@@ -1,0 +1,124 @@
+*changesPlugin.txt*  Print indication of changed lines for a buffer 
+
+Author:  Christian Brabandt <cb@256bit.org>
+Version: 0.5  Apr, 12th, 2010
+Copyright: (c) 2010 by Christian Brabandt 	 *changesPlugin-copyright*
+	   The VIM LICENSE applies to changesPlugin.txt (see |copyright|)
+	   except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
+	   IMPLIED.  USE AT-YOUR-OWN-RISK.
+
+==============================================================================
+                                                              *changesPlugin*
+1. Functionality
+
+This plugin was written to help visualize which lines have been changes since
+editing started for a file. The plugin was inspired by so called changed-bars,
+available at other editors, such as Embarcadero C++ Builder (there it is
+called Change Bars, see:
+http://edn.embarcadero.com/article/33453#6PersonalDeveloperProductivity)
+or Visual Studio where it is called indicator margin (see
+http://blog.eveningcreek.com/?p=151).
+
+ChangesPlugin.vim uses the |diff|-feature of vim and compares the actual
+buffer with it's saved state. In order to highlight the indicator signs at the
+first column, its using |signs|. For newly added lines, the first column will
+be displayed with a leading '+' and highlighted using the DiffAdd highlighting
+(see |hl-DiffAdd|), deleted lines will be indicated by a '-' with a
+DiffDelete highlighting (see |hl-DiffDelete|) and modified lines will be
+displayed using '*' and a DiffChange highlighting (see |hl-DiffChange|).
+
+This means, that in order to use this plugin you need a vim, that was built
+with |+signs|-support and |+diff|-support and you also need an executable diff
+command. If neither of these conditions are met, changePlugin.vim will issue a
+warning and abort.
+
+							 *:EC* *:EnableChanges*
+By default the plugin is not enabled. To enable it enter >
+    :EnableChanges
+When you run this command, changesPlugin.vim diffs the current file agains
+its saved file on disk and displays the changes in the first column.
+
+Alternatively, you can enter the shortcut >
+     :EC
+which basically calls :EnableChanes
+
+							 *:DC* *:DisableChanges*
+If you want to disable the plugin, enter >
+    :DisableChanges
+or alternatively, you can enter the shortcut >
+     :DC
+
+						     *:TCV* *:ToggleChangesView*
+You can toggle, between turning on and off the indicator bars, using >
+     :ToggleChangeView
+or alternatively, you can use the shortcut >
+     :TCV
+
+==============================================================================
+							*changesPlugin-Config*
+2. Configuring changesPlugin.vim
+
+There are basically four different configuration options available.
+
+2.1 Highlighte the whole line
+By default, changesPlugin.vim will only indicate a change in the first column.
+Setting g:changes_hl_lines to 1 will highlight the whole line. By default this
+variable is unset (which is the same as setting it to 0).
+If you'd like to have this, set this variable in your |.vimrc| >
+    :let g:changes_hl_lines=1
+
+2.2 Auto-refresh the changes
+By default changesPlugin.vim will not automatically update the view. You can
+however configure it to do so. This will use an |CursorHold| autocommand to
+update the indicator signs after |'updatetime'| seconds in Normal mode when
+no key is pressed. To enable this feature, put this in your |.vimrc| >
+    let g:changes_autocmd=1
+
+This autocommand checks, whether there have been changes to the file, or else
+it won't update the view.
+
+2.3 Show what the indicator signs mean.
+By default, whenever you run |:EnableChanges|, changesVim will print a short
+status message, what each sign means. If you don't want this, put this in your
+|.vimrc| >
+    :let g:changes_verbose=0
+
+2.4 Specify different colors.
+changesVim uses the highlighting used for |diff| mode to indicate the change
+in a buffer. This is consistent, since when you're already used to |vimdiff|
+you'll probably also know the highlighting. If for any reason you do not like
+the colors, you have to define your own highlighting items.
+If for example you want the DiffAdd highlighting to be displayed like White on
+a Blue background, you can define it as follows in your |.vimrc| >
+
+    :hi DiffAdd term=bold ctermbg=4 guibg=DarkBlue
+
+In the same way, you can change DiffDelete for indicating deleted lines and
+DiffChange for indicating modified lines. You can also specify your favorite
+highlighting colors using your own build |colorscheme|.
+==============================================================================
+3. changesPlugin History				*changesPlugin-history*
+    0.6: Apr 12, 2010:  BF: fixed a missing highlight for DiffText
+    0.5: Apr 12, 2010:  BF: error when trying to access b:diffhl in the
+			    scratch buffer. This should be fixed now (thanks
+			    Jeet Sukumaran!)
+			BF: Use the correct highlighting groups (thanks Jeet
+			    Sukumaran!)
+    0.4: Apr 12, 2010:  NF: |ToggleChangesView|
+			NF: The autocommand checks, if the buffer has been
+			    modified, since the last time.
+			BF: Do not mess with signs, that have not been placed
+			    by changesPlugin.vim
+			BF: CleanUp was seriously messed up (sorry, I must
+			    have been asleep, when writing that)
+			BF: Take care of 'foldcolumn' setting, which would be
+			    overwritten by the signs-column
+    0.3: Apr 11, 2010:  BF: redraw, so that the diff window will not be
+			    displayed
+			NF: enabled GLVS (see |GLVS|)
+    0.2: Apr 11, 2010:	Added Documentation
+			created an autoload version
+    0.1: Apr 10, 2010:	First working version
+
+==============================================================================
+vim:tw=78:ts=8:ft=help
