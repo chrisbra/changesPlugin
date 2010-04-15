@@ -19,9 +19,6 @@ uninstall:
 undo:
 	for i in */*.orig; do mv -f "$$i" "$${i%.*}"; done
 
-commit:
-	git commit -m "increased version number" $(PERLSCRIPT)
-
 changes:
 	perl -i.orig -pne 'if (/Version:/) {s/\.(\d)*/sprintf(".%d", 1+$$1)/e}' ${SCRIPT}
 	perl -i -pne 'if (/GetLatestVimScripts:/) {s/(\d+)\s+:AutoInstall:/sprintf("%d", 1+$$1)/e}' ${SCRIPT}
