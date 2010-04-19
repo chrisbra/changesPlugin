@@ -1,12 +1,13 @@
 " Changes.vim - Using Signs for indicating changed lines
 " ---------------------------------------------------------------
-" Version:  0.6
+" Version:  0.7
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: 2010/04/13
+" Last Change: Mon, 19 Apr 2010 14:35:35 +0200
+
 " Script:  http://www.vim.org/scripts/script.php?script_id=3052
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
-" GetLatestVimScripts: 3052 6 :AutoInstall: ChangesPlugin.vim
+" GetLatestVimScripts: 3052 7 ChangesPlugin.vim
 
 " Documentation:"{{{1
 " To see differences with your file, exexute:
@@ -43,7 +44,7 @@
 " see :h :hi
 
 " Check preconditions"{{{1
-fu changes#Check()
+fu! changes#Check()
     if !has("diff")
 	call changes#WarningMsg("Diff support not available in your Vim version.")
 	call changes#WarningMsg("changes plugin will not be working!")
@@ -86,9 +87,42 @@ fu! changes#Output()"{{{1
 endfu
 
 fu! changes#Init()"{{{1
-    let s:hl_lines = (exists("g:changes_hl_lines") ? g:changes_hl_lines : 0)
-    let s:autocmd  = (exists("g:changes_autocmd")  ? g:changes_autocmd  : 0)
-    let s:verbose  = (exists("g:changes_verbose")  ? g:changes_verbose  : 1)
+    let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
+    let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
+    let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    : 1)
+    " Check against a file in a vcs system
+    let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
+    if !exists("s:vcs_cat")
+	let s:vcs_cat  = {'git': 'show HEAD:', 
+			 \'bazaar': 'cat ', 
+			 \'cvs': 'export ',
+			 \'svn': 'cat ',
+			 \'subversion': 'cat ',
+			 \'svk': 'cat ',
+			 \'hg': 'cat ',
+			 \'mercurial': 'cat '}
+    endif
+
+    " Settings for Version Control
+    if s:vcs
+       if !exists("g:changes_vcs_system")
+	   call changes#WarningMsg("Please specify which VCS to use. See :h changes-vcs.")
+	   call changes#WarningMsg("VCS check will be disabled for now.")
+	   sleep 2
+	   let s:vcs=0
+      endif
+      let s:vcs_type  = g:changes_vcs_system
+      if get(s:vcs_cat, s:vcs_type)
+	   call changes#WarningMsg("Don't know VCS " . s:vcs_type)
+	   call changes#WarningMsg("VCS check will be disabled for now.")
+	   sleep 2
+	   let s:vcs=0
+      endif
+      if !exists(s:temp_file)
+	  let s:temp_file=tempname()
+      endif
+    endif
+
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
     let s:sign_prefix = 99
@@ -190,7 +224,7 @@ fu! changes#GetDiff()"{{{1
     let b:diffhl['del'] = s:temp['del']
     call changes#PlaceSigns(b:diffhl)
     call changes#DiffOff()
-    redraw
+    redraw!
     let &lz=o_lz
     " I assume, the diff-mode messed up the folding settings,
     " so we need to restore them here
@@ -230,7 +264,19 @@ fu! changes#MakeDiff()"{{{1
     " Get diff for current buffer with original
     noa vert new
     set bt=nofile
-    r #
+    if !s:vcs
+	r #
+    else
+	try
+	exe ':silent !' s:vcs_type s:vcs_cat[s:vcs_type] .  fnamemodify(expand("#"), '.') '>' s:temp_file
+	exe ':r' s:temp_file
+	call delete(s:temp_file)
+	catch
+	    let msg="There was an error executing the VCS command:"
+	    call changes#WarningMsg(msg)
+	    unlet msg
+	endtry
+    endif
     0d_
     diffthis
     noa wincmd p
