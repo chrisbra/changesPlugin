@@ -111,6 +111,7 @@ In the same way, you can change DiffDelete for indicating deleted lines and
 DiffChange for indicating modified lines. You can also specify your favorite
 highlighting colors using your own build |colorscheme|.
 
+                                                                 *changes-vcs*
 3.5 Check differences against a checked-in file from a VCS
 
 Warning: This feature is rather experimental. So use it with care. 

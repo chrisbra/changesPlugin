@@ -78,7 +78,7 @@ fu! changes#WarningMsg(msg)"{{{1
 endfu
 
 fu! changes#Output()"{{{1
-    if s:verbose
+    if s:verbose && !s:excp
 	echohl Title
 	echo "Differences will be highlighted like this:"
 	echohl Normal
@@ -99,6 +99,7 @@ fu! changes#Init()"{{{1
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    : 1)
     " Check against a file in a vcs system
     let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
+    let s:excp     = 0
     if !exists("s:vcs_cat")
 	let s:vcs_cat  = {'git': 'show HEAD:', 
 			 \'bazaar': 'cat ', 
@@ -115,6 +116,7 @@ fu! changes#Init()"{{{1
        if !exists("g:changes_vcs_system")
 	   call changes#WarningMsg("Please specify which VCS to use. See :h changes-vcs.")
 	   call changes#WarningMsg("VCS check will be disabled for now.")
+	   throw 'changes:NoVCS'
 	   sleep 2
 	   let s:vcs=0
       endif
@@ -125,7 +127,7 @@ fu! changes#Init()"{{{1
 	   sleep 2
 	   let s:vcs=0
       endif
-      if !exists(s:temp_file)
+      if !exists("s:temp_file")
 	  let s:temp_file=tempname()
       endif
     endif
@@ -205,7 +207,13 @@ fu! changes#UpdateView()"{{{1
 endfu
 
 fu! changes#GetDiff()"{{{1
-    call changes#Init()
+    try
+	call changes#Init()
+    catch changes:NoVCS
+	let s:excp = 1
+	return
+    endtry
+
     " Save some settings
     let o_lz   = &lz
     let o_fdm  = &fdm
@@ -218,33 +226,40 @@ fu! changes#GetDiff()"{{{1
     " Delete previously placed signs
     "sign unplace *
     call changes#UnPlaceSigns()
+    let b:diffhl={'add': [], 'del': [], 'ch': []}
 "	for key in keys(s:signs)
 "	    exe "sign unplace " key
 "	endfor
-    call changes#MakeDiff()
-    let b:diffhl={'add': [], 'del': [], 'ch': []}
-    call changes#CheckLines(1)
-    " Switch to other buffer and check for deleted lines
-    noa wincmd p
-    call changes#CheckLines(0)
-    noa wincmd p
-    let b:diffhl['del'] = s:temp['del']
-    call changes#PlaceSigns(b:diffhl)
-    call changes#DiffOff()
-    redraw!
-    let &lz=o_lz
-    " I assume, the diff-mode messed up the folding settings,
-    " so we need to restore them here
-    "
-    " Should we also restore other fold related settings?
-    let &fdm=o_fdm
-    if b:ofdc ==? 1
-	" When foldcolumn is 1, folds won't be shown because of
-	" the signs, so increasing its value by 1 so that folds will
-	" also be shown
-	let &fdc += 1
-    endif
-    let b:changes_view_enabled=1
+    try
+	call changes#MakeDiff()
+	call changes#CheckLines(1)
+	" Switch to other buffer and check for deleted lines
+	noa wincmd p
+	call changes#CheckLines(0)
+	noa wincmd p
+	let b:diffhl['del'] = s:temp['del']
+	call changes#PlaceSigns(b:diffhl)
+	call changes#DiffOff()
+	redraw!
+	let b:changes_view_enabled=1
+    catch /^changes:abort/
+	let b:changes_view_enabled=0
+	let s:excp = 1
+	"return
+    finally
+	let &lz=o_lz
+	" I assume, the diff-mode messed up the folding settings,
+	" so we need to restore them here
+	"
+	" Should we also restore other fold related settings?
+	let &fdm=o_fdm
+	if b:ofdc ==? 1
+	    " When foldcolumn is 1, folds won't be shown because of
+	    " the signs, so increasing its value by 1 so that folds will
+	    " also be shown
+	    let &fdc += 1
+	endif
+    endtry
 endfu
 
 fu! changes#PlaceSigns(dict)"{{{1
@@ -275,13 +290,21 @@ fu! changes#MakeDiff()"{{{1
 	r #
     else
 	try
-	exe ':silent !' s:vcs_type s:vcs_cat[s:vcs_type] .  fnamemodify(expand("#"), '.') '>' s:temp_file
-	exe ':r' s:temp_file
-	call delete(s:temp_file)
-	catch
-	    let msg="There was an error executing the VCS command:"
-	    call changes#WarningMsg(msg)
-	    unlet msg
+	    let git_rep_p = s:ReturnGitRepPath()
+	    exe ':silent !' s:vcs_type s:vcs_cat[s:vcs_type] .  git_rep_p . expand("#") '>' s:temp_file
+	    let fsize=getfsize(s:temp_file)
+	    if fsize == 0
+		call delete(s:temp_file)
+		call changes#WarningMsg("Couldn't get VCS output, aborting")
+		:q!
+		throw "changes:abort"
+	    endif
+	    exe ':r' s:temp_file
+	    call delete(s:temp_file)
+        catch /^changes: Not git Repository found/
+	    call changes#WarningMsg("Unable to find git Top level repository.")
+	    echo v:errmsg
+	    throw "changes:abort"
 	endtry
     endif
     0d_
@@ -289,6 +312,23 @@ fu! changes#MakeDiff()"{{{1
     noa wincmd p
     diffthis
 endfu
+
+fu! s:ReturnGitRepPath()
+    " return the top level of the repository path. This is needed, so
+    " git show will correctly return the file
+    let fil=expand("#")
+    let cwd=fnamemodify(fil, ':h:.')
+    let dir=finddir('.git', cwd.';')
+    if empty(dir)
+	throw 'changes: Not git Repository found'
+    else
+	let sdir=fnamemodify(dir,':h:t')
+    endif
+    let path = matchstr(fnamemodify(fil, ':p'),'\V'.sdir.'\zs\.\{-\}'.fnamemodify(fil, ':t'))
+    let path = fnamemodify(path, ':h'). '/'
+    return (path =~ '^/' ? path[1:] : path)
+endfu
+
 
 fu! changes#DiffOff()"{{{1
     " Turn off Diff Mode and close buffer
