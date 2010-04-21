@@ -78,7 +78,7 @@ fu! changes#WarningMsg(msg)"{{{1
 endfu
 
 fu! changes#Output()"{{{1
-    if s:verbose && !s:excp
+    if s:verbose
 	echohl Title
 	echo "Differences will be highlighted like this:"
 	echohl Normal
@@ -99,7 +99,6 @@ fu! changes#Init()"{{{1
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    : 1)
     " Check against a file in a vcs system
     let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
-    let s:excp     = 0
     if !exists("s:vcs_cat")
 	let s:vcs_cat  = {'git': 'show HEAD:', 
 			 \'bazaar': 'cat ', 
@@ -210,7 +209,7 @@ fu! changes#GetDiff()"{{{1
     try
 	call changes#Init()
     catch changes:NoVCS
-	let s:excp = 1
+	let s:verbose = 0
 	return
     endtry
 
@@ -240,14 +239,14 @@ fu! changes#GetDiff()"{{{1
 	let b:diffhl['del'] = s:temp['del']
 	call changes#PlaceSigns(b:diffhl)
 	call changes#DiffOff()
-	redraw!
 	let b:changes_view_enabled=1
     catch /^changes:abort/
 	let b:changes_view_enabled=0
-	let s:excp = 1
+	let s:verbose = 0
 	"return
     finally
 	let &lz=o_lz
+	redraw!
 	" I assume, the diff-mode messed up the folding settings,
 	" so we need to restore them here
 	"
@@ -259,6 +258,7 @@ fu! changes#GetDiff()"{{{1
 	    " also be shown
 	    let &fdc += 1
 	endif
+	echo v:errmsg
     endtry
 endfu
 
@@ -301,9 +301,10 @@ fu! changes#MakeDiff()"{{{1
 	    endif
 	    exe ':r' s:temp_file
 	    call delete(s:temp_file)
-        catch /^changes: Not git Repository found/
+        catch /^changes: No git Repository found/
 	    call changes#WarningMsg("Unable to find git Top level repository.")
 	    echo v:errmsg
+	    :q!
 	    throw "changes:abort"
 	endtry
     endif
@@ -320,7 +321,7 @@ fu! s:ReturnGitRepPath()
     let cwd=fnamemodify(fil, ':h:.')
     let dir=finddir('.git', cwd.';')
     if empty(dir)
-	throw 'changes: Not git Repository found'
+	throw 'changes: No git Repository found'
     else
 	let sdir=fnamemodify(dir,':h:t')
     endif
