@@ -66,9 +66,15 @@ fu! changes#Check()
 endfu
 
 fu! changes#WarningMsg(msg)"{{{1
+    let msg="Changes.vim: " . a:msg
     echohl WarningMsg
-    echo a:msg
+    if exists(":unsilent")
+	unsilent echomsg msg
+    else
+	echomsg msg
+    endif
     echohl Normal
+    let v:errmsg=msg
 endfu
 
 fu! changes#Output()"{{{1
