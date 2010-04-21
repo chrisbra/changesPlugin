@@ -226,9 +226,6 @@ fu! changes#GetDiff()"{{{1
     "sign unplace *
     call changes#UnPlaceSigns()
     let b:diffhl={'add': [], 'del': [], 'ch': []}
-"	for key in keys(s:signs)
-"	    exe "sign unplace " key
-"	endfor
     try
 	call changes#MakeDiff()
 	call changes#CheckLines(1)
@@ -239,14 +236,6 @@ fu! changes#GetDiff()"{{{1
 	let b:diffhl['del'] = s:temp['del']
 	call changes#PlaceSigns(b:diffhl)
 	call changes#DiffOff()
-	let b:changes_view_enabled=1
-    catch /^changes:abort/
-	let b:changes_view_enabled=0
-	let s:verbose = 0
-	"return
-    finally
-	let &lz=o_lz
-	redraw!
 	" I assume, the diff-mode messed up the folding settings,
 	" so we need to restore them here
 	"
@@ -258,7 +247,13 @@ fu! changes#GetDiff()"{{{1
 	    " also be shown
 	    let &fdc += 1
 	endif
-	echo v:errmsg
+	let b:changes_view_enabled=1
+    catch /^changes/
+	let b:changes_view_enabled=0
+	let s:verbose = 0
+    finally
+	let &lz=o_lz
+	redraw!
     endtry
 endfu
 
