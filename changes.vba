@@ -2,7 +2,7 @@
 UseVimball
 finish
 autoload/changes.vim	[[[1
-369
+371
 " Changes.vim - Using Signs for indicating changed lines
 " ---------------------------------------------------------------
 " Version:  0.8
@@ -16,70 +16,55 @@ autoload/changes.vim	[[[1
 " GetLatestVimScripts: 3052 8 :AutoInstall: ChangesPlugin.vim
 
 " Documentation:"{{{1
-" To see differences with your file, exexute:
-" :EnableChanges
-"
-" The following variables will be accepted:
-"
-" g:changes_hl_lines
-" If set, all lines will be highlighted, else
-" only an indication will be displayed on the first column
-" (default: 0)
-"
-" g:changes_autocmd
-" Updates the indication for changed lines automatically,
-" if the user does not press a key for 'updatetime' seconds when
-" Vim is not in insert mode. See :h 'updatetime'
-" (default: 0)
-"
-" g:changes_verbose
-" Output a short description, what these colors mean
-" (default: 1)
-"
-" Colors for indicating the changes
-" By default changes.vim displays deleted lines using the hilighting
-" DiffDelete, added lines using DiffAdd and modified lines using
-" DiffChange.
-" You can see how these are defined, by issuing
-" :hi DiffAdd
-" :hi DiffDelete
-" :hi DiffChange
-" See also the help :h hl-DiffAdd :h hl-DiffChange and :h hl-DiffDelete
-"
-" If you'd like to change these colors, simply change these hilighting items
-" see :h :hi
+" See :h ChangesPlugin.txt
 
 " Check preconditions"{{{1
 fu! changes#Check()
     if !has("diff")
-	call changes#WarningMsg("Diff support not available in your Vim version.")
-	call changes#WarningMsg("changes plugin will not be working!")
+	call changes#WarningMsg(1,"Diff support not available in your Vim version.")
+	call changes#WarningMsg(1,"changes plugin will not be working!")
 	finish
     endif
 
     if  !has("signs")
-	call changes#WarningMsg("Sign Support support not available in your Vim version.")
-	call changes#WarningMsg("changes plugin will not be working!")
+	call changes#WarningMsg(1,"Sign Support support not available in your Vim version.")
+	call changes#WarningMsg(1,"changes plugin will not be working!")
 	finish
     endif
 
     if !executable("diff") || executable("diff") == -1
-	call changes#WarningMsg("No diff executable found")
-	call changes#WarningMsg("changes plugin will not be working!")
+	call changes#WarningMsg(1,"No diff executable found")
+	call changes#WarningMsg(1,"changes plugin will not be working!")
 	finish
     endif
+
+    " Check for the existence of unsilent
+    if exists(":unsilent")
+	let s:cmd='unsilent echomsg'
+    else
+	let s:cmd='echomsg'
+    endif
+
 endfu
 
-fu! changes#WarningMsg(msg)"{{{1
-    let msg="Changes.vim: " . a:msg
-    echohl WarningMsg
-    if exists(":unsilent")
-	unsilent echomsg msg
+fu! changes#WarningMsg(mode,msg)"{{{1
+    if type(a:msg) == 1
+	let msg=["Changes.vim: " . a:msg]
     else
-	echomsg msg
+	let msg=["Changes.vim: " . a:msg[0]] + a:msg[1:]
     endif
-    echohl Normal
-    let v:errmsg=msg
+
+    if a:mode
+	echohl WarningMsg
+    endif
+    for line in msg
+	    exe s:cmd "line"
+    endfor
+
+    if a:mode
+	echohl Normal
+	let v:errmsg=msg[0]
+    endif
 endfu
 
 fu! changes#Output()"{{{1
@@ -99,9 +84,12 @@ fu! changes#Output()"{{{1
 endfu
 
 fu! changes#Init()"{{{1
+    call changes#Check()
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
     let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    : 1)
+    " Buffer queue, that will be displayed.
+    let s:msg      = []
     " Check against a file in a vcs system
     let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
     if !exists("s:vcs_cat")
@@ -118,16 +106,16 @@ fu! changes#Init()"{{{1
     " Settings for Version Control
     if s:vcs
        if !exists("g:changes_vcs_system")
-	   call changes#WarningMsg("Please specify which VCS to use. See :h changes-vcs.")
-	   call changes#WarningMsg("VCS check will be disabled for now.")
+	   call changes#WarningMsg(1,"Please specify which VCS to use. See :h changes-vcs.")
+	   call changes#WarningMsg(1,"VCS check will be disabled for now.")
 	   throw 'changes:NoVCS'
 	   sleep 2
 	   let s:vcs=0
       endif
       let s:vcs_type  = g:changes_vcs_system
       if get(s:vcs_cat, s:vcs_type)
-	   call changes#WarningMsg("Don't know VCS " . s:vcs_type)
-	   call changes#WarningMsg("VCS check will be disabled for now.")
+	   call changes#WarningMsg(1,"Don't know VCS " . s:vcs_type)
+	   call changes#WarningMsg(1,"VCS check will be disabled for now.")
 	   sleep 2
 	   let s:vcs=0
       endif
@@ -151,7 +139,6 @@ fu! changes#Init()"{{{1
     let s:ids["ch2"]   = hlID("DiffText")
     call changes#DefineSigns()
     call changes#AuCmd(s:autocmd)
-    call changes#Check()
 endfu
 
 fu! changes#AuCmd(arg)"{{{1
@@ -219,7 +206,7 @@ fu! changes#GetDiff()"{{{1
     endtry
 
     if empty(bufname(''))
-	call changes#WarningMsg("The buffer does not contain a name. Check aborted!")
+	call changes#WarningMsg(1,"The buffer does not contain a name. Check aborted!")
 	let s:verbose = 0
 	return
     endif
@@ -246,7 +233,14 @@ fu! changes#GetDiff()"{{{1
 	call changes#CheckLines(0)
 	noa wincmd p
 	let b:diffhl['del'] = s:temp['del']
-	call changes#PlaceSigns(b:diffhl)
+	" Check for empty dict of signs
+	if (empty(values(b:diffhl)[0]) && 
+	   \empty(values(b:diffhl)[1]) && 
+	   \empty(values(b:diffhl)[2]))
+	    call add(s:msg, 'No differences found!')
+	else
+	    call changes#PlaceSigns(b:diffhl)
+	endif
 	call changes#DiffOff()
 	" I assume, the diff-mode messed up the folding settings,
 	" so we need to restore them here
@@ -266,6 +260,10 @@ fu! changes#GetDiff()"{{{1
     finally
 	let &lz=o_lz
 	redraw!
+	if g:changes_vcs_check && b:changes_view_enabled
+	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . g:changes_vcs_system)
+	    call changes#WarningMsg(0,s:msg)
+	endif
     endtry
 endfu
 
@@ -297,19 +295,23 @@ fu! changes#MakeDiff()"{{{1
 	r #
     else
 	try
-	    let git_rep_p = s:ReturnGitRepPath()
+	    if s:vcs_cat[s:vcs_type] == 'git'
+		let git_rep_p = s:ReturnGitRepPath()
+	    else
+		let git_rep_p = ''
+	    endif
 	    exe ':silent !' s:vcs_type s:vcs_cat[s:vcs_type] .  git_rep_p . expand("#") '>' s:temp_file
 	    let fsize=getfsize(s:temp_file)
 	    if fsize == 0
 		call delete(s:temp_file)
-		call changes#WarningMsg("Couldn't get VCS output, aborting")
+		call changes#WarningMsg(1,"Couldn't get VCS output, aborting")
 		:q!
 		throw "changes:abort"
 	    endif
 	    exe ':r' s:temp_file
 	    call delete(s:temp_file)
         catch /^changes: No git Repository found/
-	    call changes#WarningMsg("Unable to find git Top level repository.")
+	    call changes#WarningMsg(1,"Unable to find git Top level repository.")
 	    echo v:errmsg
 	    :q!
 	    throw "changes:abort"
@@ -372,33 +374,33 @@ endfunction
 
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
-doc/changesPlugin.txt	[[[1
-169
-*changesPlugin.txt*  Print indication of changed lines for a buffer 
+doc/ChangesPlugin.txt	[[[1
+174
+*ChangesPlugin.txt*  Print indication of changed lines for a buffer 
 
 Author:  Christian Brabandt <cb@256bit.org>
 Version: 0.8 Mon, 19 Apr 2010 15:10:16 +0200
-Copyright: (c) 2010 by Christian Brabandt 	 *changesPlugin-copyright*
-	   The VIM LICENSE applies to changesPlugin.txt (see |copyright|)
+Copyright: (c) 2010 by Christian Brabandt 	 *ChangesPlugin-copyright*
+	   The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
 	   except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
 	   IMPLIED.  USE AT-YOUR-OWN-RISK.
 
 ==============================================================================
-1. Contents                          			      *changesPlugin*
+1. Contents                          			      *ChangesPlugin*
 
-  1.  Contents......................................: |changesPlugin|
-  2.  Manual........................................: |changesPlugin-manual|
-  3.  Configuration.................................: |changesPlugin-Config|
+  1.  Contents......................................: |ChangesPlugin|
+  2.  Manual........................................: |ChangesPlugin-manual|
+  3.  Configuration.................................: |ChangesPlugin-Config|
    3.1 Highlighting whole lines
    3.2 Auto-refresh changes
    3.3 Show the meaning of the indicator bars
    3.4 Specify different colors
    3.5 Check against a file in a VCS
-  4.  changesPlugin History.........................: |changesPlugin-history|
+  4.  ChangesPlugin History.........................: |ChangesPlugin-history|
 
 ==============================================================================
 
-                                                       *changesPlugin-manual*
+                                                       *ChangesPlugin-manual*
 2. Functionality
 
 This plugin was written to help visualize which lines have been changes since
@@ -425,7 +427,7 @@ warning and abort.
 							 *:EC* *:EnableChanges*
 By default the plugin is not enabled. To enable it enter >
     :EnableChanges
-When you run this command, changesPlugin.vim diffs the current file agains
+When you run this command, ChangesPlugin.vim diffs the current file agains
 its saved file on disk and displays the changes in the first column.
 
 Alternatively, you can enter the shortcut >
@@ -445,20 +447,20 @@ or alternatively, you can use the shortcut >
      :TCV
 
 ==============================================================================
-							*changesPlugin-Config*
-3. Configuring changesPlugin.vim
+							*ChangesPlugin-Config*
+3. Configuring ChangesPlugin.vim
 
 There are several different configuration options available.
 
 2.1 Highlighte the whole line
-By default, changesPlugin.vim will only indicate a change in the first column.
+By default, ChangesPlugin.vim will only indicate a change in the first column.
 Setting g:changes_hl_lines to 1 will highlight the whole line. By default this
 variable is unset (which is the same as setting it to 0).
 If you'd like to have this, set this variable in your |.vimrc| >
     :let g:changes_hl_lines=1
 
 3.2 Auto-refresh the changes
-By default changesPlugin.vim will not automatically update the view. You can
+By default ChangesPlugin.vim will not automatically update the view. You can
 however configure it to do so. This will use an |CursorHold| autocommand to
 update the indicator signs after |'updatetime'| seconds in Normal mode when
 no key is pressed. To enable this feature, put this in your |.vimrc| >
@@ -492,12 +494,12 @@ highlighting colors using your own build |colorscheme|.
 
 Warning: This feature is rather experimental. So use it with care. 
 
-You can configure changesPlugin to check the differrences of the current
+You can configure ChangesPlugin to check the differrences of the current
 buffer not only against the file stored on disk, but rather query a Version
 Control System (VCS) for its latest version and indicate changes based on
 this version. 
 
-Currently, changesPlugin supports these VCS Systems:
+Currently, ChangesPlugin supports these VCS Systems:
     - git
     - cvs
     - bazaar
@@ -517,7 +519,12 @@ working copy, otherwise, this won't work. So this won't work, if you have
 'acd' set.
 
 ==============================================================================
-4. changesPlugin History				*changesPlugin-history*
+4. ChangesPlugin History				*ChangesPlugin-history*
+    0.8: Apr 22, 2010:  NF: Renamed the helpfile, to make it more obvious, 
+                            that it refers to a plugin
+			NF: Outputting name of checked file, if checking
+			    against VCS
+			BF: Don't check for empty files.
     0.7: Apr 19, 2010:  NF: Check against a file in a VCS
     0.6: Apr 12, 2010:  BF: fixed a missing highlight for DiffText
     0.5: Apr 12, 2010:  BF: error when trying to access b:diffhl in the
@@ -529,7 +536,7 @@ working copy, otherwise, this won't work. So this won't work, if you have
 			NF: The autocommand checks, if the buffer has been
 			    modified, since the last time.
 			BF: Do not mess with signs, that have not been placed
-			    by changesPlugin.vim
+			    by ChangesPlugin.vim
 			BF: CleanUp was seriously messed up (sorry, I must
 			    have been asleep, when writing that)
 			BF: Take care of 'foldcolumn' setting, which would be
