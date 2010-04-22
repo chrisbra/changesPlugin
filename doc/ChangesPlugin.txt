@@ -147,9 +147,9 @@ working copy, otherwise, this won't work. So this won't work, if you have
 			NF: Outputting name of checked file, if checking
 			    against VCS
 			BF: Don't check for empty files.
-			BF: If there are no differences, report it,
-			    instead of trying to place signs
-			NF: Reworked the Message function
+			BF: Reworked the Message function
+			BF: Don't try to place signs, if there are no
+			    differences
     0.7: Apr 19, 2010:  NF: Check against a file in a VCS
     0.6: Apr 12, 2010:  BF: fixed a missing highlight for DiffText
     0.5: Apr 12, 2010:  BF: error when trying to access b:diffhl in the
