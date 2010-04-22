@@ -367,5 +367,22 @@ fu! changes#TCV()"{{{1
 endfunction
 
 
+fu! s:ShowDifferentLines()"{{{1
+    redir => a
+    silent sign place
+    redir end
+    let b=split(a,"\n")
+    let b=filter(b, 'v:val =~ "id=".s:sign_prefix')
+    let b=map(b, 'matchstr(v:val, ''line=\zs\d\+'')')
+    let b=map(b, '''\%(^\%''.v:val.''l\)''')
+    if !empty(b)
+	exe ":vimgrep /".join(b, '\|').'/gj' expand("%")
+	copen
+    else
+	" This should not happen!
+	call changes#WarningMsg(1,"Pattern not found!")
+    endif
+endfun
+
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
