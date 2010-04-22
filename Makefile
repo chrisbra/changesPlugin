@@ -4,7 +4,7 @@ PLUGIN=changes
 
 .PHONY: $(PLUGIN).vba
 
-all: vimball
+all: uninstall vimball install
 
 vimball: $(PLUGIN).vba
 
@@ -17,7 +17,7 @@ install:
 	vim -N -c':so %' -c':q!' ${PLUGIN}.vba
 
 uninstall:
-	vim -N -c':RmVimball ${PLUGIN}.vba'
+	vim -N -c':RmVimball' -c':q!' ${PLUGIN}.vba
 
 undo:
 	for i in */*.orig; do mv -f "$$i" "$${i%.*}"; done
