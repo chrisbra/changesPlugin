@@ -2,6 +2,7 @@ SCRIPT=autoload/changes.vim plugin/changesPlugin.vim
 DOC=doc/changesPlugin.txt
 PLUGIN=changes
 
+.PHONY: $(PLUGIN).vba
 
 all: $(PLUGIN) vimball
 
@@ -22,6 +23,7 @@ undo:
 	for i in */*.orig; do mv -f "$$i" "$${i%.*}"; done
 
 changes.vba:
+	rm -f $(PLUGIN).vba
 	vim -N -c 'ru! vimballPlugin.vim' -c ':call append("0", ["autoload/changes.vim", "doc/changesPlugin.txt", "plugin/changesPlugin.vim"])' -c '$$d' -c ':%MkVimball ${PLUGIN} .' -c':q!'
      
 changes:
