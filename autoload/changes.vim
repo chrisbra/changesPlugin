@@ -213,6 +213,13 @@ fu! changes#GetDiff()"{{{1
 	return
     endtry
 
+    if empty(bufname(''))
+	call changes#WarningMsg("The buffer does not contain a name. Check aborted!")
+	let s:verbose = 0
+	return
+    endif
+
+
     " Save some settings
     let o_lz   = &lz
     let o_fdm  = &fdm
