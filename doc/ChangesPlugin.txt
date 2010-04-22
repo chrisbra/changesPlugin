@@ -1,28 +1,28 @@
-*changesPlugin.txt*  Print indication of changed lines for a buffer 
+*ChangesPlugin.txt*  Print indication of changed lines for a buffer 
 
 Author:  Christian Brabandt <cb@256bit.org>
 Version: 0.8 Mon, 19 Apr 2010 15:10:16 +0200
-Copyright: (c) 2010 by Christian Brabandt 	 *changesPlugin-copyright*
-	   The VIM LICENSE applies to changesPlugin.txt (see |copyright|)
+Copyright: (c) 2010 by Christian Brabandt 	 *ChangesPlugin-copyright*
+	   The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
 	   except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
 	   IMPLIED.  USE AT-YOUR-OWN-RISK.
 
 ==============================================================================
-1. Contents                          			      *changesPlugin*
+1. Contents                          			      *ChangesPlugin*
 
-  1.  Contents......................................: |changesPlugin|
-  2.  Manual........................................: |changesPlugin-manual|
-  3.  Configuration.................................: |changesPlugin-Config|
+  1.  Contents......................................: |ChangesPlugin|
+  2.  Manual........................................: |ChangesPlugin-manual|
+  3.  Configuration.................................: |ChangesPlugin-Config|
    3.1 Highlighting whole lines
    3.2 Auto-refresh changes
    3.3 Show the meaning of the indicator bars
    3.4 Specify different colors
    3.5 Check against a file in a VCS
-  4.  changesPlugin History.........................: |changesPlugin-history|
+  4.  ChangesPlugin History.........................: |ChangesPlugin-history|
 
 ==============================================================================
 
-                                                       *changesPlugin-manual*
+                                                       *ChangesPlugin-manual*
 2. Functionality
 
 This plugin was written to help visualize which lines have been changes since
@@ -49,7 +49,7 @@ warning and abort.
 							 *:EC* *:EnableChanges*
 By default the plugin is not enabled. To enable it enter >
     :EnableChanges
-When you run this command, changesPlugin.vim diffs the current file agains
+When you run this command, ChangesPlugin.vim diffs the current file agains
 its saved file on disk and displays the changes in the first column.
 
 Alternatively, you can enter the shortcut >
@@ -69,20 +69,20 @@ or alternatively, you can use the shortcut >
      :TCV
 
 ==============================================================================
-							*changesPlugin-Config*
-3. Configuring changesPlugin.vim
+							*ChangesPlugin-Config*
+3. Configuring ChangesPlugin.vim
 
 There are several different configuration options available.
 
 2.1 Highlighte the whole line
-By default, changesPlugin.vim will only indicate a change in the first column.
+By default, ChangesPlugin.vim will only indicate a change in the first column.
 Setting g:changes_hl_lines to 1 will highlight the whole line. By default this
 variable is unset (which is the same as setting it to 0).
 If you'd like to have this, set this variable in your |.vimrc| >
     :let g:changes_hl_lines=1
 
 3.2 Auto-refresh the changes
-By default changesPlugin.vim will not automatically update the view. You can
+By default ChangesPlugin.vim will not automatically update the view. You can
 however configure it to do so. This will use an |CursorHold| autocommand to
 update the indicator signs after |'updatetime'| seconds in Normal mode when
 no key is pressed. To enable this feature, put this in your |.vimrc| >
@@ -116,12 +116,12 @@ highlighting colors using your own build |colorscheme|.
 
 Warning: This feature is rather experimental. So use it with care. 
 
-You can configure changesPlugin to check the differrences of the current
+You can configure ChangesPlugin to check the differrences of the current
 buffer not only against the file stored on disk, but rather query a Version
 Control System (VCS) for its latest version and indicate changes based on
 this version. 
 
-Currently, changesPlugin supports these VCS Systems:
+Currently, ChangesPlugin supports these VCS Systems:
     - git
     - cvs
     - bazaar
@@ -141,7 +141,7 @@ working copy, otherwise, this won't work. So this won't work, if you have
 'acd' set.
 
 ==============================================================================
-4. changesPlugin History				*changesPlugin-history*
+4. ChangesPlugin History				*ChangesPlugin-history*
     0.7: Apr 19, 2010:  NF: Check against a file in a VCS
     0.6: Apr 12, 2010:  BF: fixed a missing highlight for DiffText
     0.5: Apr 12, 2010:  BF: error when trying to access b:diffhl in the
@@ -153,7 +153,7 @@ working copy, otherwise, this won't work. So this won't work, if you have
 			NF: The autocommand checks, if the buffer has been
 			    modified, since the last time.
 			BF: Do not mess with signs, that have not been placed
-			    by changesPlugin.vim
+			    by ChangesPlugin.vim
 			BF: CleanUp was seriously messed up (sorry, I must
 			    have been asleep, when writing that)
 			BF: Take care of 'foldcolumn' setting, which would be
