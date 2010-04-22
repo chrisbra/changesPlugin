@@ -142,6 +142,14 @@ working copy, otherwise, this won't work. So this won't work, if you have
 
 ==============================================================================
 4. ChangesPlugin History				*ChangesPlugin-history*
+    0.8: Apr 22, 2010:  NF: Renamed the helpfile, to make it more obvious, 
+                            that it refers to a plugin
+			NF: Outputting name of checked file, if checking
+			    against VCS
+			BF: Don't check for empty files.
+			BF: If there are no differences, report it,
+			    instead of trying to place signs
+			NF: Reworked the Message function
     0.7: Apr 19, 2010:  NF: Check against a file in a VCS
     0.6: Apr 12, 2010:  BF: fixed a missing highlight for DiffText
     0.5: Apr 12, 2010:  BF: error when trying to access b:diffhl in the

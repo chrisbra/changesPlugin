@@ -11,70 +11,55 @@
 " GetLatestVimScripts: 3052 8 :AutoInstall: ChangesPlugin.vim
 
 " Documentation:"{{{1
-" To see differences with your file, exexute:
-" :EnableChanges
-"
-" The following variables will be accepted:
-"
-" g:changes_hl_lines
-" If set, all lines will be highlighted, else
-" only an indication will be displayed on the first column
-" (default: 0)
-"
-" g:changes_autocmd
-" Updates the indication for changed lines automatically,
-" if the user does not press a key for 'updatetime' seconds when
-" Vim is not in insert mode. See :h 'updatetime'
-" (default: 0)
-"
-" g:changes_verbose
-" Output a short description, what these colors mean
-" (default: 1)
-"
-" Colors for indicating the changes
-" By default changes.vim displays deleted lines using the hilighting
-" DiffDelete, added lines using DiffAdd and modified lines using
-" DiffChange.
-" You can see how these are defined, by issuing
-" :hi DiffAdd
-" :hi DiffDelete
-" :hi DiffChange
-" See also the help :h hl-DiffAdd :h hl-DiffChange and :h hl-DiffDelete
-"
-" If you'd like to change these colors, simply change these hilighting items
-" see :h :hi
+" See :h ChangesPlugin.txt
 
 " Check preconditions"{{{1
 fu! changes#Check()
     if !has("diff")
-	call changes#WarningMsg("Diff support not available in your Vim version.")
-	call changes#WarningMsg("changes plugin will not be working!")
+	call changes#WarningMsg(1,"Diff support not available in your Vim version.")
+	call changes#WarningMsg(1,"changes plugin will not be working!")
 	finish
     endif
 
     if  !has("signs")
-	call changes#WarningMsg("Sign Support support not available in your Vim version.")
-	call changes#WarningMsg("changes plugin will not be working!")
+	call changes#WarningMsg(1,"Sign Support support not available in your Vim version.")
+	call changes#WarningMsg(1,"changes plugin will not be working!")
 	finish
     endif
 
     if !executable("diff") || executable("diff") == -1
-	call changes#WarningMsg("No diff executable found")
-	call changes#WarningMsg("changes plugin will not be working!")
+	call changes#WarningMsg(1,"No diff executable found")
+	call changes#WarningMsg(1,"changes plugin will not be working!")
 	finish
     endif
+
+    " Check for the existence of unsilent
+    if exists(":unsilent")
+	let s:cmd='unsilent echomsg'
+    else
+	let s:cmd='echomsg'
+    endif
+
 endfu
 
-fu! changes#WarningMsg(msg)"{{{1
-    let msg="Changes.vim: " . a:msg
-    echohl WarningMsg
-    if exists(":unsilent")
-	unsilent echomsg msg
+fu! changes#WarningMsg(mode,msg)"{{{1
+    if type(a:msg) == 1
+	let msg=["Changes.vim: " . a:msg]
     else
-	echomsg msg
+	let msg=["Changes.vim: " . a:msg[0]] + a:msg[1:]
     endif
-    echohl Normal
-    let v:errmsg=msg
+
+    if a:mode
+	echohl WarningMsg
+    endif
+    for line in msg
+	    exe s:cmd "line"
+    endfor
+
+    if a:mode
+	echohl Normal
+	let v:errmsg=msg[0]
+    endif
 endfu
 
 fu! changes#Output()"{{{1
@@ -94,9 +79,12 @@ fu! changes#Output()"{{{1
 endfu
 
 fu! changes#Init()"{{{1
+    call changes#Check()
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
     let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    : 1)
+    " Buffer queue, that will be displayed.
+    let s:msg      = []
     " Check against a file in a vcs system
     let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
     if !exists("s:vcs_cat")
@@ -113,16 +101,16 @@ fu! changes#Init()"{{{1
     " Settings for Version Control
     if s:vcs
        if !exists("g:changes_vcs_system")
-	   call changes#WarningMsg("Please specify which VCS to use. See :h changes-vcs.")
-	   call changes#WarningMsg("VCS check will be disabled for now.")
+	   call changes#WarningMsg(1,"Please specify which VCS to use. See :h changes-vcs.")
+	   call changes#WarningMsg(1,"VCS check will be disabled for now.")
 	   throw 'changes:NoVCS'
 	   sleep 2
 	   let s:vcs=0
       endif
       let s:vcs_type  = g:changes_vcs_system
       if get(s:vcs_cat, s:vcs_type)
-	   call changes#WarningMsg("Don't know VCS " . s:vcs_type)
-	   call changes#WarningMsg("VCS check will be disabled for now.")
+	   call changes#WarningMsg(1,"Don't know VCS " . s:vcs_type)
+	   call changes#WarningMsg(1,"VCS check will be disabled for now.")
 	   sleep 2
 	   let s:vcs=0
       endif
@@ -146,7 +134,6 @@ fu! changes#Init()"{{{1
     let s:ids["ch2"]   = hlID("DiffText")
     call changes#DefineSigns()
     call changes#AuCmd(s:autocmd)
-    call changes#Check()
 endfu
 
 fu! changes#AuCmd(arg)"{{{1
@@ -214,7 +201,7 @@ fu! changes#GetDiff()"{{{1
     endtry
 
     if empty(bufname(''))
-	call changes#WarningMsg("The buffer does not contain a name. Check aborted!")
+	call changes#WarningMsg(1,"The buffer does not contain a name. Check aborted!")
 	let s:verbose = 0
 	return
     endif
@@ -241,7 +228,14 @@ fu! changes#GetDiff()"{{{1
 	call changes#CheckLines(0)
 	noa wincmd p
 	let b:diffhl['del'] = s:temp['del']
-	call changes#PlaceSigns(b:diffhl)
+	" Check for empty dict of signs
+	if (empty(values(b:diffhl)[0]) && 
+	   \empty(values(b:diffhl)[1]) && 
+	   \empty(values(b:diffhl)[2]))
+	    call add(s:msg, 'No differences found!')
+	else
+	    call changes#PlaceSigns(b:diffhl)
+	endif
 	call changes#DiffOff()
 	" I assume, the diff-mode messed up the folding settings,
 	" so we need to restore them here
@@ -261,6 +255,10 @@ fu! changes#GetDiff()"{{{1
     finally
 	let &lz=o_lz
 	redraw!
+	if g:changes_vcs_check && b:changes_view_enabled
+	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . g:changes_vcs_system)
+	    call changes#WarningMsg(0,s:msg)
+	endif
     endtry
 endfu
 
@@ -292,19 +290,23 @@ fu! changes#MakeDiff()"{{{1
 	r #
     else
 	try
-	    let git_rep_p = s:ReturnGitRepPath()
+	    if s:vcs_cat[s:vcs_type] == 'git'
+		let git_rep_p = s:ReturnGitRepPath()
+	    else
+		let git_rep_p = ''
+	    endif
 	    exe ':silent !' s:vcs_type s:vcs_cat[s:vcs_type] .  git_rep_p . expand("#") '>' s:temp_file
 	    let fsize=getfsize(s:temp_file)
 	    if fsize == 0
 		call delete(s:temp_file)
-		call changes#WarningMsg("Couldn't get VCS output, aborting")
+		call changes#WarningMsg(1,"Couldn't get VCS output, aborting")
 		:q!
 		throw "changes:abort"
 	    endif
 	    exe ':r' s:temp_file
 	    call delete(s:temp_file)
         catch /^changes: No git Repository found/
-	    call changes#WarningMsg("Unable to find git Top level repository.")
+	    call changes#WarningMsg(1,"Unable to find git Top level repository.")
 	    echo v:errmsg
 	    :q!
 	    throw "changes:abort"
