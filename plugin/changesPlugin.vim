@@ -23,14 +23,15 @@ set cpo&vim
 let s:autocmd  = (exists("g:changes_autocmd")  ? g:changes_autocmd  : 0)
 " ------------------------------------------------------------------------------
 " Public Interface: {{{1
-com! EnableChanges	 call changes#GetDiff()|:call changes#Output()
-com! DisableChanges	 call changes#CleanUp()
-com! ToggleChangesView	 call changes#TCV()
 
 " Define the Shortcuts:
 com! DC	 DisableChanges
 com! EC	 EnableChanges
 com! TCV ToggleChangesView
+
+com! EnableChanges	 call changes#GetDiff()|:call changes#Output()
+com! DisableChanges	 call changes#CleanUp()
+com! ToggleChangesView	 call changes#TCV()
 
 if s:autocmd
     call changes#Init()
