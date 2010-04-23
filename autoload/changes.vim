@@ -95,7 +95,7 @@ fu! changes#Init()"{{{1
     if !exists("s:vcs_cat")
 	let s:vcs_cat  = {'git': 'show HEAD:', 
 			 \'bazaar': 'cat ', 
-			 \'cvs': 'export ',
+			 \'cvs': '-q update -p ',
 			 \'svn': 'cat ',
 			 \'subversion': 'cat ',
 			 \'svk': 'cat ',
@@ -260,7 +260,7 @@ fu! changes#GetDiff()"{{{1
     finally
 	let &lz=o_lz
 	redraw!
-	if g:changes_vcs_check && b:changes_view_enabled
+	if s:vcs && b:changes_view_enabled
 	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . g:changes_vcs_system)
 	    call changes#WarningMsg(0,s:msg)
 	endif
