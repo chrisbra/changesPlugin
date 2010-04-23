@@ -393,5 +393,32 @@ fu! changes#ShowDifferentLines()"{{{1
     endif
 endfun
 
+fu! s:GuessVCSSystem() "{{{1
+    " Check global config variable
+    if exists("g:changes_vcs_system")
+	let vcs=matchstr(g:changes_vcs_system, '\(git\)\|\(hg\)\|\(bzr\)\|\(svk\)\|\(cvs\)\|\(svn\)')
+	if vcs
+	    return vcs
+	endif
+    endif
+    let dir  = fnamemodify(expand("%"), ':p')
+    let path = fnamemodify(file, ':h')
+    " First let's try if there is a CVS dir
+    if isdirectory(path . '/CVS')
+	return 'cvs'
+    elseif isdirectory(path . '/.svn')
+	return 'svn'
+    endif
+    if finddir('.git',path.';')
+	return 'git'
+    elseif finddir('.hg',path.';')
+	return 'hg'
+    elseif finddir('.bzr',path.';')
+	return 'hg'
+    else
+	"Fallback: svk
+	return 'svk'
+    endif
+endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
