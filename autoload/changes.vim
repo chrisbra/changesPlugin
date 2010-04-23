@@ -79,7 +79,12 @@ fu! changes#Output()"{{{1
 endfu
 
 fu! changes#Init()"{{{1
-    call changes#Check()
+    " Only check the first time this file is loaded
+    " It should not be neccessary to check every time
+    if !exists("s:precheck")
+	call changes#Check()
+	let s:precheck=1
+    endif
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
     let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    : 1)
