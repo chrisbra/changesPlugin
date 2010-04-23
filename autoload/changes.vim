@@ -295,6 +295,10 @@ fu! changes#MakeDiff()"{{{1
 	r #
     else
 	try
+	    if !executable(s:vcs_cat[s:vcs_type])
+		call changes#WarningMsg(1,"Executable " . s:vcs_cat[s:vcs_type] . "not found! Aborting.")
+		throw "changes:abort"
+	    endif
 	    if s:vcs_cat[s:vcs_type] == 'git'
 		let git_rep_p = s:ReturnGitRepPath()
 	    else
