@@ -61,12 +61,35 @@ If you want to disable the plugin, enter >
     :DisableChanges
 or alternatively, you can enter the shortcut >
      :DC
+and the Display of Changes will be disabled.
 
-						     *:TCV* *:ToggleChangesView*
+						     *:TCV* *:ToggleChangeView*
 You can toggle, between turning on and off the indicator bars, using >
      :ToggleChangeView
-or alternatively, you can use the shortcut >
+or alternatively: >
      :TCV
+to toggle the display of indicator bars.
+
+						     *:CC* *:ChangesCpation*
+You are probably wondering, what those strange looking signs mean. You can use
+either >
+    :CC
+or >
+    :ChangesCaptions
+to let the Plugin display a small caption, so you know what each sign means
+and how they are colored.
+
+						 *:CL* *:ChangesLineOverview*
+If you are editing a huge file with several hundreds of lines, it may be hard
+to find the lines that have been changed. >
+    :CL
+or >
+    :ChangesLineOverview	
+provide an easy view to only see all modified lines. This will open the
+|quickfix| buffer where you can easily see the affected lines. Pushing enter
+on any line, allows you to easily jump to that line in the buffer.
+
+
 
 ==============================================================================
 							*ChangesPlugin-Config*
@@ -124,7 +147,7 @@ this version.
 Currently, ChangesPlugin supports these VCS Systems:
     - git
     - cvs
-    - bazaar
+    - bzr
     - svn
     - svk
     - hg
@@ -143,14 +166,18 @@ working copy, otherwise, this won't work. So this won't work, if you have
 ==============================================================================
 4. ChangesPlugin History				*ChangesPlugin-history*
     0.8: Apr 22, 2010:  NF: Renamed the helpfile, to make it more obvious, 
-                            that it refers to a plugin
+			that it refers to a plugin
 			NF: Outputting name of checked file, if checking
 			    against VCS
 			BF: Don't check for empty files.
 			BF: Reworked the Message function
 			BF: Don't try to place signs, if there are no
 			    differences
+			    (unreleased, VCS successfully tested with
+			     git, hg, svn, cvs, bzr)
     0.7: Apr 19, 2010:  NF: Check against a file in a VCS
+			    (unreleased, first working version,
+			    needs to be checked for each VCS)
     0.6: Apr 12, 2010:  BF: fixed a missing highlight for DiffText
     0.5: Apr 12, 2010:  BF: error when trying to access b:diffhl in the
 			    scratch buffer. This should be fixed now (thanks
