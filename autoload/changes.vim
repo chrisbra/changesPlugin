@@ -94,7 +94,7 @@ fu! changes#Init()"{{{1
     let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
     if !exists("s:vcs_cat")
 	let s:vcs_cat  = {'git': 'show HEAD:', 
-			 \'bazaar': 'cat ', 
+			 \'bzr': 'cat ', 
 			 \'cvs': '-q update -p ',
 			 \'svn': 'cat ',
 			 \'subversion': 'cat ',
@@ -259,7 +259,7 @@ fu! changes#GetDiff()"{{{1
 	let s:verbose = 0
     finally
 	let &lz=o_lz
-	redraw!
+	"redraw!
 	if s:vcs && b:changes_view_enabled
 	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . g:changes_vcs_system)
 	    call changes#WarningMsg(0,s:msg)
@@ -295,11 +295,11 @@ fu! changes#MakeDiff()"{{{1
 	r #
     else
 	try
-	    if !executable(s:vcs_cat[s:vcs_type])
-		call changes#WarningMsg(1,"Executable " . s:vcs_cat[s:vcs_type] . "not found! Aborting.")
+	    if !executable(s:vcs_type)
+		call changes#WarningMsg(1,"Executable " . s:vcs_type . "not found! Aborting.")
 		throw "changes:abort"
 	    endif
-	    if s:vcs_cat[s:vcs_type] == 'git'
+	    if s:vcs_type == 'git'
 		let git_rep_p = s:ReturnGitRepPath()
 	    else
 		let git_rep_p = ''
@@ -374,7 +374,7 @@ fu! changes#TCV()"{{{1
 endfunction
 
 
-fu! s:ShowDifferentLines()"{{{1
+fu! changes#ShowDifferentLines()"{{{1
     redir => a
     silent sign place
     redir end
@@ -383,11 +383,13 @@ fu! s:ShowDifferentLines()"{{{1
     let b=map(b, 'matchstr(v:val, ''line=\zs\d\+'')')
     let b=map(b, '''\%(^\%''.v:val.''l\)''')
     if !empty(b)
-	exe ":vimgrep /".join(b, '\|').'/gj' expand("%")
-	copen
+	exe ":silent! lvimgrep /".join(b, '\|').'/gj' expand("%")
+	lw
     else
 	" This should not happen!
-	call changes#WarningMsg(1,"Pattern not found!")
+	call setloclist(winnr(),[],'a')
+	lclose
+	call changes#WarningMsg(1,"There have been no changes!")
     endif
 endfun
 
