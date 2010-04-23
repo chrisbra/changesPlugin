@@ -323,20 +323,18 @@ fu! changes#MakeDiff()"{{{1
     diffthis
 endfu
 
-fu! s:ReturnGitRepPath()
+fu! s:ReturnGitRepPath() "{{{1
     " return the top level of the repository path. This is needed, so
     " git show will correctly return the file
-    let fil=expand("#")
-    let cwd=fnamemodify(fil, ':h:.')
-    let dir=finddir('.git', cwd.';')
+    let file  =  fnamemodify(expand("#"), ':p')
+    let path  =  fnamemodify(file, ':h')
+    let dir   =  finddir('.git',path.';')
     if empty(dir)
 	throw 'changes: No git Repository found'
     else
-	let sdir=fnamemodify(dir,':h:t')
+	let ldir  =  strlen(substitute(dir, '.', 'x', 'g'))-4
+	return file[ldir :]
     endif
-    let path = matchstr(fnamemodify(fil, ':p'),'\V'.sdir.'\zs\.\{-\}'.fnamemodify(fil, ':t'))
-    let path = fnamemodify(path, ':h'). '/'
-    return (path =~ '^/' ? path[1:] : path)
 endfu
 
 
