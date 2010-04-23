@@ -4,7 +4,7 @@ PLUGIN=changes
 
 .PHONY: $(PLUGIN).vba
 
-all: uninstall vimball install
+all: uninstall vimball install README
 
 vimball: $(PLUGIN).vba
 
@@ -21,6 +21,9 @@ uninstall:
 
 undo:
 	for i in */*.orig; do mv -f "$$i" "$${i%.*}"; done
+
+README:
+	cp -f $(DOC) README
 
 changes.vba:
 	rm -f $(PLUGIN).vba
