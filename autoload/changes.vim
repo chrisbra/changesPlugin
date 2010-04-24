@@ -40,6 +40,13 @@ fu! changes#Check()
 	let s:cmd='echomsg'
     endif
 
+    let s:sign_prefix = 99
+    let s:ids={}
+    let s:ids["add"]   = hlID("DiffAdd")
+    let s:ids["del"]   = hlID("DiffDelete")
+    let s:ids["ch"]    = hlID("DiffChange")
+    let s:ids["ch2"]   = hlID("DiffText")
+
 endfu
 
 fu! changes#WarningMsg(mode,msg)"{{{1
@@ -116,6 +123,7 @@ fu! changes#Init()"{{{1
       if get(s:vcs_cat, s:vcs_type)
 	   call changes#WarningMsg(1,"Don't know VCS " . s:vcs_type)
 	   call changes#WarningMsg(1,"VCS check will be disabled for now.")
+	   throw 'changes:NoVCS'
 	   sleep 2
 	   let s:vcs=0
       endif
@@ -126,17 +134,11 @@ fu! changes#Init()"{{{1
 
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
-    let s:sign_prefix = 99
     let s:signs={}
-    let s:ids={}
     let s:signs["add"] = "texthl=DiffAdd text=+ texthl=DiffAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
     let s:signs["del"] = "texthl=DiffDelete text=- texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
     let s:signs["ch"] = "texthl=DiffChange text=* texthl=DiffChange " . ( (s:hl_lines) ? " linehl=DiffChange" : "")
 
-    let s:ids["add"]   = hlID("DiffAdd")
-    let s:ids["del"]   = hlID("DiffDelete")
-    let s:ids["ch"]    = hlID("DiffChange")
-    let s:ids["ch2"]   = hlID("DiffText")
     call changes#DefineSigns()
     call changes#AuCmd(s:autocmd)
 endfu
@@ -155,9 +157,9 @@ fu! changes#AuCmd(arg)"{{{1
 endfu
 
 fu! changes#DefineSigns()"{{{1
-    exe "sign define add" s:signs["add"]
-    exe "sign define del" s:signs["del"]
-    exe "sign define ch"  s:signs["ch"]
+    for key in keys(s:signs)
+	exe "sign define" key s:signs[key]
+    endfor
 endfu
 
 fu! changes#CheckLines(arg)"{{{1
@@ -401,7 +403,7 @@ fu! s:GuessVCSSystem() "{{{1
 	    return vcs
 	endif
     endif
-    let dir  = fnamemodify(expand("%"), ':p')
+    let file = fnamemodify(expand("%"), ':p')
     let path = fnamemodify(file, ':h')
     " First let's try if there is a CVS dir
     if isdirectory(path . '/CVS')
@@ -409,12 +411,12 @@ fu! s:GuessVCSSystem() "{{{1
     elseif isdirectory(path . '/.svn')
 	return 'svn'
     endif
-    if finddir('.git',path.';')
+    if !empty(finddir('.git',path.';'))
 	return 'git'
-    elseif finddir('.hg',path.';')
+    elseif !empty(finddir('.hg',path.';'))
 	return 'hg'
-    elseif finddir('.bzr',path.';')
-	return 'hg'
+    elseif !empty(finddir('.bzr',path.';'))
+	return 'bzr'
     else
 	"Fallback: svk
 	return 'svk'
