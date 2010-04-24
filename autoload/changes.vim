@@ -16,20 +16,20 @@
 " Check preconditions"{{{1
 fu! s:Check()
     if !has("diff")
-	call s:WarningMsg(1,"Diff support not available in your Vim version.")
-	call s:WarningMsg(1,"changes plugin will not be working!")
+	call add(s:msg,"Diff support not available in your Vim version.")
+	call add(s:msg,"changes plugin will not be working!")
 	finish
     endif
 
     if  !has("signs")
-	call s:WarningMsg(1,"Sign Support support not available in your Vim version.")
-	call s:WarningMsg(1,"changes plugin will not be working!")
+	call add(s:msg,"Sign Support support not available in your Vim version.")
+	call add(s:msg,"changes plugin will not be working!")
 	finish
     endif
 
     if !executable("diff") || executable("diff") == -1
-	call s:WarningMsg(1,"No diff executable found")
-	call s:WarningMsg(1,"changes plugin will not be working!")
+	call add(s:msg,"No diff executable found")
+	call add(s:msg,"changes plugin will not be working!")
 	finish
     endif
 
@@ -49,21 +49,15 @@ fu! s:Check()
 
 endfu
 
-fu! s:WarningMsg(mode,msg)"{{{1
-    if type(a:msg) == 1
-	let msg=["Changes.vim: " . a:msg]
-    else
-	let msg=["Changes.vim: " . a:msg[0]] + a:msg[1:]
-    endif
-
-    if a:mode
+fu! s:WarningMsg()"{{{1
+    redraw!
+    if !empty(s:msg)
+	let msg=["Changes.vim: " . s:msg[0]] + s:msg[1:]
 	echohl WarningMsg
-    endif
-    for line in msg
-	    exe s:cmd "line"
-    endfor
+	for line in msg
+		exe s:cmd "line"
+	endfor
 
-    if a:mode
 	echohl Normal
 	let v:errmsg=msg[0]
     endif
@@ -113,16 +107,16 @@ fu! s:Init()"{{{1
     " Settings for Version Control
     if s:vcs
        if !exists("g:changes_vcs_system")
-	   call s:WarningMsg(1,"Please specify which VCS to use. See :h changes-vcs.")
-	   call s:WarningMsg(1,"VCS check will be disabled for now.")
+	   call add(s:msg,"Please specify which VCS to use. See :h changes-vcs.")
+	   call add(s:msg,"VCS check will be disabled for now.")
 	   throw 'changes:NoVCS'
 	   sleep 2
 	   let s:vcs=0
       endif
       let s:vcs_type  = g:changes_vcs_system
       if get(s:vcs_cat, s:vcs_type)
-	   call s:WarningMsg(1,"Don't know VCS " . s:vcs_type)
-	   call s:WarningMsg(1,"VCS check will be disabled for now.")
+	   call add(s:msg,"Don't know VCS " . s:vcs_type)
+	   call add(s:msg,"VCS check will be disabled for now.")
 	   throw 'changes:NoVCS'
 	   sleep 2
 	   let s:vcs=0
@@ -213,7 +207,7 @@ fu! changes#GetDiff(arg)"{{{1
 
     " Does not make sense to check an empty buffer
     if empty(bufname(''))
-	call s:WarningMsg(1,"The buffer does not contain a name. Check aborted!")
+	call add(s:msg,"The buffer does not contain a name. Check aborted!")
 	let s:verbose = 0
 	return
     endif
@@ -271,11 +265,11 @@ fu! changes#GetDiff(arg)"{{{1
 	let s:verbose = 0
     finally
 	let &lz=o_lz
-	"redraw!
 	if s:vcs && b:changes_view_enabled
 	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . g:changes_vcs_system)
-	    call s:WarningMsg(0,s:msg)
+	    call add(s:msg,s:msg)
 	endif
+	call s:WarningMsg()
     endtry
 endfu
 
@@ -308,7 +302,7 @@ fu! s:MakeDiff()"{{{1
     else
 	try
 	    if !executable(s:vcs_type)
-		call s:WarningMsg(1,"Executable " . s:vcs_type . "not found! Aborting.")
+		call add(s:msg,"Executable " . s:vcs_type . "not found! Aborting.")
 		throw "changes:abort"
 	    endif
 	    if s:vcs_type == 'git'
@@ -320,14 +314,14 @@ fu! s:MakeDiff()"{{{1
 	    let fsize=getfsize(s:temp_file)
 	    if fsize == 0
 		call delete(s:temp_file)
-		call s:WarningMsg(1,"Couldn't get VCS output, aborting")
+		call add(s:msg,"Couldn't get VCS output, aborting")
 		:q!
 		throw "changes:abort"
 	    endif
 	    exe ':r' s:temp_file
 	    call delete(s:temp_file)
         catch /^changes: No git Repository found/
-	    call s:WarningMsg(1,"Unable to find git Top level repository.")
+	    call add(s:msg,"Unable to find git Top level repository.")
 	    echo v:errmsg
 	    :q!
 	    throw "changes:abort"
@@ -401,7 +395,7 @@ fu! s:ShowDifferentLines()"{{{1
 	" This should not happen!
 	call setloclist(winnr(),[],'a')
 	lclose
-	call s:WarningMsg(1,"There have been no changes!")
+	call add(s:msg,"There have been no changes!")
     endif
 endfun
 
