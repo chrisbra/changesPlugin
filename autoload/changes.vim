@@ -139,15 +139,15 @@ fu! changes#Init()"{{{1
     let s:signs["del"] = "texthl=DiffDelete text=- texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
     let s:signs["ch"] = "texthl=DiffChange text=* texthl=DiffChange " . ( (s:hl_lines) ? " linehl=DiffChange" : "")
 
-    call changes#DefineSigns()
-    call changes#AuCmd(s:autocmd)
+    call s:DefineSigns()
+    call s:AuCmd(s:autocmd)
 endfu
 
-fu! changes#AuCmd(arg)"{{{1
+fu! s:AuCmd(arg)"{{{1
     if s:autocmd && a:arg
 	augroup Changes
 		autocmd!
-		au InsertLeave,CursorHold * :call changes#UpdateView()
+		au InsertLeave,CursorHold * :call s:UpdateView()
 	augroup END
     else
 	augroup Changes
@@ -156,13 +156,13 @@ fu! changes#AuCmd(arg)"{{{1
     endif
 endfu
 
-fu! changes#DefineSigns()"{{{1
+fu! s:DefineSigns()"{{{1
     for key in keys(s:signs)
 	exe "sign define" key s:signs[key]
     endfor
 endfu
 
-fu! changes#CheckLines(arg)"{{{1
+fu! s:CheckLines(arg)"{{{1
     " a:arg  1: check original buffer
     "        0: check diffed scratch buffer
     let line=1
@@ -190,7 +190,7 @@ fu! changes#CheckLines(arg)"{{{1
     endw
 endfu
 
-fu! changes#UpdateView()"{{{1
+fu! s:UpdateView()"{{{1
     if !exists("b:changes_chg_tick")
 	let b:changes_chg_tick = 0
     endif
@@ -249,11 +249,9 @@ fu! changes#GetDiff(arg)"{{{1
 	else
 	    call changes#PlaceSigns(b:diffhl)
 	endif
-	call changes#DiffOff()
-	" I assume, the diff-mode messed up the folding settings,
+	call s:DiffOff()
+	" :diffoff resets some options (see :h :diffoff
 	" so we need to restore them here
-	"
-	" Should we also restore other fold related settings?
 	let &fdm=o_fdm
 	if  o_fdc ==? 1
 	    " When foldcolumn is 1, folds won't be shown because of
@@ -356,7 +354,7 @@ fu! s:ReturnGitRepPath() "{{{1
 endfu
 
 
-fu! changes#DiffOff()"{{{1
+fu! s:DiffOff()"{{{1
     " Turn off Diff Mode and close buffer
     wincmd p
     diffoff!
@@ -370,7 +368,7 @@ fu! changes#CleanUp()"{{{1
 	exe "sign undefine " key
     endfor
     if s:autocmd
-	call changes#AuCmd(0)
+	call s:AuCmd(0)
     endif
 endfu
 
@@ -388,7 +386,7 @@ fu! changes#TCV()"{{{1
 endfunction
 
 
-fu! s#ShowDifferentLines()"{{{1
+fu! s:ShowDifferentLines()"{{{1
     redir => a
     silent sign place
     redir end
