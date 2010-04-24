@@ -14,22 +14,22 @@
 " See :h ChangesPlugin.txt
 
 " Check preconditions"{{{1
-fu! changes#Check()
+fu! s:Check()
     if !has("diff")
-	call changes#WarningMsg(1,"Diff support not available in your Vim version.")
-	call changes#WarningMsg(1,"changes plugin will not be working!")
+	call s:WarningMsg(1,"Diff support not available in your Vim version.")
+	call s:WarningMsg(1,"changes plugin will not be working!")
 	finish
     endif
 
     if  !has("signs")
-	call changes#WarningMsg(1,"Sign Support support not available in your Vim version.")
-	call changes#WarningMsg(1,"changes plugin will not be working!")
+	call s:WarningMsg(1,"Sign Support support not available in your Vim version.")
+	call s:WarningMsg(1,"changes plugin will not be working!")
 	finish
     endif
 
     if !executable("diff") || executable("diff") == -1
-	call changes#WarningMsg(1,"No diff executable found")
-	call changes#WarningMsg(1,"changes plugin will not be working!")
+	call s:WarningMsg(1,"No diff executable found")
+	call s:WarningMsg(1,"changes plugin will not be working!")
 	finish
     endif
 
@@ -49,7 +49,7 @@ fu! changes#Check()
 
 endfu
 
-fu! changes#WarningMsg(mode,msg)"{{{1
+fu! s:WarningMsg(mode,msg)"{{{1
     if type(a:msg) == 1
 	let msg=["Changes.vim: " . a:msg]
     else
@@ -85,11 +85,11 @@ fu! changes#Output()"{{{1
     endif
 endfu
 
-fu! changes#Init()"{{{1
+fu! s:Init()"{{{1
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time
     if !exists("s:precheck")
-	call changes#Check()
+	call s:Check()
 	let s:precheck=1
     endif
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
@@ -113,16 +113,16 @@ fu! changes#Init()"{{{1
     " Settings for Version Control
     if s:vcs
        if !exists("g:changes_vcs_system")
-	   call changes#WarningMsg(1,"Please specify which VCS to use. See :h changes-vcs.")
-	   call changes#WarningMsg(1,"VCS check will be disabled for now.")
+	   call s:WarningMsg(1,"Please specify which VCS to use. See :h changes-vcs.")
+	   call s:WarningMsg(1,"VCS check will be disabled for now.")
 	   throw 'changes:NoVCS'
 	   sleep 2
 	   let s:vcs=0
       endif
       let s:vcs_type  = g:changes_vcs_system
       if get(s:vcs_cat, s:vcs_type)
-	   call changes#WarningMsg(1,"Don't know VCS " . s:vcs_type)
-	   call changes#WarningMsg(1,"VCS check will be disabled for now.")
+	   call s:WarningMsg(1,"Don't know VCS " . s:vcs_type)
+	   call s:WarningMsg(1,"VCS check will be disabled for now.")
 	   throw 'changes:NoVCS'
 	   sleep 2
 	   let s:vcs=0
@@ -205,7 +205,7 @@ fu! changes#GetDiff(arg)"{{{1
     " a:arg == 2 Show Overview Window
     " a:arg == 3 Start diff mode
     try
-	call changes#Init()
+	call s:Init()
     catch changes:NoVCS
 	let s:verbose = 0
 	return
@@ -213,7 +213,7 @@ fu! changes#GetDiff(arg)"{{{1
 
     " Does not make sense to check an empty buffer
     if empty(bufname(''))
-	call changes#WarningMsg(1,"The buffer does not contain a name. Check aborted!")
+	call s:WarningMsg(1,"The buffer does not contain a name. Check aborted!")
 	let s:verbose = 0
 	return
     endif
@@ -231,14 +231,14 @@ fu! changes#GetDiff(arg)"{{{1
     let s:temp = {'del': []}
     " Delete previously placed signs
     "sign unplace *
-    call changes#UnPlaceSigns()
+    call s:UnPlaceSigns()
     let b:diffhl={'add': [], 'del': [], 'ch': []}
     try
-	call changes#MakeDiff()
-	call changes#CheckLines(1)
+	call s:MakeDiff()
+	call s:CheckLines(1)
 	" Switch to other buffer and check for deleted lines
 	noa wincmd p
-	call changes#CheckLines(0)
+	call s:CheckLines(0)
 	noa wincmd p
 	let b:diffhl['del'] = s:temp['del']
 	" Check for empty dict of signs
@@ -247,7 +247,7 @@ fu! changes#GetDiff(arg)"{{{1
 	   \empty(values(b:diffhl)[2]))
 	    call add(s:msg, 'No differences found!')
 	else
-	    call changes#PlaceSigns(b:diffhl)
+	    call s:PlaceSigns(b:diffhl)
 	endif
 	call s:DiffOff()
 	" :diffoff resets some options (see :h :diffoff
@@ -274,12 +274,12 @@ fu! changes#GetDiff(arg)"{{{1
 	"redraw!
 	if s:vcs && b:changes_view_enabled
 	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . g:changes_vcs_system)
-	    call changes#WarningMsg(0,s:msg)
+	    call s:WarningMsg(0,s:msg)
 	endif
     endtry
 endfu
 
-fu! changes#PlaceSigns(dict)"{{{1
+fu! s:PlaceSigns(dict)"{{{1
     for [ id, lines ] in items(a:dict)
 	for item in lines
 	    exe "sign place " s:sign_prefix . item . " line=" . item . " name=" . id . " buffer=" . bufnr('')
@@ -287,7 +287,7 @@ fu! changes#PlaceSigns(dict)"{{{1
     endfor
 endfu
 
-fu! changes#UnPlaceSigns()"{{{1
+fu! s:UnPlaceSigns()"{{{1
     redir => a
     silent sign place
     redir end
@@ -299,7 +299,7 @@ fu! changes#UnPlaceSigns()"{{{1
     endfor
 endfu
 
-fu! changes#MakeDiff()"{{{1
+fu! s:MakeDiff()"{{{1
     " Get diff for current buffer with original
     noa vert new
     set bt=nofile
@@ -308,7 +308,7 @@ fu! changes#MakeDiff()"{{{1
     else
 	try
 	    if !executable(s:vcs_type)
-		call changes#WarningMsg(1,"Executable " . s:vcs_type . "not found! Aborting.")
+		call s:WarningMsg(1,"Executable " . s:vcs_type . "not found! Aborting.")
 		throw "changes:abort"
 	    endif
 	    if s:vcs_type == 'git'
@@ -320,14 +320,14 @@ fu! changes#MakeDiff()"{{{1
 	    let fsize=getfsize(s:temp_file)
 	    if fsize == 0
 		call delete(s:temp_file)
-		call changes#WarningMsg(1,"Couldn't get VCS output, aborting")
+		call s:WarningMsg(1,"Couldn't get VCS output, aborting")
 		:q!
 		throw "changes:abort"
 	    endif
 	    exe ':r' s:temp_file
 	    call delete(s:temp_file)
         catch /^changes: No git Repository found/
-	    call changes#WarningMsg(1,"Unable to find git Top level repository.")
+	    call s:WarningMsg(1,"Unable to find git Top level repository.")
 	    echo v:errmsg
 	    :q!
 	    throw "changes:abort"
@@ -363,7 +363,7 @@ endfu
 
 fu! changes#CleanUp()"{{{1
     " only delete signs, that have been set by this plugin
-    call changes#UnPlaceSigns()
+    call s:UnPlaceSigns()
     for key in keys(s:signs)
 	exe "sign undefine " key
     endfor
@@ -401,7 +401,7 @@ fu! s:ShowDifferentLines()"{{{1
 	" This should not happen!
 	call setloclist(winnr(),[],'a')
 	lclose
-	call changes#WarningMsg(1,"There have been no changes!")
+	call s:WarningMsg(1,"There have been no changes!")
     endif
 endfun
 
