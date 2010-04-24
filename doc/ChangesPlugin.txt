@@ -1,7 +1,7 @@
 *ChangesPlugin.txt*  Print indication of changed lines for a buffer 
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.8 Mon, 19 Apr 2010 15:10:16 +0200
+Version: 0.9 Sat, 24 Apr 2010 18:54:55 +0200
 Copyright: (c) 2010 by Christian Brabandt 	 *ChangesPlugin-copyright*
 	   The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
 	   except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
