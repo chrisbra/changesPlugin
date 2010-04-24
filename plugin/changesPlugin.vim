@@ -30,12 +30,14 @@ com! EC	 EnableDisplayChanges
 com! TCV ToggleChangeView
 com! CC  ChangesCaption
 com! CL  ChangesLinesOverview
+com! CD  ChangesDiffMode
 
-com! EnableDisplayChanges	call changes#GetDiff()
+com! EnableDisplayChanges	call changes#GetDiff(1)
 com! DisableDisplayChanges	call changes#CleanUp()
 com! ToggleChangeView		call changes#TCV()
-com! ChangesCaption		call changes#Output()
-com! ChangesLinesOverview	call changes#ShowDifferentLines()
+com! ChangesCaption		call changes#Output(1)
+com! ChangesLinesOverview	call changes#GetDiff(2)
+com! ChangesDiffMode		call changes#GetDiff(3)
 
 if s:autocmd
     call changes#Init()
