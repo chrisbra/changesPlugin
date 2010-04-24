@@ -147,7 +147,7 @@ fu! changes#AuCmd(arg)"{{{1
     if s:autocmd && a:arg
 	augroup Changes
 		autocmd!
-		au CursorHold * :call changes#UpdateView()
+		au InsertLeave,CursorHold * :call changes#UpdateView()
 	augroup END
     else
 	augroup Changes
