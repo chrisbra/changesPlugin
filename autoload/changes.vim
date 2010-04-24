@@ -163,6 +163,8 @@ fu! changes#DefineSigns()"{{{1
 endfu
 
 fu! changes#CheckLines(arg)"{{{1
+    " a:arg  1: check original buffer
+    "        0: check diffed scratch buffer
     let line=1
     " This should not be necessary, since b:diffhl for the scratch buffer
     " should never be accessed. But just to be sure, we define it here
@@ -174,7 +176,6 @@ fu! changes#CheckLines(arg)"{{{1
 	if  (id == 0)
 	    let line+=1
 	    continue
-	" Check for deleted lines in the diffed scratch buffer
 	" in the original buffer, there won't be any lines accessible
 	" that have been 'marked' deleted, so we need to check scratch
 	" buffer for added lines
@@ -199,7 +200,10 @@ fu! changes#UpdateView()"{{{1
     endif
 endfu
 
-fu! changes#GetDiff()"{{{1
+fu! changes#GetDiff(arg)"{{{1
+    " a:arg == 1 Create signs
+    " a:arg == 2 Show Overview Window
+    " a:arg == 3 Start diff mode
     try
 	call changes#Init()
     catch changes:NoVCS
@@ -207,17 +211,19 @@ fu! changes#GetDiff()"{{{1
 	return
     endtry
 
+    " Does not make sense to check an empty buffer
     if empty(bufname(''))
 	call changes#WarningMsg(1,"The buffer does not contain a name. Check aborted!")
 	let s:verbose = 0
 	return
     endif
 
-
     " Save some settings
+    " fdm, wrap, and fdc will be reset by :diffoff!
     let o_lz   = &lz
     let o_fdm  = &fdm
-    let b:ofdc = &fdc
+    let o_fdc  = &fdc
+    let o_wrap = &wrap
     " Lazy redraw
     setl lz
     " For some reason, getbufvar/setbufvar do not work, so
@@ -249,13 +255,19 @@ fu! changes#GetDiff()"{{{1
 	"
 	" Should we also restore other fold related settings?
 	let &fdm=o_fdm
-	if b:ofdc ==? 1
+	if  o_fdc ==? 1
 	    " When foldcolumn is 1, folds won't be shown because of
 	    " the signs, so increasing its value by 1 so that folds will
 	    " also be shown
 	    let &fdc += 1
+	else
+	    let &fdc = o_fdc
 	endif
+	let &wrap = o_wrap
 	let b:changes_view_enabled=1
+	if a:arg ==# 2
+	   call s:ShowDifferentLines()
+	endif
     catch /^changes/
 	let b:changes_view_enabled=0
 	let s:verbose = 0
@@ -376,7 +388,7 @@ fu! changes#TCV()"{{{1
 endfunction
 
 
-fu! changes#ShowDifferentLines()"{{{1
+fu! s#ShowDifferentLines()"{{{1
     redir => a
     silent sign place
     redir end
