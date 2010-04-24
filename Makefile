@@ -2,7 +2,7 @@ SCRIPT=autoload/changes.vim plugin/changesPlugin.vim
 DOC=doc/ChangesPlugin.txt
 PLUGIN=changes
 
-.PHONY: $(PLUGIN).vba
+.PHONY: $(PLUGIN).vba README
 
 all: uninstall vimball install README
 
