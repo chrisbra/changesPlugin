@@ -350,7 +350,7 @@ fu! s:MakeDiff()"{{{1
     diffthis
     noa wincmd p
     diffthis
-    if vcs=='cvs'
+    if s:vcs && exists("vcs") && vcs=='cvs'
 	exe "cd "  o_pwd
     endif
 endfu
