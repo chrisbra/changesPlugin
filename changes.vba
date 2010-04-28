@@ -5,15 +5,15 @@ autoload/changes.vim	[[[1
 483
 " Changes.vim - Using Signs for indicating changed lines
 " ---------------------------------------------------------------
-" Version:  0.9
+" Version:  0.10
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Sat, 24 Apr 2010 18:54:55 +0200
+" Last Change: Wed, 28 Apr 2010 08:25:37 +0200
 
 
 " Script:  http://www.vim.org/scripts/script.php?script_id=3052
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
-" GetLatestVimScripts: 3052 9 :AutoInstall: ChangesPlugin.vim
+" GetLatestVimScripts: 3052 10 :AutoInstall: ChangesPlugin.vim
 
 " Documentation:"{{{1
 " See :h ChangesPlugin.txt
@@ -355,7 +355,7 @@ fu! s:MakeDiff()"{{{1
     diffthis
     noa wincmd p
     diffthis
-    if vcs=='cvs'
+    if s:vcs && exists("vcs") && vcs=='cvs'
 	exe "cd "  o_pwd
     endif
 endfu
@@ -487,11 +487,11 @@ endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
 doc/ChangesPlugin.txt	[[[1
-259
+261
 *ChangesPlugin.txt*  Print indication of changed lines for a buffer 
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.9 Sat, 24 Apr 2010 18:54:55 +0200
+Version: 0.10 Wed, 28 Apr 2010 08:25:37 +0200
 Copyright: (c) 2010 by Christian Brabandt 	 *ChangesPlugin-copyright*
 	   The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
 	   except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
@@ -700,6 +700,8 @@ third line of this document.
 
 ==============================================================================
 5. ChangesPlugin History				*ChangesPlugin-history*
+    0.10: Apr 28, 2010: NF: Fixed Issue 1 from github
+                            (http://github.com/chrisbra/changesPlugin/issues/1/find)
     0.9: Apr 24, 2010:  NF: You can now use different VCS Systems for each
                             buffer you are using.
 			NF: Stay in diff mode
@@ -751,15 +753,15 @@ plugin/changesPlugin.vim	[[[1
 52
 " ChangesPlugin.vim - Using Signs for indicating changed lines
 " ---------------------------------------------------------------
-" Version:  0.9
+" Version:  0.10
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Sat, 24 Apr 2010 18:54:55 +0200
+" Last Change: Wed, 28 Apr 2010 08:25:37 +0200
 
 
 " Script:  http://www.vim.org/scripts/script.php?script_id=3052
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
-" GetLatestVimScripts: 3052 9 :AutoInstall: ChangesPlugin.vim
+" GetLatestVimScripts: 3052 10 :AutoInstall: ChangesPlugin.vim
 
 
 " ---------------------------------------------------------------------

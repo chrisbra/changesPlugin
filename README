@@ -1,7 +1,7 @@
 *ChangesPlugin.txt*  Print indication of changed lines for a buffer 
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.9 Sat, 24 Apr 2010 18:54:55 +0200
+Version: 0.10 Wed, 28 Apr 2010 08:25:37 +0200
 Copyright: (c) 2010 by Christian Brabandt 	 *ChangesPlugin-copyright*
 	   The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
 	   except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
@@ -210,6 +210,8 @@ third line of this document.
 
 ==============================================================================
 5. ChangesPlugin History				*ChangesPlugin-history*
+    0.10: Apr 28, 2010: NF: Fixed Issue 1 from github
+                            (http://github.com/chrisbra/changesPlugin/issues/1/find)
     0.9: Apr 24, 2010:  NF: You can now use different VCS Systems for each
                             buffer you are using.
 			NF: Stay in diff mode
