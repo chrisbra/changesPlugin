@@ -15,30 +15,31 @@
 
 " Check preconditions"{{{1
 fu! s:Check()
-    if !has("diff")
-	call add(s:msg,"Diff support not available in your Vim version.")
-	call add(s:msg,"changes plugin will not be working!")
-	finish
-    endif
-
-    if  !has("signs")
-	call add(s:msg,"Sign Support support not available in your Vim version.")
-	call add(s:msg,"changes plugin will not be working!")
-	finish
-    endif
-
-    if !executable("diff") || executable("diff") == -1
-	call add(s:msg,"No diff executable found")
-	call add(s:msg,"changes plugin will not be working!")
-	finish
-    endif
-
     " Check for the existence of unsilent
     if exists(":unsilent")
 	let s:echo_cmd='unsilent echomsg'
     else
 	let s:echo_cmd='echomsg'
     endif
+
+    if !has("diff")
+	call add(s:msg,"Diff support not available in your Vim version.")
+	call add(s:msg,"changes plugin will not be working!")
+	throw 'changes:abort'
+    endif
+
+    if  !has("signs")
+	call add(s:msg,"Sign Support support not available in your Vim version.")
+	call add(s:msg,"changes plugin will not be working!")
+	throw 'changes:abort'
+    endif
+
+    if !executable("diff") || executable("diff") == -1
+	call add(s:msg,"No diff executable found")
+	call add(s:msg,"changes plugin will not be working!")
+	throw 'changes:abort'
+    endif
+
 
     let s:sign_prefix = 99
     let s:ids={}
@@ -80,6 +81,8 @@ fu! changes#Output(force)"{{{1
 endfu
 
 fu! s:Init()"{{{1
+    " Message queue, that will be displayed.
+    let s:msg      = []
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time
     if !exists("s:precheck")
@@ -89,8 +92,6 @@ fu! s:Init()"{{{1
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
     let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    : (exists("s:verbose") ? s:verbose : 1))
-    " Message queue, that will be displayed.
-    let s:msg      = []
     " Check against a file in a vcs system
     let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
     let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
@@ -202,7 +203,7 @@ fu! changes#GetDiff(arg)"{{{1
     " a:arg == 3 Stay in diff mode
     try
 	call s:Init()
-    catch changes:NoVCS
+    catch changes:
 	let s:verbose = 0
 	call s:WarningMsg()
 	return
