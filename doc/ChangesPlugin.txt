@@ -122,9 +122,10 @@ If you'd like to have this, set this variable in your |.vimrc| >
 							*ChangesPlugin-aucmd*
 3.2 Auto-refresh the changes
 By default ChangesPlugin.vim will not automatically update the view. You can
-however configure it to do so. This will use an |CursorHold| autocommand to
-update the indicator signs after |'updatetime'| seconds in Normal mode when
-no key is pressed. To enable this feature, put this in your |.vimrc| >
+however configure it to do so. This will use an |CursorHold| and |InsertLeave|
+utocommand to update the indicator signs after |'updatetime'| seconds in
+Normal mode when no key is pressed. To enable this feature, put this in your
+|.vimrc| >
     let g:changes_autocmd=1
 
 This autocommand checks, whether there have been changes to the file, or else
