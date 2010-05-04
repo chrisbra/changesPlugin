@@ -5,15 +5,15 @@ plugin/changesPlugin.vim	[[[1
 52
 " ChangesPlugin.vim - Using Signs for indicating changed lines
 " ---------------------------------------------------------------
-" Version:  0.10
+" Version:  0.11
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Wed, 28 Apr 2010 08:25:37 +0200
+" Last Change: Tue, 04 May 2010 21:16:28 +0200
 
 
 " Script:  http://www.vim.org/scripts/script.php?script_id=3052
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
-" GetLatestVimScripts: 3052 10 :AutoInstall: ChangesPlugin.vim
+" GetLatestVimScripts: 3052 11 :AutoInstall: ChangesPlugin.vim
 
 
 " ---------------------------------------------------------------------
@@ -56,48 +56,48 @@ unlet s:keepcpo
 " Modeline
 " vi:fdm=marker fdl=0
 autoload/changes.vim	[[[1
-483
+490
 " Changes.vim - Using Signs for indicating changed lines
 " ---------------------------------------------------------------
-" Version:  0.10
+" Version:  0.11
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Wed, 28 Apr 2010 08:25:37 +0200
-
+" Last Change: Tue, 04 May 2010 21:16:28 +0200
 
 " Script:  http://www.vim.org/scripts/script.php?script_id=3052
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
-" GetLatestVimScripts: 3052 10 :AutoInstall: ChangesPlugin.vim
+" GetLatestVimScripts: 3052 11 :AutoInstall: ChangesPlugin.vim
 
 " Documentation:"{{{1
 " See :h ChangesPlugin.txt
 
 " Check preconditions"{{{1
 fu! s:Check()
-    if !has("diff")
-	call add(s:msg,"Diff support not available in your Vim version.")
-	call add(s:msg,"changes plugin will not be working!")
-	finish
-    endif
-
-    if  !has("signs")
-	call add(s:msg,"Sign Support support not available in your Vim version.")
-	call add(s:msg,"changes plugin will not be working!")
-	finish
-    endif
-
-    if !executable("diff") || executable("diff") == -1
-	call add(s:msg,"No diff executable found")
-	call add(s:msg,"changes plugin will not be working!")
-	finish
-    endif
-
     " Check for the existence of unsilent
     if exists(":unsilent")
 	let s:echo_cmd='unsilent echomsg'
     else
 	let s:echo_cmd='echomsg'
     endif
+
+    if !has("diff")
+	call add(s:msg,"Diff support not available in your Vim version.")
+	call add(s:msg,"changes plugin will not be working!")
+	throw 'changes:abort'
+    endif
+
+    if  !has("signs")
+	call add(s:msg,"Sign Support support not available in your Vim version.")
+	call add(s:msg,"changes plugin will not be working!")
+	throw 'changes:abort'
+    endif
+
+    if !executable("diff") || executable("diff") == -1
+	call add(s:msg,"No diff executable found")
+	call add(s:msg,"changes plugin will not be working!")
+	throw 'changes:abort'
+    endif
+
 
     let s:sign_prefix = 99
     let s:ids={}
@@ -139,6 +139,8 @@ fu! changes#Output(force)"{{{1
 endfu
 
 fu! s:Init()"{{{1
+    " Message queue, that will be displayed.
+    let s:msg      = []
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time
     if !exists("s:precheck")
@@ -148,8 +150,6 @@ fu! s:Init()"{{{1
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
     let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    : (exists("s:verbose") ? s:verbose : 1))
-    " Message queue, that will be displayed.
-    let s:msg      = []
     " Check against a file in a vcs system
     let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
     let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
@@ -180,6 +180,7 @@ fu! s:Init()"{{{1
 	  let s:temp_file=tempname()
       endif
     endif
+    let s:nodiff=0
 
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
@@ -195,7 +196,7 @@ fu! s:Init()"{{{1
 endfu
 
 fu! s:AuCmd(arg)"{{{1
-    if s:autocmd && a:arg
+    if a:arg
 	augroup Changes
 		autocmd!
 		let s:verbose=0
@@ -261,7 +262,7 @@ fu! changes#GetDiff(arg)"{{{1
     " a:arg == 3 Stay in diff mode
     try
 	call s:Init()
-    catch changes:NoVCS
+    catch /^changes:/
 	let s:verbose = 0
 	call s:WarningMsg()
 	return
@@ -301,25 +302,29 @@ fu! changes#GetDiff(arg)"{{{1
 	   \empty(values(b:diffhl)[2]))
 	    call add(s:msg, 'No differences found!')
 	    let s:verbose=0
+	    let s:nodiff=1
 	else
 	    call s:PlaceSigns(b:diffhl)
 	endif
-	if a:arg !=? 3
+	if a:arg !=? 3  || s:nodiff
 	    call s:DiffOff()
 	endif
 	" :diffoff resets some options (see :h :diffoff
 	" so we need to restore them here
-	let &fdm=o_fdm
-	if  o_fdc ==? 1
-	    " When foldcolumn is 1, folds won't be shown because of
-	    " the signs, so increasing its value by 1 so that folds will
-	    " also be shown
-	    let &fdc += 1
-	else
-	    let &fdc = o_fdc
+	" We don't reset the fdm, in case we are staying in diff mode
+	if a:arg != 3 || s:nodiff
+	    let &fdm=o_fdm
+	    if  o_fdc ==? 1
+		" When foldcolumn is 1, folds won't be shown because of
+		" the signs, so increasing its value by 1 so that folds will
+		" also be shown
+		let &fdc += 1
+	    else
+		let &fdc = o_fdc
+	    endif
+	    let &wrap = o_wrap
+	    let b:changes_view_enabled=1
 	endif
-	let &wrap = o_wrap
-	let b:changes_view_enabled=1
 	if a:arg ==# 2
 	   call s:ShowDifferentLines()
 	   let s:verbose=0
@@ -369,10 +374,12 @@ fu! s:MakeDiff()"{{{1
     " Get diff for current buffer with original
     let o_pwd = getcwd()
     let bnr = bufnr('%')
+    let ft  = &l:ft
     noa vert new
     set bt=nofile
     if !s:vcs
 	r #
+	let &l:ft=ft
     else
 	let vcs=getbufvar(bnr, 'vcs_type')
 	try
@@ -541,18 +548,18 @@ endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
 doc/ChangesPlugin.txt	[[[1
-261
+272
 *ChangesPlugin.txt*  Print indication of changed lines for a buffer 
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.10 Wed, 28 Apr 2010 08:25:37 +0200
-Copyright: (c) 2010 by Christian Brabandt 	 *ChangesPlugin-copyright*
-	   The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
-	   except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
-	   IMPLIED.  USE AT-YOUR-OWN-RISK.
+Version: 0.11 Tue, 04 May 2010 21:16:28 +0200
+Copyright: (c) 2010 by Christian Brabandt        *ChangesPlugin-copyright*
+           The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
+           except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
+           IMPLIED.  USE AT-YOUR-OWN-RISK.
 
 ==============================================================================
-1. Contents                          			      *ChangesPlugin*
+1. Contents                                                   *ChangesPlugin*
 
   1.  Contents......................................: |ChangesPlugin|
   2.  Manual........................................: |ChangesPlugin-manual|
@@ -594,7 +601,7 @@ with |+signs|-support and |+diff|-support and you also need an executable diff
 command. If neither of these conditions are met, changePlugin.vim will issue a
 warning and abort.
 
-							 *:EC* *:EnableChanges*
+                                                         *:EC* *:EnableChanges*
 By default the plugin is not enabled. To enable it enter >
     :EnableChanges
 When you run this command, ChangesPlugin.vim diffs the current file agains
@@ -604,21 +611,21 @@ Alternatively, you can enter the shortcut >
      :EC
 which basically calls :EnableChanes
 
-							 *:DC* *:DisableChanges*
+                                                         *:DC* *:DisableChanges*
 If you want to disable the plugin, enter >
     :DisableChanges
 or alternatively, you can enter the shortcut >
      :DC
 and the Display of Changes will be disabled.
 
-						     *:TCV* *:ToggleChangeView*
+                                                     *:TCV* *:ToggleChangeView*
 You can toggle, between turning on and off the indicator bars, using >
      :ToggleChangeView
 or alternatively: >
      :TCV
 to toggle the display of indicator bars.
 
-						     *:CC* *:ChangesCpation*
+                                                     *:CC* *:ChangesCpation*
 You are probably wondering, what those strange looking signs mean. You can use
 either >
     :CC
@@ -627,17 +634,17 @@ or >
 to let the Plugin display a small caption, so you know what each sign means
 and how they are colored.
 
-						 *:CL* *:ChangesLineOverview*
+                                                 *:CL* *:ChangesLineOverview*
 If you are editing a huge file with several hundreds of lines, it may be hard
 to find the lines that have been changed. >
     :CL
 or >
-    :ChangesLineOverview	
+    :ChangesLineOverview        
 provide an easy view to only see all modified lines. This will open the
 |location-list| buffer where you can easily see the affected lines. Pushing enter
 on any line, allows you to easily jump to that line in the buffer.
 
-						 *:CD* *:ChangesDiffMode*
+                                                 *:CD* *:ChangesDiffMode*
 You might want to keep the diff-window open, so you can use it for modifying
 your buffer using e.g. |:diffput| or |:diffget|
 Therefore ChangesPlugin defines the two commands >
@@ -650,12 +657,12 @@ as it is saved on disk. See |copy-diffs| for how to merge changes between
 those two buffers.
 
 ==============================================================================
-							*ChangesPlugin-Config*
+                                                        *ChangesPlugin-Config*
 3. Configuring ChangesPlugin.vim
 
 There are several different configuration options available.
 
-							*ChangesPlugin-hlLine*
+                                                        *ChangesPlugin-hlLine*
 2.1 Highlighte the whole line
 By default, ChangesPlugin.vim will only indicate a change in the first column.
 Setting g:changes_hl_lines to 1 will highlight the whole line. By default this
@@ -663,18 +670,19 @@ variable is unset (which is the same as setting it to 0).
 If you'd like to have this, set this variable in your |.vimrc| >
     :let g:changes_hl_lines=1
 
-							*ChangesPlugin-aucmd*
+                                                        *ChangesPlugin-aucmd*
 3.2 Auto-refresh the changes
 By default ChangesPlugin.vim will not automatically update the view. You can
-however configure it to do so. This will use an |CursorHold| autocommand to
-update the indicator signs after |'updatetime'| seconds in Normal mode when
-no key is pressed. To enable this feature, put this in your |.vimrc| >
+however configure it to do so. This will use an |CursorHold| and |InsertLeave|
+utocommand to update the indicator signs after |'updatetime'| seconds in
+Normal mode when no key is pressed. To enable this feature, put this in your
+|.vimrc| >
     let g:changes_autocmd=1
 
 This autocommand checks, whether there have been changes to the file, or else
 it won't update the view.
 
-							*ChangesPlugin-bars*
+                                                        *ChangesPlugin-bars*
 3.3 Show what the indicator signs mean.
 By default, whenever you run |:EnableChanges|, changesVim will print a short
 status message, what each sign means. If you don't want this, put this in your
@@ -682,7 +690,7 @@ status message, what each sign means. If you don't want this, put this in your
     :let g:changes_verbose=0
 and achangesPlugin won't display this message again. You can always issue the
 |CL| command to find out, what each sign means.
-							*ChangesPlugin-colors*
+                                                        *ChangesPlugin-colors*
 
 3.4 Specify different colors.
 changesVim uses the highlighting used for |diff| mode to indicate the change
@@ -698,7 +706,7 @@ In the same way, you can change DiffDelete for indicating deleted lines and
 DiffChange for indicating modified lines. You can also specify your favorite
 highlighting colors using your own build |colorscheme|.
 
-							     *ChangesPlugin-VCS*
+                                                             *ChangesPlugin-VCS*
 3.5 Check differences against a checked-in file from a VCS
 
 Warning: This feature is rather experimental. So use it with care. 
@@ -740,7 +748,7 @@ bug to the maintainer of the plugin. Setting g:changes_vcs_check will however
 disable the check against the on-disk version of a buffer.
 
 ==============================================================================
-4. ChangesPlugin Feedback			    *ChangesPlugin-feedback*
+4. ChangesPlugin Feedback                           *ChangesPlugin-feedback*
 
 Feedback is always welcome. If you like the plugin, please rate it at the
 vim-page:
@@ -753,53 +761,63 @@ Please don't hesitate to report any bugs to the maintainer, mentioned in the
 third line of this document.
 
 ==============================================================================
-5. ChangesPlugin History				*ChangesPlugin-history*
+5. ChangesPlugin History                                *ChangesPlugin-history*
+    0.11: May 04, 2010: BF: Document, that |InsertLeave| autocommand is used
+                            as autocommand
+                        BF: generate the help file with 'et' set, so that the
+                            README at github looks prettier
+                        BF: When staying in diff mode, don't reset 'fdm'
+                            and apply syntax coloring to scratch buffer
+                        BF: the check for the diff executable does not work
+                            as expected (Reported by Sergey Khorev),
+                            additionally outputting the Warnings did not work
+                            in that case
     0.10: Apr 28, 2010: NF: Fixed Issue 1 from github
                             (http://github.com/chrisbra/changesPlugin/issues/1/find)
     0.9: Apr 24, 2010:  NF: You can now use different VCS Systems for each
                             buffer you are using.
-			NF: Stay in diff mode
-			BF: Fix the display of deleted signs
-			BF: Undefining old signs, so that changing
-			    g:changes_hl_lines works
-			BF: Some more error handling.
-			NF: Show an overview for changed lines in location-list
-			    (|:CL|)
-			NF: Show what each sign means using |:CC|
+                        NF: Stay in diff mode
+                        BF: Fix the display of deleted signs
+                        BF: Undefining old signs, so that changing
+                            g:changes_hl_lines works
+                        BF: Some more error handling.
+                        NF: Show an overview for changed lines in location-list
+                            (|:CL|)
+                        NF: Show what each sign means using |:CC|
     0.8: Apr 22, 2010:  NF: Renamed the helpfile, to make it more obvious, 
-			that it refers to a plugin
-			NF: Outputting name of checked file, if checking
-			    against VCS
-			BF: Don't check for empty files.
-			BF: Reworked the Message function
-			BF: Don't try to place signs, if there are no
-			    differences
-			    (unreleased, VCS successfully tested with
-			     git, hg, svn, cvs, bzr)
+                        that it refers to a plugin
+                        NF: Outputting name of checked file, if checking
+                            against VCS
+                        BF: Don't check for empty files.
+                        BF: Reworked the Message function
+                        BF: Don't try to place signs, if there are no
+                            differences
+                            (unreleased, VCS successfully tested with
+                             git, hg, svn, cvs, bzr)
     0.7: Apr 19, 2010:  NF: Check against a file in a VCS
-			    (unreleased, first working version,
-			    needs to be checked for each VCS)
+                            (unreleased, first working version,
+                            needs to be checked for each VCS)
     0.6: Apr 12, 2010:  BF: fixed a missing highlight for DiffText
     0.5: Apr 12, 2010:  BF: error when trying to access b:diffhl in the
-			    scratch buffer. This should be fixed now (thanks
-			    Jeet Sukumaran!)
-			BF: Use the correct highlighting groups (thanks Jeet
-			    Sukumaran!)
+                            scratch buffer. This should be fixed now (thanks
+                            Jeet Sukumaran!)
+                        BF: Use the correct highlighting groups (thanks Jeet
+                            Sukumaran!)
     0.4: Apr 12, 2010:  NF: |ToggleChangesView|
-			NF: The autocommand checks, if the buffer has been
-			    modified, since the last time.
-			BF: Do not mess with signs, that have not been placed
-			    by ChangesPlugin.vim
-			BF: CleanUp was seriously messed up (sorry, I must
-			    have been asleep, when writing that)
-			BF: Take care of 'foldcolumn' setting, which would be
-			    overwritten by the signs-column
+                        NF: The autocommand checks, if the buffer has been
+                            modified, since the last time.
+                        BF: Do not mess with signs, that have not been placed
+                            by ChangesPlugin.vim
+                        BF: CleanUp was seriously messed up (sorry, I must
+                            have been asleep, when writing that)
+                        BF: Take care of 'foldcolumn' setting, which would be
+                            overwritten by the signs-column
     0.3: Apr 11, 2010:  BF: redraw, so that the diff window will not be
-			    displayed
-			NF: enabled GLVS (see |GLVS|)
-    0.2: Apr 11, 2010:	Added Documentation
-			created an autoload version
-    0.1: Apr 10, 2010:	First working version
+                            displayed
+                        NF: enabled GLVS (see |GLVS|)
+    0.2: Apr 11, 2010:  Added Documentation
+                        created an autoload version
+    0.1: Apr 10, 2010:  First working version
 
 ==============================================================================
-vim:tw=78:ts=8:ft=help
+vim:tw=78:ts=8:ft=help:et
