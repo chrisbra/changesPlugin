@@ -79,7 +79,7 @@ fu! changes#Output(force)"{{{1
     endif
 endfu
 
-fu! s:Init()"{{{1
+fu! changes#Init()"{{{1
     " Message queue, that will be displayed.
     let s:msg      = []
     " Only check the first time this file is loaded
@@ -202,7 +202,7 @@ fu! changes#GetDiff(arg)"{{{1
     " a:arg == 2 Show Overview Window
     " a:arg == 3 Stay in diff mode
     try
-	call s:Init()
+	call changes#Init()
     catch /^changes:/
 	let s:verbose = 0
 	call s:WarningMsg()
