@@ -211,6 +211,8 @@ third line of this document.
 
 ==============================================================================
 5. ChangesPlugin History                                *ChangesPlugin-history*
+    0.12 (unreleased):
+                        BF: Fix E117 error (patch by Mate Gabri, Thanks!)
     0.11: May 04, 2010: BF: Document, that |InsertLeave| autocommand is used
                             as autocommand
                         BF: generate the help file with 'et' set, so that the
