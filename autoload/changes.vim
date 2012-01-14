@@ -209,6 +209,13 @@ fu! changes#GetDiff(arg)"{{{1
 	return
     endtry
 
+    if !filereadable(bufname(''))
+	call add(s:msg,"You've opened a new file so viewing changes is disabled until the file is saved (You have to reenable it if not using autocmd).")
+	let s:verbose = 0
+	call s:WarningMsg()
+	return
+    endif
+
     " Does not make sense to check an empty buffer
     if empty(bufname(''))
 	call add(s:msg,"The buffer does not contain a name. Check aborted!")
