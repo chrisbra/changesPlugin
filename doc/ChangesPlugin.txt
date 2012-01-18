@@ -212,6 +212,8 @@ third line of this document.
 ==============================================================================
 5. ChangesPlugin History                                *ChangesPlugin-history*
     0.12 (unreleased):
+                        NF: Fix issue #3 from github (check changes against
+                            any file, suggested by Alessio Bolognino, Thanks!)
                         BF: Fix E117 error (patch by Mate Gabri, Thanks!)
                         BF: Check, that the current file is readable, before
                             diffing (patch by Mate Gabri, Thanks!)
