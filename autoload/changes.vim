@@ -197,7 +197,7 @@ fu! s:UpdateView()"{{{1
     endif
 endfu
 
-fu! changes#GetDiff(arg)"{{{1
+fu! changes#GetDiff(arg, ...)"{{{1
     " a:arg == 1 Create signs
     " a:arg == 2 Show Overview Window
     " a:arg == 3 Stay in diff mode
@@ -236,7 +236,7 @@ fu! changes#GetDiff(arg)"{{{1
     let s:temp = {'del': []}
     let b:diffhl={'add': [], 'del': [], 'ch': []}
     try
-	call s:MakeDiff()
+	call s:MakeDiff(exists("a:1") ? a:1 : '')
 	call s:CheckLines(1)
 	" Switch to other buffer and check for deleted lines
 	noa wincmd p
@@ -318,7 +318,7 @@ fu! s:UnPlaceSigns()"{{{1
     endfor
 endfu
 
-fu! s:MakeDiff()"{{{1
+fu! s:MakeDiff(...)"{{{1
     " Get diff for current buffer with original
     let o_pwd = getcwd()
     let bnr = bufnr('%')
@@ -326,7 +326,7 @@ fu! s:MakeDiff()"{{{1
     noa vert new
     set bt=nofile
     if !s:vcs
-	r #
+	exe "r " (exists("a:1") && !empty(a:1) ? a:1 : '#')
 	let &l:ft=ft
     else
 	let vcs=getbufvar(bnr, 'vcs_type')
