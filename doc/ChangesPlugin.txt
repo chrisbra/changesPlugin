@@ -56,9 +56,15 @@ By default the plugin is not enabled. To enable it enter >
 When you run this command, ChangesPlugin.vim diffs the current file agains
 its saved file on disk and displays the changes in the first column.
 
+If you like to display the Changes against a different file, simply supply its
+filename as optional argument to that command, e.g. >
+    :EnableChanges ~/project/foobar.c
+would display the Signs as if your current file has been diffed against the
+file ~/project/foobar.c
+
 Alternatively, you can enter the shortcut >
      :EC
-which basically calls :EnableChanes
+which basically calls :EnableChanges and supports the same arguments.
 
                                                          *:DC* *:DisableChanges*
 If you want to disable the plugin, enter >
