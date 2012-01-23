@@ -238,10 +238,10 @@ fu! changes#GetDiff(arg, ...)"{{{1
     try
 	call s:MakeDiff(exists("a:1") ? a:1 : '')
 	call s:CheckLines(1)
-	" Switch to other buffer and check for deleted lines
-	noa wincmd p
+	call s:MoveToPrevWindow()
 	call s:CheckLines(0)
-	noa wincmd p
+	" Switch to other buffer and check for deleted lines
+	call s:MoveToPrevWindow()
 	let b:diffhl['del'] = s:temp['del']
 	call s:CheckDeletedLines()
 	" Check for empty dict of signs
@@ -348,7 +348,7 @@ fu! s:MakeDiff(...)"{{{1
 	    if fsize == 0
 		call delete(s:temp_file)
 		call add(s:msg,"Couldn't get VCS output, aborting")
-		wincmd p
+		call s:MoveToPrevWindow()
 		throw "changes:abort"
 	    endif
 	    exe ':r' s:temp_file
@@ -356,13 +356,13 @@ fu! s:MakeDiff(...)"{{{1
         catch /^changes: No git Repository found/
 	    call add(s:msg,"Unable to find git Top level repository.")
 	    echo v:errmsg
-	    wincmd p
+	    call s:MoveToPrevWindow()
 	    throw "changes:abort"
 	endtry
     endif
     0d_
     diffthis
-    noa wincmd p
+    call s:MoveToPrevWindow()
     diffthis
     if s:vcs && exists("vcs") && vcs=='cvs'
 	exe "cd "  o_pwd
@@ -390,7 +390,7 @@ endfu
 
 fu! s:DiffOff()"{{{1
     " Turn off Diff Mode and close buffer
-    wincmd p
+    call s:MoveToPrevWindow()
     diffoff!
     q
 endfu
@@ -492,6 +492,16 @@ fu! s:CheckDeletedLines() "{{{1
     endfor
 endfu
 
-
+fu! s:MoveToPrevWindow() "{{{1
+    let winnr = winnr()
+    noa wincmd p
+    if winnr() == winnr
+	" Best effort, there doesn't exist a previous window
+	" where wincmd p can jump to, so move to the next window
+	" (e.g. latexsuite does this:
+	" https://github.com/chrisbra/changesPlugin/issues/5
+	noa wincmd w
+    endif
+endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
