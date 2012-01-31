@@ -1,7 +1,7 @@
 *ChangesPlugin.txt*  Print indication of changed lines for a buffer 
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.11 Tue, 04 May 2010 21:16:28 +0200
+Version: 0.12 Tue, 31 Jan 2012 22:07:31 +0100
 Copyright: (c) 2010 by Christian Brabandt        *ChangesPlugin-copyright*
            The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
            except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
@@ -56,9 +56,15 @@ By default the plugin is not enabled. To enable it enter >
 When you run this command, ChangesPlugin.vim diffs the current file agains
 its saved file on disk and displays the changes in the first column.
 
+If you like to display the Changes against a different file, simply supply its
+filename as optional argument to that command, e.g. >
+    :EnableChanges ~/project/foobar.c
+would display the Signs as if your current file has been diffed against the
+file ~/project/foobar.c
+
 Alternatively, you can enter the shortcut >
      :EC
-which basically calls :EnableChanes
+which basically calls :EnableChanges and supports the same arguments.
 
                                                          *:DC* *:DisableChanges*
 If you want to disable the plugin, enter >
@@ -211,10 +217,16 @@ third line of this document.
 
 ==============================================================================
 5. ChangesPlugin History                                *ChangesPlugin-history*
-    0.12 (unreleased):
+    0.12: Jan, 31, 2012:
+                        NF: Fix issue #3 from github (check changes against
+                            any file, suggested by Alessio Bolognino, Thanks!)
                         BF: Fix E117 error (patch by Mate Gabri, Thanks!)
                         BF: Check, that the current file is readable, before
                             diffing (patch by Mate Gabri, Thanks!)
+                        BF: Sometimes, the previous Window is not accessible
+                            anymore
+                            (http://github.com/chrisbra/changesPlugin/issues/5
+                            by Mate Gabri, Thanks!)
     0.11: May 04, 2010: BF: Document, that |InsertLeave| autocommand is used
                             as autocommand
                         BF: generate the help file with 'et' set, so that the
