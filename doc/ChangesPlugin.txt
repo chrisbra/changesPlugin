@@ -66,7 +66,7 @@ Alternatively, you can enter the shortcut >
      :EC
 which basically calls :EnableChanges and supports the same arguments.
 
-                                                         *:DC* *:DisableChanges*
+                                                        *:DC* *:DisableChanges*
 If you want to disable the plugin, enter >
     :DisableChanges
 or alternatively, you can enter the shortcut >
@@ -96,8 +96,8 @@ to find the lines that have been changed. >
 or >
     :ChangesLineOverview        
 provide an easy view to only see all modified lines. This will open the
-|location-list| buffer where you can easily see the affected lines. Pushing enter
-on any line, allows you to easily jump to that line in the buffer.
+|location-list| buffer where you can easily see the affected lines. Pushing
+enter on any line, allows you to easily jump to that line in the buffer.
 
                                                  *:CD* *:ChangesDiffMode*
 You might want to keep the diff-window open, so you can use it for modifying
@@ -217,6 +217,10 @@ third line of this document.
 
 ==============================================================================
 5. ChangesPlugin History                                *ChangesPlugin-history*
+    0.13: (unreleased):
+                        BF: Plugin used :EnableDisplayChanges, but
+                        documentation talked about EnableChanges
+                        (same for DisableChanges)
     0.12: Jan, 31, 2012:
                         NF: Fix issue #3 from github (check changes against
                             any file, suggested by Alessio Bolognino, Thanks!)
