@@ -118,15 +118,18 @@ those two buffers.
 There are several different configuration options available.
 
                                                         *ChangesPlugin-hlLine*
-2.1 Highlighte the whole line
+3.1 Highlighte the whole line
+
 By default, ChangesPlugin.vim will only indicate a change in the first column.
 Setting g:changes_hl_lines to 1 will highlight the whole line. By default this
 variable is unset (which is the same as setting it to 0).
 If you'd like to have this, set this variable in your |.vimrc| >
     :let g:changes_hl_lines=1
+<
 
                                                         *ChangesPlugin-aucmd*
 3.2 Auto-refresh the changes
+
 By default ChangesPlugin.vim will not automatically update the view. You can
 however configure it to do so. This will use an |CursorHold| and |InsertLeave|
 utocommand to update the indicator signs after |'updatetime'| seconds in
@@ -139,6 +142,7 @@ it won't update the view.
 
                                                         *ChangesPlugin-bars*
 3.3 Show what the indicator signs mean.
+
 By default, whenever you run |:EnableChanges|, changesVim will print a short
 status message, what each sign means. If you don't want this, put this in your
 |.vimrc| >
@@ -148,6 +152,7 @@ and achangesPlugin won't display this message again. You can always issue the
                                                         *ChangesPlugin-colors*
 
 3.4 Specify different colors.
+
 changesVim uses the highlighting used for |diff| mode to indicate the change
 in a buffer. This is consistent, since when you're already used to |vimdiff|
 you'll probably also know the highlighting. If for any reason you do not like
@@ -161,7 +166,7 @@ In the same way, you can change DiffDelete for indicating deleted lines and
 DiffChange for indicating modified lines. You can also specify your favorite
 highlighting colors using your own build |colorscheme|.
 
-                                                             *ChangesPlugin-VCS*
+                                                          *ChangesPlugin-VCS*
 3.5 Check differences against a checked-in file from a VCS
 
 Warning: This feature is rather experimental. So use it with care. 
