@@ -25,15 +25,15 @@ let s:autocmd  = (exists("g:changes_autocmd")  ? g:changes_autocmd  : 0)
 " Public Interface: {{{1
 
 " Define the Shortcuts:
-com! -nargs=? -complete=file EC	 EnableDisplayChanges <args>
-com! DC	 DisableDisplayChanges
+com! -nargs=? -complete=file EC	 EnableChanges <args>
+com! DC	 DisableChanges
 com! TCV ToggleChangeView
 com! CC  ChangesCaption
 com! CL  ChangesLinesOverview
 com! CD  ChangesDiffMode
 
-com! -nargs=? -complete=file EnableDisplayChanges	call changes#GetDiff(1,<q-args>)
-com! DisableDisplayChanges	call changes#CleanUp()
+com! -nargs=? -complete=file EnableChanges	call changes#GetDiff(1,<q-args>)
+com! DisableChanges		call changes#CleanUp()
 com! ToggleChangeView		call changes#TCV()
 com! ChangesCaption		call changes#Output(1)
 com! ChangesLinesOverview	call changes#GetDiff(2)
