@@ -226,6 +226,8 @@ third line of this document.
                         BF: Plugin used :EnableDisplayChanges, but
                         documentation talked about EnableChanges
                         (same for DisableChanges)
+                        BF: Don't load the autoload script when sourcing
+                        the plugin (reported by Sergey Kholev, thanks!)
     0.12: Jan, 31, 2012:
                         NF: Fix issue #3 from github (check changes against
                             any file, suggested by Alessio Bolognino, Thanks!)
