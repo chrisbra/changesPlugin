@@ -1,7 +1,7 @@
 *ChangesPlugin.txt*  Print indication of changed lines for a buffer 
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.12 Tue, 31 Jan 2012 22:07:31 +0100
+Version: 0.13 Sat, 16 Feb 2013 23:17:36 +0100
 Copyright: (c) 2010 by Christian Brabandt        *ChangesPlugin-copyright*
            The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
            except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
@@ -222,7 +222,7 @@ third line of this document.
 
 ==============================================================================
 5. ChangesPlugin History                                *ChangesPlugin-history*
-    0.13: (unreleased):
+    0.13: Feb 16, 2013:
                         BF: Plugin used :EnableDisplayChanges, but
                         documentation talked about EnableChanges
                         (same for DisableChanges)
