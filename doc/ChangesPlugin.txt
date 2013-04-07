@@ -222,6 +222,10 @@ third line of this document.
 
 ==============================================================================
 5. ChangesPlugin History                                *ChangesPlugin-history*
+    0.14: (unreleased):
+                        BF: Exception not caught (reported by Marco, thanks!)
+                        BF: Prevent flickering by resetting SignColumn on
+                        updates (reported by Marco, thanks!)
     0.13: Feb 16, 2013:
                         BF: Plugin used :EnableDisplayChanges, but
                         documentation talked about EnableChanges
