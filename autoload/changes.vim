@@ -51,13 +51,17 @@ fu! s:Check() "{{{1
     call s:DefineSigns()
 endfu
 
-fu! s:WarningMsg() "{{{1
+fu! changes#WarningMsg() "{{{1
     redraw!
     if !empty(s:msg)
 	let msg=["Changes.vim: " . s:msg[0]] + s:msg[1:]
 	echohl WarningMsg
+	" s:echo_cmd might not yet exist
+	if !exists("s:echo_cmd")
+	    let s:echo_cmd = 'echomsg'
+	endif
 	for mess in msg
-		exe s:echo_cmd "mess"
+	    exe s:echo_cmd "mess"
 	endfor
 
 	echohl Normal
@@ -111,7 +115,9 @@ fu! changes#Init() "{{{1
 	   throw 'changes:NoVCS'
       endif
       if !executable(b:vcs_type)
-	   call add(s:msg,"Executable " . b:vcs_type . "not found! Aborting.")
+	   call add(s:msg,'Guessing VCS: '. b:vcs_type)
+	   call add(s:msg,"Executable " . b:vcs_type . " not found! Aborting.")
+	   call add(s:msg,'You might want to set the g:changes_vcs_system variable to override!')
 	   throw "changes:abort"
       endif
       if !exists("s:temp_file")
@@ -213,14 +219,14 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	call changes#Init()
     catch /^changes:/
 	let s:verbose = 0
-	call s:WarningMsg()
+	call changes#WarningMsg()
 	return
     endtry
 
     if !filereadable(bufname(''))
 	call add(s:msg,"You've opened a new file so viewing changes is disabled until the file is saved (You have to reenable it if not using autocmd).")
 	let s:verbose = 0
-	call s:WarningMsg()
+	call changes#WarningMsg()
 	return
     endif
 
@@ -296,7 +302,7 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
 	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
 	endif
-	call s:WarningMsg()
+	call changes#WarningMsg()
 	call changes#Output(0)
     endtry
 endfu
@@ -347,6 +353,8 @@ endfu
 fu! s:MakeDiff(...) "{{{1
     " Get diff for current buffer with original
     let o_pwd = getcwd()
+    let _lz = &lz
+    set lazyredraw
     let bnr = bufnr('%')
     let ft  = &l:ft
     noa vert new
@@ -359,6 +367,8 @@ fu! s:MakeDiff(...) "{{{1
 	try
 	    if vcs == 'git'
 		let git_rep_p = s:ReturnGitRepPath()
+		exe 'cd' git_rep_p
+		let git_rep_p = ''
 	    elseif vcs == 'cvs'
 		" I am not sure, if this is the best way
 		" to query CVS. But just to make sure, 
@@ -393,6 +403,7 @@ fu! s:MakeDiff(...) "{{{1
     if s:vcs && exists("vcs") && vcs=='cvs'
 	exe "cd "  o_pwd
     endif
+    let &lz = _lz
 endfu
 
 fu! s:ReturnGitRepPath() "{{{1
@@ -404,6 +415,7 @@ fu! s:ReturnGitRepPath() "{{{1
     if empty(dir)
 	throw 'changes: No git Repository found'
     else
+	return fnamemodify(dir, ':h')
 	let ldir  =  strlen(substitute(dir, '.', 'x', 'g'))-4
 	if ldir
 	    return file[ldir :]
