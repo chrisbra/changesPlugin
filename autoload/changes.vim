@@ -85,7 +85,12 @@ fu! changes#Init()"{{{1
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time
     if !exists("s:precheck")
-	call s:Check()
+	try
+	    call s:Check()
+	catch
+	    " Rethrow exception
+	    throw v:exception
+	endtry
 	let s:precheck=1
     endif
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
