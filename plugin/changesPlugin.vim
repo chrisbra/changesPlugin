@@ -40,7 +40,7 @@ com! ChangesLinesOverview	call changes#GetDiff(2)
 com! ChangesDiffMode		call changes#GetDiff(3)
 
 if s:autocmd
-    exe "call changes#Init()"
+    exe "try | call changes#Init()|catch|call changes#WarningMsg()|endtry"
 endif
 " =====================================================================
 " Restoration And Modelines: {{{1
