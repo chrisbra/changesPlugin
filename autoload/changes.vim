@@ -9,11 +9,11 @@
 " Documentation: see :help changesPlugin.txt
 " GetLatestVimScripts: 3052 13 :AutoInstall: ChangesPlugin.vim
 
-" Documentation:"{{{1
+" Documentation: "{{{1
 " See :h ChangesPlugin.txt
 
-" Check preconditions"{{{1
-fu! s:Check()
+" Check preconditions
+fu! s:Check() "{{{1
     " Check for the existence of unsilent
     if exists(":unsilent")
 	let s:echo_cmd='unsilent echomsg'
@@ -39,7 +39,8 @@ fu! s:Check()
 	throw 'changes:abort'
     endif
 
-
+    " This variable is a prefix for all placed signs.
+    " This is needed, to not mess with signs placed by the user
     let s:sign_prefix = 99
     let s:ids={}
     let s:ids["add"]   = hlID("DiffAdd")
@@ -49,7 +50,7 @@ fu! s:Check()
 
 endfu
 
-fu! s:WarningMsg()"{{{1
+fu! s:WarningMsg() "{{{1
     redraw!
     if !empty(s:msg)
 	let msg=["Changes.vim: " . s:msg[0]] + s:msg[1:]
@@ -63,7 +64,7 @@ fu! s:WarningMsg()"{{{1
     endif
 endfu
 
-fu! changes#Output(force)"{{{1
+fu! changes#Output(force) "{{{1
     if s:verbose || a:force
 	echohl Title
 	echo "Differences will be highlighted like this:"
@@ -79,7 +80,7 @@ fu! changes#Output(force)"{{{1
     endif
 endfu
 
-fu! changes#Init()"{{{1
+fu! changes#Init() "{{{1
     " Message queue, that will be displayed.
     let s:msg      = []
     " Only check the first time this file is loaded
@@ -95,7 +96,8 @@ fu! changes#Init()"{{{1
     endif
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
     let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
-    let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    : (exists("s:verbose") ? s:verbose : 1))
+    let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    :
+		\ (exists("s:verbose") ? s:verbose : 1))
     " Check against a file in a vcs system
     let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
     let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
@@ -128,8 +130,6 @@ fu! changes#Init()"{{{1
     endif
     let s:nodiff=0
 
-    " This variable is a prefix for all placed signs.
-    " This is needed, to not mess with signs placed by the user
     let s:signs={}
     let s:signs["add"] = "text=+ texthl=DiffAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
     let s:signs["del"] = "text=- texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
@@ -141,7 +141,7 @@ fu! changes#Init()"{{{1
     call s:AuCmd(s:autocmd)
 endfu
 
-fu! s:AuCmd(arg)"{{{1
+fu! s:AuCmd(arg) "{{{1
     if a:arg
 	augroup Changes
 		autocmd!
@@ -155,14 +155,14 @@ fu! s:AuCmd(arg)"{{{1
     endif
 endfu
 
-fu! s:DefineSigns()"{{{1
+fu! s:DefineSigns() "{{{1
     for key in keys(s:signs)
 	exe "silent! sign undefine " key
 	exe "sign define" key s:signs[key]
     endfor
 endfu
 
-fu! s:CheckLines(arg)"{{{1
+fu! s:CheckLines(arg) "{{{1
     " a:arg  1: check original buffer
     "        0: check diffed scratch buffer
     let line=1
@@ -190,7 +190,7 @@ fu! s:CheckLines(arg)"{{{1
     endw
 endfu
 
-fu! s:UpdateView()"{{{1
+fu! s:UpdateView() "{{{1
     if !exists("b:changes_chg_tick")
 	let b:changes_chg_tick = 0
     endif
@@ -202,7 +202,7 @@ fu! s:UpdateView()"{{{1
     endif
 endfu
 
-fu! changes#GetDiff(arg, ...)"{{{1
+fu! changes#GetDiff(arg, ...) "{{{1
     " a:arg == 1 Create signs
     " a:arg == 2 Show Overview Window
     " a:arg == 3 Stay in diff mode
@@ -296,7 +296,7 @@ fu! changes#GetDiff(arg, ...)"{{{1
     endtry
 endfu
 
-fu! s:PlaceSigns(dict)"{{{1
+fu! s:PlaceSigns(dict) "{{{1
     for [ id, lines ] in items(a:dict)
 	for item in lines
 	    " One special case could occur:
@@ -306,12 +306,13 @@ fu! s:PlaceSigns(dict)"{{{1
 	    "if item > line('$')
 	"	let item=line('$')
 	"    endif
-	    exe "sign place " s:sign_prefix . item . " line=" . item . " name=" . id . " buffer=" . bufnr('')
+	    exe "sign place " s:sign_prefix . item . " line=" . item .
+		\ " name=" . id . " buffer=" . bufnr('')
 	endfor
     endfor
 endfu
 
-fu! s:UnPlaceSigns()"{{{1
+fu! s:UnPlaceSigns() "{{{1
     redir => a
     silent sign place
     redir end
@@ -323,7 +324,7 @@ fu! s:UnPlaceSigns()"{{{1
     endfor
 endfu
 
-fu! s:MakeDiff(...)"{{{1
+fu! s:MakeDiff(...) "{{{1
     " Get diff for current buffer with original
     let o_pwd = getcwd()
     let bnr = bufnr('%')
@@ -392,15 +393,14 @@ fu! s:ReturnGitRepPath() "{{{1
     endif
 endfu
 
-
-fu! s:DiffOff()"{{{1
+fu! s:DiffOff() "{{{1
     " Turn off Diff Mode and close buffer
     call s:MoveToPrevWindow()
     diffoff!
     q
 endfu
 
-fu! changes#CleanUp()"{{{1
+fu! changes#CleanUp() "{{{1
     " only delete signs, that have been set by this plugin
     call s:UnPlaceSigns()
     for key in keys(s:signs)
@@ -411,7 +411,7 @@ fu! changes#CleanUp()"{{{1
     endif
 endfu
 
-fu! changes#TCV()"{{{1
+fu! changes#TCV() "{{{1
     if  exists("b:changes_view_enabled") && b:changes_view_enabled
         :DC
 	if exists("b:ofdc")
@@ -426,8 +426,7 @@ fu! changes#TCV()"{{{1
     endif
 endfunction
 
-
-fu! s:ShowDifferentLines()"{{{1
+fu! s:ShowDifferentLines() "{{{1
     redir => a
     silent sign place
     redir end
