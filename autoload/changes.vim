@@ -48,6 +48,7 @@ fu! s:Check() "{{{1
     let s:ids["ch"]    = hlID("DiffChange")
     let s:ids["ch2"]   = hlID("DiffText")
 
+    call s:DefineSigns()
 endfu
 
 fu! s:WarningMsg() "{{{1
@@ -83,17 +84,6 @@ endfu
 fu! changes#Init() "{{{1
     " Message queue, that will be displayed.
     let s:msg      = []
-    " Only check the first time this file is loaded
-    " It should not be neccessary to check every time
-    if !exists("s:precheck")
-	try
-	    call s:Check()
-	catch
-	    " Rethrow exception
-	    throw v:exception
-	endtry
-	let s:precheck=1
-    endif
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
     let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    :
@@ -134,10 +124,23 @@ fu! changes#Init() "{{{1
     let s:signs["add"] = "text=+ texthl=DiffAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
     let s:signs["del"] = "text=- texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
     let s:signs["ch"] = "text=* texthl=DiffChange " . ( (s:hl_lines) ? " linehl=DiffChange" : "")
+    let s:signs["dummy"] = "text=_ texthl=SignColumn "
+
+    " Only check the first time this file is loaded
+    " It should not be neccessary to check every time
+    if !exists("s:precheck")
+	try
+	    call s:Check()
+	catch
+	    " Rethrow exception
+	    throw v:exception
+	endtry
+	let s:precheck=1
+    endif
 
     " Delete previously placed signs
-    call s:UnPlaceSigns()
-    call s:DefineSigns()
+    call s:UnPlaceSigns(0)
+    "call s:DefineSigns() " already defined
     call s:AuCmd(s:autocmd)
 endfu
 
@@ -259,6 +262,8 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	else
 	    call s:PlaceSigns(b:diffhl)
 	endif
+	" Remove dummy sign
+	call s:PlaceSignDummy(0)
 	if a:arg !=? 3  || s:nodiff
 	    call s:DiffOff()
 	endif
@@ -296,6 +301,14 @@ fu! changes#GetDiff(arg, ...) "{{{1
     endtry
 endfu
 
+fu! s:PlaceSignDummy(place) "{{{1
+    if a:place
+	exe "sign place " s:sign_prefix.'0 line=1 name=dummy buffer='. bufnr('')
+    else
+	exe "sign unplace " s:sign_prefix.'0'
+    endif
+endfu
+
 fu! s:PlaceSigns(dict) "{{{1
     for [ id, lines ] in items(a:dict)
 	for item in lines
@@ -312,14 +325,21 @@ fu! s:PlaceSigns(dict) "{{{1
     endfor
 endfu
 
-fu! s:UnPlaceSigns() "{{{1
+fu! s:UnPlaceSigns(force) "{{{1
+    if !a:force
+	call s:PlaceSignDummy(1)
+    endif
     redir => a
     silent sign place
     redir end
     let b=split(a,"\n")
     let b=filter(b, 'v:val =~ "id=".s:sign_prefix')
     let b=map(b, 'matchstr(v:val, ''id=\zs\d\+'')')
-    for id in b
+    for id in sort(b)
+	if id == s:sign_prefix.'0' && !a:force
+	    " Keep dummy, so the sign column does not vanish
+	    continue
+	endif
 	exe "sign unplace" id
     endfor
 endfu
@@ -402,7 +422,7 @@ endfu
 
 fu! changes#CleanUp() "{{{1
     " only delete signs, that have been set by this plugin
-    call s:UnPlaceSigns()
+    call s:UnPlaceSigns(1)
     for key in keys(s:signs)
 	exe "sign undefine " key
     endfor
