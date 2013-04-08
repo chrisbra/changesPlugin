@@ -265,21 +265,22 @@ fu! s:GuessVCSSystem() "{{{1
     endif
     let file = fnamemodify(expand("%"), ':p')
     let path = fnamemodify(file, ':h')
-    " First let's try if there is a CVS dir
-    if isdirectory(path . '/CVS')
-	return 'cvs'
-    elseif isdirectory(path . '/.svn')
-	return 'svn'
-    endif
+    " First try git and hg, they seem to be the most popular ones these days
     if !empty(finddir('.git',path.';'))
 	return 'git'
     elseif !empty(finddir('.hg',path.';'))
 	return 'hg'
+    elseif isdirectory(path . '/CVS')
+	return 'cvs'
+    elseif isdirectory(path . '/.svn')
+	return 'svn'
     elseif !empty(finddir('.bzr',path.';'))
 	return 'bzr'
-    else
-	"Fallback: svk
+    " Is this correct for svk?
+    elseif !empty(finddir('.svn',path.';'))
 	return 'svk'
+    else
+	return ''
     endif
 endfu
 
@@ -319,6 +320,10 @@ fu! s:MoveToPrevWindow() "{{{1
     endif
 endfu
 fu! changes#WarningMsg() "{{{1
+    if !&vbs
+	" Set verbose to 1 to have messages displayed!
+	return
+    endif
     redraw!
     if !empty(s:msg)
 	let msg=["Changes.vim: " . s:msg[0]] + s:msg[1:]
@@ -375,21 +380,21 @@ fu! changes#Init() "{{{1
 
     " Settings for Version Control
     if s:vcs
-      if get(s:vcs_cat, b:vcs_type, 'NONE') == 'NONE'
-	   call add(s:msg,"Don't know VCS " . b:vcs_type)
-	   call add(s:msg,"VCS check will be disabled for now.")
-	   let s:vcs=0
-	   throw 'changes:NoVCS'
-      endif
-      if !executable(b:vcs_type)
-	   call add(s:msg,'Guessing VCS: '. b:vcs_type)
-	   call add(s:msg,"Executable " . b:vcs_type . " not found! Aborting.")
-	   call add(s:msg,'You might want to set the g:changes_vcs_system variable to override!')
-	   throw "changes:abort"
-      endif
-      if !exists("s:temp_file")
-	  let s:temp_file=tempname()
-      endif
+	if get(s:vcs_cat, b:vcs_type, 'NONE') == 'NONE'
+	    call add(s:msg,"Don't know VCS " . b:vcs_type)
+	    call add(s:msg,"VCS check will be disabled for now.")
+	    let s:vcs=0
+	    throw 'changes:NoVCS'
+	endif
+	if !executable(b:vcs_type)
+	    call add(s:msg,'Guessing VCS: '. b:vcs_type)
+	    call add(s:msg,"Executable " . b:vcs_type . " not found! Aborting.")
+	    call add(s:msg,'You might want to set the g:changes_vcs_system variable to override!')
+	    throw "changes:abort"
+	endif
+	if !exists("s:temp_file")
+	    let s:temp_file=tempname()
+	endif
     endif
     let s:nodiff=0
 
