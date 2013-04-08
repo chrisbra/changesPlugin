@@ -51,105 +51,6 @@ fu! s:Check() "{{{1
     call s:DefineSigns()
 endfu
 
-fu! changes#WarningMsg() "{{{1
-    redraw!
-    if !empty(s:msg)
-	let msg=["Changes.vim: " . s:msg[0]] + s:msg[1:]
-	echohl WarningMsg
-	" s:echo_cmd might not yet exist
-	if !exists("s:echo_cmd")
-	    let s:echo_cmd = 'echomsg'
-	endif
-	for mess in msg
-	    exe s:echo_cmd "mess"
-	endfor
-
-	echohl Normal
-	let v:errmsg=msg[0]
-    endif
-endfu
-
-fu! changes#Output(force) "{{{1
-    if s:verbose || a:force
-	echohl Title
-	echo "Differences will be highlighted like this:"
-	echohl Normal
-	echo "========================================="
-	echohl DiffAdd
-	echo "+ Added Lines"
-	echohl DiffDelete
-	echo "- Deleted Lines"
-	echohl DiffChange
-	echo "* Changed Lines"
-	echohl Normal
-    endif
-endfu
-
-fu! changes#Init() "{{{1
-    " Message queue, that will be displayed.
-    let s:msg      = []
-    let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
-    let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
-    let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    :
-		\ (exists("s:verbose") ? s:verbose : 1))
-    " Check against a file in a vcs system
-    let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
-    let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
-    if !exists("s:vcs_cat")
-	let s:vcs_cat  = {'git': 'show HEAD:', 
-			 \'bzr': 'cat ', 
-			 \'cvs': '-q update -p ',
-			 \'svn': 'cat ',
-			 \'subversion': 'cat ',
-			 \'svk': 'cat ',
-			 \'hg': 'cat ',
-			 \'mercurial': 'cat '}
-    endif
-
-    " Settings for Version Control
-    if s:vcs
-      if get(s:vcs_cat, b:vcs_type, 'NONE') == 'NONE'
-	   call add(s:msg,"Don't know VCS " . b:vcs_type)
-	   call add(s:msg,"VCS check will be disabled for now.")
-	   let s:vcs=0
-	   throw 'changes:NoVCS'
-      endif
-      if !executable(b:vcs_type)
-	   call add(s:msg,'Guessing VCS: '. b:vcs_type)
-	   call add(s:msg,"Executable " . b:vcs_type . " not found! Aborting.")
-	   call add(s:msg,'You might want to set the g:changes_vcs_system variable to override!')
-	   throw "changes:abort"
-      endif
-      if !exists("s:temp_file")
-	  let s:temp_file=tempname()
-      endif
-    endif
-    let s:nodiff=0
-
-    let s:signs={}
-    let s:signs["add"] = "text=+ texthl=DiffAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
-    let s:signs["del"] = "text=- texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
-    let s:signs["ch"] = "text=* texthl=DiffChange " . ( (s:hl_lines) ? " linehl=DiffChange" : "")
-    let s:signs["dummy"] = "text=_ texthl=SignColumn "
-
-    " Only check the first time this file is loaded
-    " It should not be neccessary to check every time
-    if !exists("s:precheck")
-	try
-	    call s:Check()
-	catch
-	    " Rethrow exception
-	    throw v:exception
-	endtry
-	let s:precheck=1
-    endif
-
-    " Delete previously placed signs
-    call s:UnPlaceSigns(0)
-    "call s:DefineSigns() " already defined
-    call s:AuCmd(s:autocmd)
-endfu
-
 fu! s:AuCmd(arg) "{{{1
     if a:arg
 	augroup Changes
@@ -209,102 +110,6 @@ fu! s:UpdateView() "{{{1
 	let s:verbose=0
 	call changes#GetDiff(1)
     endif
-endfu
-
-fu! changes#GetDiff(arg, ...) "{{{1
-    " a:arg == 1 Create signs
-    " a:arg == 2 Show Overview Window
-    " a:arg == 3 Stay in diff mode
-    try
-	call changes#Init()
-    catch /^changes:/
-	let s:verbose = 0
-	call changes#WarningMsg()
-	return
-    endtry
-
-    if !filereadable(bufname(''))
-	call add(s:msg,"You've opened a new file so viewing changes is disabled until the file is saved (You have to reenable it if not using autocmd).")
-	let s:verbose = 0
-	call changes#WarningMsg()
-	return
-    endif
-
-    " Does not make sense to check an empty buffer
-    if empty(bufname(''))
-	call add(s:msg,"The buffer does not contain a name. Check aborted!")
-	let s:verbose = 0
-	return
-    endif
-
-    " Save some settings
-    " fdm, wrap, and fdc will be reset by :diffoff!
-    let o_lz   = &lz
-    let o_fdm  = &fdm
-    let o_fdc  = &fdc
-    let o_wrap = &wrap
-    " Lazy redraw
-    setl lz
-    " For some reason, getbufvar/setbufvar do not work, so
-    " we use a temporary script variable here
-    let s:temp = {'del': []}
-    let b:diffhl={'add': [], 'del': [], 'ch': []}
-    try
-	call s:MakeDiff(exists("a:1") ? a:1 : '')
-	call s:CheckLines(1)
-	call s:MoveToPrevWindow()
-	call s:CheckLines(0)
-	" Switch to other buffer and check for deleted lines
-	call s:MoveToPrevWindow()
-	let b:diffhl['del'] = s:temp['del']
-	call s:CheckDeletedLines()
-	" Check for empty dict of signs
-	if (empty(values(b:diffhl)[0]) && 
-	   \empty(values(b:diffhl)[1]) && 
-	   \empty(values(b:diffhl)[2]))
-	    call add(s:msg, 'No differences found!')
-	    let s:verbose=0
-	    let s:nodiff=1
-	else
-	    call s:PlaceSigns(b:diffhl)
-	endif
-	" Remove dummy sign
-	call s:PlaceSignDummy(0)
-	if a:arg !=? 3  || s:nodiff
-	    call s:DiffOff()
-	endif
-	" :diffoff resets some options (see :h :diffoff
-	" so we need to restore them here
-	" We don't reset the fdm, in case we are staying in diff mode
-	if a:arg != 3 || s:nodiff
-	    let &fdm=o_fdm
-	    if  o_fdc ==? 1
-		" When foldcolumn is 1, folds won't be shown because of
-		" the signs, so increasing its value by 1 so that folds will
-		" also be shown
-		let &fdc += 1
-	    else
-		let &fdc = o_fdc
-	    endif
-	    let &wrap = o_wrap
-	    let b:changes_view_enabled=1
-	endif
-	if a:arg ==# 2
-	   call s:ShowDifferentLines()
-	   let s:verbose=0
-	endif
-    catch /^changes/
-	call s:DiffOff()
-	let b:changes_view_enabled=0
-	let s:verbose = 0
-    finally
-	let &lz=o_lz
-	if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
-	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
-	endif
-	call changes#WarningMsg()
-	call changes#Output(0)
-    endtry
 endfu
 
 fu! s:PlaceSignDummy(place) "{{{1
@@ -432,32 +237,6 @@ fu! s:DiffOff() "{{{1
     q
 endfu
 
-fu! changes#CleanUp() "{{{1
-    " only delete signs, that have been set by this plugin
-    call s:UnPlaceSigns(1)
-    for key in keys(s:signs)
-	exe "sign undefine " key
-    endfor
-    if s:autocmd
-	call s:AuCmd(0)
-    endif
-endfu
-
-fu! changes#TCV() "{{{1
-    if  exists("b:changes_view_enabled") && b:changes_view_enabled
-        :DC
-	if exists("b:ofdc")
-	    let &fdc=b:ofdc
-	endif
-        let b:changes_view_enabled = 0
-        echo "Hiding changes since last save"
-    else
-	call changes#GetDiff(1)
-        let b:changes_view_enabled = 1
-        echo "Showing changes since last save"
-    endif
-endfunction
-
 fu! s:ShowDifferentLines() "{{{1
     redir => a
     silent sign place
@@ -539,5 +318,226 @@ fu! s:MoveToPrevWindow() "{{{1
 	noa wincmd w
     endif
 endfu
+fu! changes#WarningMsg() "{{{1
+    redraw!
+    if !empty(s:msg)
+	let msg=["Changes.vim: " . s:msg[0]] + s:msg[1:]
+	echohl WarningMsg
+	" s:echo_cmd might not yet exist
+	if !exists("s:echo_cmd")
+	    let s:echo_cmd = 'echomsg'
+	endif
+	for mess in msg
+	    exe s:echo_cmd "mess"
+	endfor
+
+	echohl Normal
+	let v:errmsg=msg[0]
+    endif
+endfu
+
+fu! changes#Output(force) "{{{1
+    if s:verbose || a:force
+	echohl Title
+	echo "Differences will be highlighted like this:"
+	echohl Normal
+	echo "========================================="
+	echohl DiffAdd
+	echo "+ Added Lines"
+	echohl DiffDelete
+	echo "- Deleted Lines"
+	echohl DiffChange
+	echo "* Changed Lines"
+	echohl Normal
+    endif
+endfu
+
+fu! changes#Init() "{{{1
+    " Message queue, that will be displayed.
+    let s:msg      = []
+    let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
+    let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
+    let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    :
+		\ (exists("s:verbose") ? s:verbose : 1))
+    " Check against a file in a vcs system
+    let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
+    let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
+    if !exists("s:vcs_cat")
+	let s:vcs_cat  = {'git': 'show HEAD:', 
+			 \'bzr': 'cat ', 
+			 \'cvs': '-q update -p ',
+			 \'svn': 'cat ',
+			 \'subversion': 'cat ',
+			 \'svk': 'cat ',
+			 \'hg': 'cat ',
+			 \'mercurial': 'cat '}
+    endif
+
+    " Settings for Version Control
+    if s:vcs
+      if get(s:vcs_cat, b:vcs_type, 'NONE') == 'NONE'
+	   call add(s:msg,"Don't know VCS " . b:vcs_type)
+	   call add(s:msg,"VCS check will be disabled for now.")
+	   let s:vcs=0
+	   throw 'changes:NoVCS'
+      endif
+      if !executable(b:vcs_type)
+	   call add(s:msg,'Guessing VCS: '. b:vcs_type)
+	   call add(s:msg,"Executable " . b:vcs_type . " not found! Aborting.")
+	   call add(s:msg,'You might want to set the g:changes_vcs_system variable to override!')
+	   throw "changes:abort"
+      endif
+      if !exists("s:temp_file")
+	  let s:temp_file=tempname()
+      endif
+    endif
+    let s:nodiff=0
+
+    let s:signs={}
+    let s:signs["add"] = "text=+ texthl=DiffAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
+    let s:signs["del"] = "text=- texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
+    let s:signs["ch"] = "text=* texthl=DiffChange " . ( (s:hl_lines) ? " linehl=DiffChange" : "")
+    let s:signs["dummy"] = "text=_ texthl=SignColumn "
+
+    " Only check the first time this file is loaded
+    " It should not be neccessary to check every time
+    if !exists("s:precheck")
+	try
+	    call s:Check()
+	catch
+	    " Rethrow exception
+	    throw v:exception
+	endtry
+	let s:precheck=1
+    endif
+
+    " Delete previously placed signs
+    call s:UnPlaceSigns(0)
+    "call s:DefineSigns() " already defined
+    call s:AuCmd(s:autocmd)
+endfu
+
+fu! changes#CleanUp() "{{{1
+    " only delete signs, that have been set by this plugin
+    call s:UnPlaceSigns(1)
+    for key in keys(s:signs)
+	exe "sign undefine " key
+    endfor
+    if s:autocmd
+	call s:AuCmd(0)
+    endif
+endfu
+
+fu! changes#TCV() "{{{1
+    if  exists("b:changes_view_enabled") && b:changes_view_enabled
+        :DC
+	if exists("b:ofdc")
+	    let &fdc=b:ofdc
+	endif
+        let b:changes_view_enabled = 0
+        echo "Hiding changes since last save"
+    else
+	call changes#GetDiff(1)
+        let b:changes_view_enabled = 1
+        echo "Showing changes since last save"
+    endif
+endfunction
+
+fu! changes#GetDiff(arg, ...) "{{{1
+    " a:arg == 1 Create signs
+    " a:arg == 2 Show Overview Window
+    " a:arg == 3 Stay in diff mode
+    try
+	call changes#Init()
+    catch /^changes:/
+	let s:verbose = 0
+	call changes#WarningMsg()
+	return
+    endtry
+
+    if !filereadable(bufname(''))
+	call add(s:msg,"You've opened a new file so viewing changes is disabled until the file is saved (You have to reenable it if not using autocmd).")
+	let s:verbose = 0
+	call changes#WarningMsg()
+	return
+    endif
+
+    " Does not make sense to check an empty buffer
+    if empty(bufname(''))
+	call add(s:msg,"The buffer does not contain a name. Check aborted!")
+	let s:verbose = 0
+	return
+    endif
+
+    " Save some settings
+    " fdm, wrap, and fdc will be reset by :diffoff!
+    let o_lz   = &lz
+    let o_fdm  = &fdm
+    let o_fdc  = &fdc
+    let o_wrap = &wrap
+    " Lazy redraw
+    setl lz
+    " For some reason, getbufvar/setbufvar do not work, so
+    " we use a temporary script variable here
+    let s:temp = {'del': []}
+    let b:diffhl={'add': [], 'del': [], 'ch': []}
+    try
+	call s:MakeDiff(exists("a:1") ? a:1 : '')
+	call s:CheckLines(1)
+	call s:MoveToPrevWindow()
+	call s:CheckLines(0)
+	" Switch to other buffer and check for deleted lines
+	call s:MoveToPrevWindow()
+	let b:diffhl['del'] = s:temp['del']
+	call s:CheckDeletedLines()
+	" Check for empty dict of signs
+	if (empty(values(b:diffhl)[0]) && 
+	   \empty(values(b:diffhl)[1]) && 
+	   \empty(values(b:diffhl)[2]))
+	    call add(s:msg, 'No differences found!')
+	    let s:verbose=0
+	    let s:nodiff=1
+	else
+	    call s:PlaceSigns(b:diffhl)
+	endif
+	" Remove dummy sign
+	call s:PlaceSignDummy(0)
+	if a:arg !=? 3  || s:nodiff
+	    call s:DiffOff()
+	endif
+	" :diffoff resets some options (see :h :diffoff
+	" so we need to restore them here
+	" We don't reset the fdm, in case we are staying in diff mode
+	if a:arg != 3 || s:nodiff
+	    let &fdm=o_fdm
+	    if  o_fdc ==? 1
+		" When foldcolumn is 1, folds won't be shown because of
+		" the signs, so increasing its value by 1 so that folds will
+		" also be shown
+		let &fdc += 1
+	    else
+		let &fdc = o_fdc
+	    endif
+	    let &wrap = o_wrap
+	    let b:changes_view_enabled=1
+	endif
+	if a:arg ==# 2
+	   call s:ShowDifferentLines()
+	   let s:verbose=0
+	endif
+    catch /^changes/
+	call s:DiffOff()
+	let b:changes_view_enabled=0
+	let s:verbose = 0
+    finally
+	let &lz=o_lz
+	if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
+	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
+	endif
+	call changes#WarningMsg()
+	call changes#Output(0)
+    endtry
+endfu
+
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
