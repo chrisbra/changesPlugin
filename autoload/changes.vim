@@ -137,9 +137,6 @@ fu! s:PlaceSigns(dict) "{{{1
 endfu
 
 fu! s:UnPlaceSigns(force) "{{{1
-    if !a:force
-	call s:PlaceSignDummy(1)
-    endif
     redir => a
     silent sign place
     redir end
@@ -362,7 +359,7 @@ fu! changes#Init() "{{{1
     let s:msg      = []
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
     let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
-    " display Usage message
+    " S
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    :
 		\ (exists("s:verbose") ? s:verbose : &vbs))
     " Check against a file in a vcs system
@@ -455,6 +452,7 @@ fu! changes#GetDiff(arg, ...) "{{{1
     " a:arg == 3 Stay in diff mode
     try
 	call changes#Init()
+	call s:PlaceSignDummy(1)
     catch /^changes:/
 	let s:verbose = 0
 	call changes#WarningMsg()
@@ -462,7 +460,9 @@ fu! changes#GetDiff(arg, ...) "{{{1
     endtry
 
     if !filereadable(bufname(''))
-	call add(s:msg,"You've opened a new file so viewing changes is disabled until the file is saved (You have to reenable it if not using autocmd).")
+	call add(s:msg,"You've opened a new file so viewing changes ".
+	    \ "is disabled until the file is saved ".
+	    \ "(You have to reenable it if not using autocmd).")
 	let s:verbose = 0
 	call changes#WarningMsg()
 	return
