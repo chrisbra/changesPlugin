@@ -362,8 +362,9 @@ fu! changes#Init() "{{{1
     let s:msg      = []
     let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
     let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
+    " display Usage message
     let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    :
-		\ (exists("s:verbose") ? s:verbose : 1))
+		\ (exists("s:verbose") ? s:verbose : &vbs))
     " Check against a file in a vcs system
     let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
     let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
@@ -505,8 +506,6 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	else
 	    call s:PlaceSigns(b:diffhl)
 	endif
-	" Remove dummy sign
-	call s:PlaceSignDummy(0)
 	if a:arg !=? 3  || s:nodiff
 	    call s:DiffOff()
 	endif
@@ -539,6 +538,8 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
 	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
 	endif
+	" remove dummy sign
+	call s:PlaceSignDummy(0)
 	call changes#WarningMsg()
 	call changes#Output(0)
     endtry
