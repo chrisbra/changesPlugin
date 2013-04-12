@@ -181,6 +181,9 @@ fu! s:MakeDiff(...) "{{{1
 		let git_rep_p = ' '
 	    endif
 	    exe ':silent !' vcs s:vcs_cat[vcs] .  git_rep_p . expand("#") '>' s:temp_file
+	    if v:shell_error
+		throw "changes:abort"
+	    endif
 	    let fsize=getfsize(s:temp_file)
 	    if fsize == 0
 		call delete(s:temp_file)
@@ -226,9 +229,9 @@ fu! s:ReturnGitRepPath() "{{{1
 endfu
 
 fu! s:DiffOff() "{{{1
-    if !&diff
-	return
-    endif
+"    if !&diff
+"	return
+"    endif
     " Turn off Diff Mode and close buffer
     call s:MoveToPrevWindow()
     diffoff!
