@@ -152,11 +152,10 @@ fu! s:UnPlaceSigns(force) "{{{1
     endfor
 endfu
 
+
 fu! s:MakeDiff(...) "{{{1
     " Get diff for current buffer with original
     let o_pwd = getcwd()
-    let _lz = &lz
-    set lazyredraw
     let bnr = bufnr('%')
     let ft  = &l:ft
     noa vert new
@@ -169,7 +168,7 @@ fu! s:MakeDiff(...) "{{{1
 	try
 	    if vcs == 'git'
 		let git_rep_p = s:ReturnGitRepPath()
-		exe 'cd' git_rep_p
+		exe 'lcd' git_rep_p
 		let git_rep_p = ''
 	    elseif vcs == 'cvs'
 		" I am not sure, if this is the best way
@@ -205,7 +204,6 @@ fu! s:MakeDiff(...) "{{{1
     if s:vcs && exists("vcs") && vcs=='cvs'
 	exe "cd "  o_pwd
     endif
-    let &lz = _lz
 endfu
 
 fu! s:ReturnGitRepPath() "{{{1
@@ -228,6 +226,9 @@ fu! s:ReturnGitRepPath() "{{{1
 endfu
 
 fu! s:DiffOff() "{{{1
+    if !&diff
+	return
+    endif
     " Turn off Diff Mode and close buffer
     call s:MoveToPrevWindow()
     diffoff!
@@ -450,30 +451,6 @@ fu! changes#GetDiff(arg, ...) "{{{1
     " a:arg == 1 Create signs
     " a:arg == 2 Show Overview Window
     " a:arg == 3 Stay in diff mode
-    try
-	call changes#Init()
-	call s:PlaceSignDummy(1)
-    catch /^changes:/
-	let s:verbose = 0
-	call changes#WarningMsg()
-	return
-    endtry
-
-    if !filereadable(bufname(''))
-	call add(s:msg,"You've opened a new file so viewing changes ".
-	    \ "is disabled until the file is saved ".
-	    \ "(You have to reenable it if not using autocmd).")
-	let s:verbose = 0
-	call changes#WarningMsg()
-	return
-    endif
-
-    " Does not make sense to check an empty buffer
-    if empty(bufname(''))
-	call add(s:msg,"The buffer does not contain a name. Check aborted!")
-	let s:verbose = 0
-	return
-    endif
 
     " Save some settings
     " fdm, wrap, and fdc will be reset by :diffoff!
@@ -483,11 +460,31 @@ fu! changes#GetDiff(arg, ...) "{{{1
     let o_wrap = &wrap
     " Lazy redraw
     setl lz
-    " For some reason, getbufvar/setbufvar do not work, so
-    " we use a temporary script variable here
-    let s:temp = {'del': []}
-    let b:diffhl={'add': [], 'del': [], 'ch': []}
+
     try
+	call changes#Init()
+	call s:PlaceSignDummy(1)
+
+	if !filereadable(bufname(''))
+	    call add(s:msg,"You've opened a new file so viewing changes ".
+		\ "is disabled until the file is saved ".
+		\ "(You have to reenable it if not using autocmd).")
+	    let s:verbose = 0
+	    call changes#WarningMsg()
+	    return
+	endif
+
+	" Does not make sense to check an empty buffer
+	if empty(bufname(''))
+	    call add(s:msg,"The buffer does not contain a name. Check aborted!")
+	    let s:verbose = 0
+	    return
+	endif
+
+	" For some reason, getbufvar/setbufvar do not work, so
+	" we use a temporary script variable here
+	let s:temp = {'del': []}
+	let b:diffhl={'add': [], 'del': [], 'ch': []}
 	call s:MakeDiff(exists("a:1") ? a:1 : '')
 	call s:CheckLines(1)
 	call s:MoveToPrevWindow()
@@ -514,7 +511,7 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	" We don't reset the fdm, in case we are staying in diff mode
 	if a:arg != 3 || s:nodiff
 	    let &fdm=o_fdm
-	    if  o_fdc ==? 1
+	    if  o_fdc == 1
 		" When foldcolumn is 1, folds won't be shown because of
 		" the signs, so increasing its value by 1 so that folds will
 		" also be shown
