@@ -3,7 +3,6 @@
 " Version:  0.13
 " Authors:  Christian Brabandt <cb@256bit.org>
 " Last Change: Sat, 16 Feb 2013 23:17:36 +0100
-
 " Script:  http://www.vim.org/scripts/script.php?script_id=3052
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
@@ -180,7 +179,7 @@ fu! s:MakeDiff(...) "{{{1
 	    else
 		let git_rep_p = ' '
 	    endif
-	    exe ':silent !' vcs s:vcs_cat[vcs] .  git_rep_p . expand("#") '>' s:temp_file
+	    call system(vcs . ' '. s:vcs_cat[vcs] .  git_rep_p . expand("#") . '>'.  s:temp_file)
 	    if v:shell_error
 		throw "changes:abort"
 	    endif
@@ -192,12 +191,18 @@ fu! s:MakeDiff(...) "{{{1
 		throw "changes:abort"
 	    endif
 	    exe ':r' s:temp_file
-	    call delete(s:temp_file)
         catch /^changes: No git Repository found/
 	    call add(s:msg,"Unable to find git Top level repository.")
 	    echo v:errmsg
 	    call s:MoveToPrevWindow()
 	    throw "changes:abort"
+	catch
+	    if bufnr('%') != bnr
+		call s:MoveToPrevWindow()
+	    endif
+	    throw "changes:abort"
+	finally
+	    call delete(s:temp_file)
 	endtry
     endif
     0d_
