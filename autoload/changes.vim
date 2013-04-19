@@ -160,7 +160,7 @@ fu! s:MakeDiff(...) "{{{1
     noa vert new
     set bt=nofile
     if !s:vcs
-	exe "r " (exists("a:1") && !empty(a:1) ? a:1 : '#')
+	exe ":silent :r " (exists("a:1") && !empty(a:1) ? a:1 : '#')
 	let &l:ft=ft
     else
 	let vcs=getbufvar(bnr, 'vcs_type')
@@ -190,7 +190,7 @@ fu! s:MakeDiff(...) "{{{1
 		call s:MoveToPrevWindow()
 		throw "changes:abort"
 	    endif
-	    exe ':r' s:temp_file
+	    exe ':silent :r' s:temp_file
         catch /^changes: No git Repository found/
 	    call add(s:msg,"Unable to find git Top level repository.")
 	    echo v:errmsg
