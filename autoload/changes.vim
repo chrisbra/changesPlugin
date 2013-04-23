@@ -466,6 +466,7 @@ fu! changes#GetDiff(arg, ...) "{{{1
     let o_fdm  = &fdm
     let o_fdc  = &fdc
     let o_wrap = &wrap
+    let _wsv   = winsaveview()
     " Lazy redraw
     setl lz
 
@@ -547,6 +548,7 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	call s:PlaceSignDummy(0)
 	call changes#WarningMsg()
 	call changes#Output(0)
+	call winrestview(_wsv)
     endtry
 endfu
 
