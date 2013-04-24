@@ -108,6 +108,7 @@ fu! s:UpdateView() "{{{1
 	" Turn off displaying the Caption
 	let s:verbose=0
 	call changes#GetDiff(1)
+	let b:changes_chg_tick = b:changedtick
     endif
 endfu
 
@@ -159,6 +160,7 @@ fu! s:MakeDiff(...) "{{{1
     let ft  = &l:ft
     noa vert new
     set bt=nofile
+    let scratchbuf = bufnr('')
     if !s:vcs
 	exe ":silent :r " (exists("a:1") && !empty(a:1) ? a:1 : '#')
 	let &l:ft=ft
@@ -212,6 +214,7 @@ fu! s:MakeDiff(...) "{{{1
     if s:vcs && exists("vcs") && vcs=='cvs'
 	exe "cd "  o_pwd
     endif
+    return scratchbuf
 endfu
 
 fu! s:ReturnGitRepPath() "{{{1
@@ -494,11 +497,11 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	" we use a temporary script variable here
 	let s:temp = {'del': []}
 	let b:diffhl={'add': [], 'del': [], 'ch': []}
-	call s:MakeDiff(exists("a:1") ? a:1 : '')
+	let scratchbuf = s:MakeDiff(exists("a:1") ? a:1 : '')
 	call s:CheckLines(1)
 	call s:MoveToPrevWindow()
 	call s:CheckLines(0)
-	" Switch to other buffer and check for deleted lines
+	" Switch to scratch buffer and check for deleted lines
 	call s:MoveToPrevWindow()
 	let b:diffhl['del'] = s:temp['del']
 	call s:CheckDeletedLines()
@@ -540,6 +543,7 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	let b:changes_view_enabled=0
 	let s:verbose = 0
     finally
+	exe "bw" scratchbuf
 	let &lz=o_lz
 	if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
 	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
