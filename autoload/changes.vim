@@ -472,6 +472,7 @@ fu! changes#GetDiff(arg, ...) "{{{1
     let _wsv   = winsaveview()
     " Lazy redraw
     setl lz
+    let scratchbuf = 0
 
     try
 	call changes#Init()
@@ -543,7 +544,9 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	let b:changes_view_enabled=0
 	let s:verbose = 0
     finally
-	exe "bw" scratchbuf
+	if scratchbuf
+	    exe "bw" scratchbuf
+	endif
 	let &lz=o_lz
 	if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
 	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
