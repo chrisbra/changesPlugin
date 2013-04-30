@@ -242,7 +242,9 @@ fu! s:DiffOff() "{{{1
 "    endif
     " Turn off Diff Mode and close buffer
     call s:MoveToPrevWindow()
-    diffoff!
+    " Don't turn off diff mode, this would disable diffmode in other windows
+    " leave it alone, it will get closed anyhow!
+"   diffoff!
     q
 endfu
 
@@ -465,10 +467,7 @@ fu! changes#GetDiff(arg, ...) "{{{1
 
     " Save some settings
     " fdm, wrap, and fdc will be reset by :diffoff!
-    let o_lz   = &lz
-    let o_fdm  = &fdm
-    let o_fdc  = &fdc
-    let o_wrap = &wrap
+    let _settings = [ &lz, &fdm, &fdc, &wrap, &diff ]
     let _wsv   = winsaveview()
     " Lazy redraw
     setl lz
@@ -523,16 +522,12 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	" so we need to restore them here
 	" We don't reset the fdm, in case we are staying in diff mode
 	if a:arg != 3 || s:nodiff
-	    let &fdm=o_fdm
-	    if  o_fdc == 1
+	    if  _settings[2] == 1
 		" When foldcolumn is 1, folds won't be shown because of
 		" the signs, so increasing its value by 1 so that folds will
 		" also be shown
-		let &fdc += 1
-	    else
-		let &fdc = o_fdc
+		let _settings[2] += 1
 	    endif
-	    let &wrap = o_wrap
 	    let b:changes_view_enabled=1
 	endif
 	if a:arg ==# 2
@@ -547,7 +542,6 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	if scratchbuf
 	    exe "bw" scratchbuf
 	endif
-	let &lz=o_lz
 	if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
 	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
 	endif
@@ -555,6 +549,8 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	call s:PlaceSignDummy(0)
 	call changes#WarningMsg()
 	call changes#Output(0)
+	let [ &lz, &fdm, &fdc, &wrap, &diff ] = _settings
+	norm! zv
 	call winrestview(_wsv)
     endtry
 endfu
