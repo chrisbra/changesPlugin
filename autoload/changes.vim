@@ -588,7 +588,7 @@ endfu
 
 fu! changes#TCV() "{{{1
     if  exists("b:changes_view_enabled") && b:changes_view_enabled
-        :DC
+	call s:UnPlaceSigns(1)
 	if exists("b:ofdc")
 	    let &fdc=b:ofdc
 	endif
