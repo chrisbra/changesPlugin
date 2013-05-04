@@ -579,7 +579,7 @@ fu! changes#CleanUp() "{{{1
     " only delete signs, that have been set by this plugin
     call s:UnPlaceSigns(1)
     for key in keys(s:signs)
-	exe "sign undefine " key
+	exe "sil! sign undefine " key
     endfor
     if s:autocmd
 	call s:AuCmd(0)
