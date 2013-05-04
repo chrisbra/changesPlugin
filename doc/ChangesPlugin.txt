@@ -80,7 +80,7 @@ or alternatively: >
      :TCV
 to toggle the display of indicator bars.
 
-                                                     *:CC* *:ChangesCpation*
+                                                     *:CC* *:ChangesCaption*
 You are probably wondering, what those strange looking signs mean. You can use
 either >
     :CC
@@ -124,9 +124,9 @@ By default, ChangesPlugin.vim will only indicate a change in the first column.
 Setting g:changes_hl_lines to 1 will highlight the whole line. By default this
 variable is unset (which is the same as setting it to 0).
 If you'd like to have this, set this variable in your |.vimrc| >
+
     :let g:changes_hl_lines=1
 <
-
                                                         *ChangesPlugin-aucmd*
 3.2 Auto-refresh the changes
 
@@ -146,7 +146,9 @@ it won't update the view.
 By default, whenever you run |:EnableChanges|, changesVim will print a short
 status message, what each sign means. If you don't want this, put this in your
 |.vimrc| >
+
     :let g:changes_verbose=0
+
 and achangesPlugin won't display this message again. You can always issue the
 |CL| command to find out, what each sign means.
                                                         *ChangesPlugin-colors*
@@ -178,11 +180,14 @@ this version.
 
 Currently, ChangesPlugin supports these VCS Systems:
     - git
+    - hg
+    - svn
     - cvs
     - bzr
-    - svn
+    - darcs
+    - fossil
     - svk
-    - hg
+    - RCS
 
 To enable this feature, you need to set the variable g:changes_vcs_check to
 1. ChangesPlugin will then try to auto-detect, which of the above supported
@@ -194,6 +199,7 @@ g:changes_vcs_system Variable.
 To enable this feature, you need to set the g:changes_vcs_check variable to 1.
 The following example enables this feature and ensures, EnablePlugin is using
 git as VCS, so these lines have been entered in the |.vimrc| >
+
     :let g:changes_vcs_check=1
     :let g:changes_vcs_system='git'
 
@@ -226,6 +232,9 @@ third line of this document.
                         BF: Exception not caught (reported by Marco, thanks!)
                         BF: Prevent flickering by resetting SignColumn on
                         updates (reported by Marco, thanks!)
+                        BF: parse diff output instead of relying on vimdiff
+                        and parsing the syntax items (prevents flickering
+                        since no window needs to be split)
     0.13: Feb 16, 2013:
                         BF: Plugin used :EnableDisplayChanges, but
                         documentation talked about EnableChanges
