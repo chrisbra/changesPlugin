@@ -214,8 +214,8 @@ fu! s:MakeDiff_new(file) "{{{1
 	    throw "changes:abort"
 	endif
 	if getfsize(s:diff_out) == 0
-	    call add(s:msg,"Couldn't get VCS output, aborting")
-	    throw "changes:abort"
+	    call add(s:msg,"No differences found!")
+	    return
 	endif
 	call s:ParseDiffOutput(s:diff_out)
     finally
