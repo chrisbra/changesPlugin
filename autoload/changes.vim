@@ -53,14 +53,15 @@ endfu
 fu! s:AuCmd(arg) "{{{1
     if a:arg
 	augroup Changes
-		autocmd!
-		let s:verbose=0
-		au InsertLeave,CursorHold * :call s:UpdateView()
+	    autocmd!
+	    let s:verbose=0
+	    au InsertLeave,CursorHold * :call s:UpdateView()
 	augroup END
     else
 	augroup Changes
-		autocmd!
+	    autocmd!
 	augroup END
+	augroup! Changes
     endif
 endfu
 
@@ -113,8 +114,22 @@ fu! s:UpdateView() "{{{1
 endfu
 
 fu! s:PlaceSignDummy(place) "{{{1
+    " could be called, without init calling first, so thta s:sign_prefix might
+    " not be defined yet. In that case, there can't be a dummy being defined
+    " yet!
+    if !exists("s:sign_prefix")
+	return
+    endif
     if a:place
-	exe "sign place " s:sign_prefix.'0 line=1 name=dummy buffer='. bufnr('')
+	redir => a
+	    silent sign place
+	redir end
+	let b=split(a,"\n")
+	let b=filter(b, 'v:val =~ "id=".s:sign_prefix')
+	if !empty(b)
+	    " only place signs, if signs have been defined
+	    exe "sign place " s:sign_prefix.'0 line=1 name=dummy buffer='. bufnr('')
+	endif
     else
 	exe "sign unplace " s:sign_prefix.'0'
     endif
@@ -125,11 +140,11 @@ fu! s:PlaceSigns(dict) "{{{1
 	for item in lines
 	    " One special case could occur:
 	    " You could delete the last lines. In that case, we couldn't place
-	    " here the deletion marks. If this happens, palce the deletion
+	    " here the deletion marks. If this happens, place the deletion
 	    " marks on the last line
-	    "if item > line('$')
-	"	let item=line('$')
-	"    endif
+	    if item > line('$')
+		let item=line('$')
+	    endif
 	    exe "sign place " s:sign_prefix . item . " line=" . item .
 		\ " name=" . id . " buffer=" . bufnr('')
 	endfor
@@ -152,8 +167,68 @@ fu! s:UnPlaceSigns(force) "{{{1
     endfor
 endfu
 
+fu! s:MakeDiff_new(file) "{{{1
+    " Parse Diff output and place signs
+    " Needs unified diff output
+    try
+	let _pwd = getcwd()
+	exe ":sil noa :w" s:diff_in_cur
+	if !s:vcs || !empty(a:file)
+	    let file = !empty(a:file) ? a:file : bufname('')
+	    if empty(file)
+		throw "changes:abort"
+	    endif
+	    if !s:Is('unix')
+		call system("copy ". shellescape(file). " ". s:diff_in_old)
+	    else
+		call system("cp -- ". shellescape(file). " ". s:diff_in_old)
+	    endif
+	    if v:shell_error
+		throw "changes:abort"
+	    endif
+	    "exe ':sil !diff -u '.  shellescape(bufname(''),1). ' '. s:diff_in_cur. '>' s:diff_out
+	else
+	    if b:vcs_type == 'git'
+		let git_rep_p = s:ReturnGitRepPath()
+		exe 'lcd' git_rep_p
+	    elseif b:vcs_type == 'cvs'
+		" I am not sure, if this is the best way
+		" to query CVS. But just to make sure, 
+		" we are in the right path and we don't have
+		" to consider CVSROOT
+		exe 'lcd' fnamemodify(expand('%'), ':p:h')
+	    endif
+	    let cmd = printf(":sil !%s %s%s > %s", (b:vcs_type==?'rcs'?'':b:vcs_type),
+			\ s:vcs_cat[b:vcs_type], shellescape(expand('%')),
+			\ s:diff_in_old)
+	    exe cmd
+	    if v:shell_error
+		throw "changes:abort"
+	    endif
+	endif
+	let cmd = printf(":sil !diff -a -U0 -N %s %s > %s", 
+	    \ s:diff_in_old, s:diff_in_cur, s:diff_out)
+	exe cmd
+	if v:shell_error >= 2 || v:shell_error < 0
+	    " diff returns 2 on errors
+	    throw "changes:abort"
+	endif
+	if getfsize(s:diff_out) == 0
+	    call add(s:msg,"Couldn't get VCS output, aborting")
+	    throw "changes:abort"
+	endif
+	call s:ParseDiffOutput(s:diff_out)
+    finally
+	for file in [s:diff_in_cur, s:diff_in_old, s:diff_out]
+	    call delete(file)
+	endfor
+	exe 'lcd' _pwd
+    endtry
+endfu
 
 fu! s:MakeDiff(...) "{{{1
+    " Old version, only needed, when GetDiff(3) is called (or argument 1 is
+    " non-empty)
     " Get diff for current buffer with original
     let o_pwd = getcwd()
     let bnr = bufnr('%')
@@ -170,56 +245,93 @@ fu! s:MakeDiff(...) "{{{1
 	    if vcs == 'git'
 		let git_rep_p = s:ReturnGitRepPath()
 		exe 'lcd' git_rep_p
-		let git_rep_p = ''
 	    elseif vcs == 'cvs'
 		" I am not sure, if this is the best way
 		" to query CVS. But just to make sure, 
 		" we are in the right path and we don't have
 		" to consider CVSROOT
 		exe 'lcd' fnamemodify(expand('#'), ':p:h')
-		let git_rep_p = ' '
-	    else
-		let git_rep_p = ' '
 	    endif
-	    call system(vcs . ' '. s:vcs_cat[vcs] .  git_rep_p . expand("#") . '>'.  s:temp_file)
+	    call system((vcs==?'rcs'?'':vcs) . ' '. s:vcs_cat[vcs] .  expand("#") . '>'.  s:diff_out)
 	    if v:shell_error
 		throw "changes:abort"
 	    endif
-	    let fsize=getfsize(s:temp_file)
+	    let fsize=getfsize(s:diff_out)
 	    if fsize == 0
-		call delete(s:temp_file)
+		call delete(s:diff_out)
 		call add(s:msg,"Couldn't get VCS output, aborting")
-		call s:MoveToPrevWindow()
+		"call s:MoveToPrevWindow()
+		exe "noa" bufwinnr(bnr) "wincmd w"
 		throw "changes:abort"
 	    endif
-	    exe ':silent :r' s:temp_file
+	    exe ':silent :r' s:diff_out
         catch /^changes: No git Repository found/
 	    call add(s:msg,"Unable to find git Top level repository.")
 	    echo v:errmsg
-	    call s:MoveToPrevWindow()
+	    exe "noa" bufwinnr(bnr) "wincmd w"
 	    throw "changes:abort"
 	catch
 	    if bufnr('%') != bnr
-		call s:MoveToPrevWindow()
+		"call s:MoveToPrevWindow()
+		exe "noa" bufwinnr(bnr) "wincmd w"
 	    endif
 	    throw "changes:abort"
 	finally
-	    call delete(s:temp_file)
+	    call delete(s:diff_out)
 	endtry
     endif
     0d_
     diffthis
-    call s:MoveToPrevWindow()
+    exe "noa" bufwinnr(bnr) "wincmd w"
     diffthis
-    if s:vcs && exists("vcs") && vcs=='cvs'
-	exe "cd "  o_pwd
-    endif
+    exe "lcd "  o_pwd
     return scratchbuf
+endfu
+
+fu! s:ParseDiffOutput(file) "{{{1
+    for line in filter(readfile(a:file), 'v:val=~''^@@''')
+	let submatch = matchlist(line, '@@ -\(\d\+\),\?\(\d*\) +\(\d\+\),\?\(\d*\) @@')
+
+	if empty(submatch)
+	    " There was probably an error, skip parsing now
+	    return
+	else
+	    let old_line = submatch[1] + 0
+	    let old_count = (empty(submatch[2]) ? 1 : submatch[2]) + 0
+	    let new_line = submatch[3] + 0
+	    let new_count = (empty(submatch[4]) ? 1 : submatch[4]) + 0
+	endif
+
+	" Line added
+	if old_count == 0 && new_count > 0
+	    let b:diffhl.add += range(new_line, new_line + new_count - 1)
+	elseif old_count > 0 && new_count == 0
+	    if new_line == 0
+		let new_line = 1
+	    endif
+	    let b:diffhl.del += range(new_line, new_line + old_count - 1)
+	" Line changed
+	elseif old_count >= new_count
+	    let b:diffhl.ch += range(new_line, new_line + new_count - 1)
+	else
+	    let b:diffhl.ch += range(new_line, new_line + old_count - 1)
+	    let b:diffhl.add += range(new_line, new_line + new_count - 1)
+	endif
+    endfor
 endfu
 
 fu! s:ReturnGitRepPath() "{{{1
     " return the top level of the repository path. This is needed, so
     " git show will correctly return the file
+    "exe 'lcd' fnamemodify(expand('%'), ':h')
+    let git_path = system('git rev-parse --git-dir')
+    if !v:shell_error
+	" we need the directory right above the .git metatdata directory
+	return git_path[:-2].'/..'
+    else
+	return ''
+    endif
+    " OLD....
     let file  =  fnamemodify(expand("#"), ':p')
     let path  =  fnamemodify(file, ':h')
     let dir   =  finddir('.git',path.';')
@@ -236,18 +348,6 @@ fu! s:ReturnGitRepPath() "{{{1
     endif
 endfu
 
-fu! s:DiffOff() "{{{1
-"    if !&diff
-"	return
-"    endif
-    " Turn off Diff Mode and close buffer
-    call s:MoveToPrevWindow()
-    " Don't turn off diff mode, this would disable diffmode in other windows
-    " leave it alone, it will get closed anyhow!
-"   diffoff!
-    q
-endfu
-
 fu! s:ShowDifferentLines() "{{{1
     redir => a
     silent sign place
@@ -257,7 +357,7 @@ fu! s:ShowDifferentLines() "{{{1
     let b=map(b, 'matchstr(v:val, ''line=\zs\d\+'')')
     let b=map(b, '''\%(^\%''.v:val.''l\)''')
     if !empty(b)
-	exe ":silent! lvimgrep /".join(b, '\|').'/gj' expand("%")
+	exe ":silent! lvimgrep /".join(b, '\|').'/gj %'
 	lw
     else
 	" This should not happen!
@@ -269,7 +369,8 @@ endfun
 fu! s:GuessVCSSystem() "{{{1
     " Check global config variable
     if exists("g:changes_vcs_system")
-	let vcs=matchstr(g:changes_vcs_system, '\(git\)\|\(hg\)\|\(bzr\)\|\(svk\)\|\(cvs\)\|\(svn\)')
+	let vcs=matchstr(g:changes_vcs_system, '\c\(git\)\|\(hg\)\|\(bzr\)\|\(svk\)\|\(cvs\)\|\(svn\)'.
+		    \ '\|\(subversion\)\|\(mercurial\)\|\(rcs\)\|\(fossil\)\|\(darcs\)')
 	if vcs
 	    return vcs
 	endif
@@ -287,6 +388,12 @@ fu! s:GuessVCSSystem() "{{{1
 	return 'svn'
     elseif !empty(finddir('.bzr',path.';'))
 	return 'bzr'
+    elseif !empty(findfile('_FOSSIL_', path.';'))
+	return 'fossil'
+    elseif !empty(finddir('_darcs', path.';'))
+	return 'darcs'
+    elseif !empty(finddir('RCS', path.';'))
+	return 'rcs'
     " Is this correct for svk?
     elseif !empty(finddir('.svn',path.';'))
 	return 'svk'
@@ -330,6 +437,17 @@ fu! s:MoveToPrevWindow() "{{{1
 	noa wincmd w
     endif
 endfu
+
+fu! s:Is(os) "{{{1
+    if (a:os == "win")
+        return has("win32") || has("win16") || has("win64")
+    elseif (a:os == "mac")
+        return has("mac") || has("macunix")
+    elseif (a:os == "unix")
+        return has("unix") || has("macunix")
+    endif
+endfu
+
 fu! changes#WarningMsg() "{{{1
     if !&vbs
 	" Set verbose to 1 to have messages displayed!
@@ -371,24 +489,45 @@ endfu
 fu! changes#Init() "{{{1
     " Message queue, that will be displayed.
     let s:msg      = []
-    let s:hl_lines = (exists("g:changes_hl_lines")  ? g:changes_hl_lines   : 0)
-    let s:autocmd  = (exists("g:changes_autocmd")   ? g:changes_autocmd    : 0)
-    " S
-    let s:verbose  = (exists("g:changes_verbose")   ? g:changes_verbose    :
-		\ (exists("s:verbose") ? s:verbose : &vbs))
+    " Ignore buffer
+    let s:ignore   = {}
+    let s:hl_lines = get(g:, 'changes_hl_lines', 0)
+    let s:autocmd  = get(g:, 'changes_autocmd', 0)
+    let s:verbose  = get(g:, 'changes_verbose', &vbs)
     " Check against a file in a vcs system
-    let s:vcs      = (exists("g:changes_vcs_check") ? g:changes_vcs_check  : 0)
-    let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
+    let s:vcs      = get(g:, 'changes_vcs_check', 0)
+    if !exists("b:vcs_type")
+	let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
+    endif
     if !exists("s:vcs_cat")
 	let s:vcs_cat  = {'git': 'show HEAD:', 
 			 \'bzr': 'cat ', 
 			 \'cvs': '-q update -p ',
+			 \'darcs': '--show-contents ',
+			 \'fossil': 'finfo -p ',
+			 \'rcs': 'co -p ',
 			 \'svn': 'cat ',
-			 \'subversion': 'cat ',
 			 \'svk': 'cat ',
-			 \'hg': 'cat ',
-			 \'mercurial': 'cat '}
+			 \'hg': 'cat '}
+
+	" Define aliases...
+	let s:vcs_cat.mercurial  = s:vcs_cat.hg
+	let s:vcs_cat.subversion = s:vcs_cat.svn
     endif
+"    if !exists("s:vcs_diff")
+"	let s:vcs_diff  = {'git': 'diff -a -U0 --no-ext-diff -- ', 
+"			 \'bzr': 'diff --using diff --diff-options=-U0 -- ', 
+"			 \'cvs': '-q diff -U0 -- ',
+"			 \'darcs': 'diff --no-pause-for-gui --diff-command="diff -U0 %1 %2" -- ',
+"			 \'fossil': 'fossil diff --unified -- ',
+"			 \'rcs': 'rcsdiff -U0 ',
+"			 \'svn': 'diff -x -u --ignore-eol-style -- ',
+"			 \'svk': 'diff -x -u --ignore-eol-style -- ',
+"			 \'hg': 'diff -U0 --nodates -- '}
+"	" Define aliases...
+"	let s:vcs_diff.subversion = s:vcs_diff.svn
+"	let s:vcs_diff.mercurial  = s:vcs_diff.hg
+"    endif
 
     " Settings for Version Control
     if s:vcs
@@ -404,9 +543,11 @@ fu! changes#Init() "{{{1
 	    call add(s:msg,'You might want to set the g:changes_vcs_system variable to override!')
 	    throw "changes:abort"
 	endif
-	if !exists("s:temp_file")
-	    let s:temp_file=tempname()
-	endif
+    endif
+    if !exists("s:diff_out")
+	let s:diff_out    = tempname()
+	let s:diff_in_cur = tempname()
+	let s:diff_in_old = tempname()
     endif
     let s:nodiff=0
 
@@ -462,15 +603,23 @@ endfunction
 
 fu! changes#GetDiff(arg, ...) "{{{1
     " a:arg == 1 Create signs
-    " a:arg == 2 Show Overview Window
+    " a:arg == 2 Show changed lines in locationlist
     " a:arg == 3 Stay in diff mode
+    
+    " If error happened, don't try to get a diff list
+    if (exists("s:ignore") && get(s:ignore, bufnr('%'), 0)) ||
+	\ !empty(&l:bt) ||
+	\ line2byte(line('$')) == -1
+	return
+    endif
 
     " Save some settings
     " fdm, wrap, and fdc will be reset by :diffoff!
-    let _settings = [ &lz, &fdm, &fdc, &wrap, &diff ]
+    let _settings = [ &fdm, &lz, &fdc, &wrap, &diff ]
     let _wsv   = winsaveview()
     " Lazy redraw
     setl lz
+    let isfolded = foldclosed('.')
     let scratchbuf = 0
 
     try
@@ -489,22 +638,30 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	" Does not make sense to check an empty buffer
 	if empty(bufname(''))
 	    call add(s:msg,"The buffer does not contain a name. Check aborted!")
+	    let s:ignore[bufnr('%')] = 1
 	    let s:verbose = 0
 	    return
 	endif
 
-	" For some reason, getbufvar/setbufvar do not work, so
-	" we use a temporary script variable here
-	let s:temp = {'del': []}
 	let b:diffhl={'add': [], 'del': [], 'ch': []}
-	let scratchbuf = s:MakeDiff(exists("a:1") ? a:1 : '')
-	call s:CheckLines(1)
-	call s:MoveToPrevWindow()
-	call s:CheckLines(0)
-	" Switch to scratch buffer and check for deleted lines
-	call s:MoveToPrevWindow()
-	let b:diffhl['del'] = s:temp['del']
-	call s:CheckDeletedLines()
+	if a:arg == 3
+	    let s:temp = {'del': []}
+	    let curbuf = bufnr('%')
+	    let _ft = &ft
+	    let scratchbuf = s:MakeDiff(exists("a:1") ? a:1 : '')
+	    call s:CheckLines(1)
+	    exe "noa" bufwinnr(scratchbuf) "wincmd w"
+	    exe "setl ft=". _ft
+	    "call s:MoveToPrevWindow()
+	    call s:CheckLines(0)
+	    " Switch to other buffer and check for deleted lines
+	    "call s:MoveToPrevWindow()
+	    exe "noa" bufwinnr(curbuf) "wincmd w"
+	    let b:diffhl['del'] = s:temp['del']
+	else
+	    let scratchbuf = s:MakeDiff_new(exists("a:1") ? a:1 : '')
+	endif
+
 	" Check for empty dict of signs
 	if (empty(values(b:diffhl)[0]) && 
 	   \empty(values(b:diffhl)[1]) && 
@@ -514,9 +671,6 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	    let s:nodiff=1
 	else
 	    call s:PlaceSigns(b:diffhl)
-	endif
-	if a:arg !=? 3  || s:nodiff
-	    call s:DiffOff()
 	endif
 	" :diffoff resets some options (see :h :diffoff
 	" so we need to restore them here
@@ -535,11 +689,11 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	   let s:verbose=0
 	endif
     catch /^changes/
-	call s:DiffOff()
 	let b:changes_view_enabled=0
+	let s:ignore[bufnr('%')] = 1
 	let s:verbose = 0
     finally
-	if scratchbuf
+	if scratchbuf && a:arg < 3
 	    exe "bw" scratchbuf
 	endif
 	if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
@@ -547,13 +701,33 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	endif
 	" remove dummy sign
 	call s:PlaceSignDummy(0)
+	" redraw (there seems to be some junk left)
+	redr!
 	call changes#WarningMsg()
 	call changes#Output(0)
-	let [ &lz, &fdm, &fdc, &wrap, &diff ] = _settings
-	norm! zv
+	if a:arg < 3
+	    let [ &fdm, &lz, &fdc, &wrap, &diff ] = _settings
+	else
+	    let [ &lz, &fdc, &wrap ] = _settings[1:3]
+	endif
+	if isfolded == -1
+	    " resetting 'fdm' might fold the cursorline, reopen it
+	    norm! zv
+	endif
 	call winrestview(_wsv)
     endtry
 endfu
+" Old functions "{{{1
+fu! s:DiffOff() "{{{2
+    if !&diff
+	return
+    endif
+    " Turn off Diff Mode and close buffer
+    call s:MoveToPrevWindow()
+    diffoff!
+    q
+endfu
+
 
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
