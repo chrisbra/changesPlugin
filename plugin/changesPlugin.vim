@@ -20,7 +20,7 @@ let g:loaded_changes       = 1
 let s:keepcpo              = &cpo
 set cpo&vim
 
-let s:autocmd  = (exists("g:changes_autocmd")  ? g:changes_autocmd  : 0)
+let s:autocmd  = get(g:, 'changes_autocmd', 0)
 " ------------------------------------------------------------------------------
 " Public Interface: {{{1
 
@@ -40,7 +40,8 @@ com! ChangesLinesOverview	call changes#GetDiff(2)
 com! ChangesDiffMode		call changes#GetDiff(3)
 
 if s:autocmd
-    exe "try | call changes#Init()|catch|call changes#WarningMsg()|endtry"
+    exe "try | call changes#Init() | catch | call changes#WarningMsg() | endtry"
+    exe "au BufWinEnter * call changes#GetDiff(1)"
 endif
 " =====================================================================
 " Restoration And Modelines: {{{1
