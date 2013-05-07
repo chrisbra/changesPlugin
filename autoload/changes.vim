@@ -688,6 +688,8 @@ fu! changes#GetDiff(arg, ...) "{{{1
 	   call s:ShowDifferentLines()
 	   let s:verbose=0
 	endif
+    catch /^Vim\%((\a\+)\)\=:E139/	" catch error E139
+	return
     catch /^changes/
 	let b:changes_view_enabled=0
 	let s:ignore[bufnr('%')] = 1
