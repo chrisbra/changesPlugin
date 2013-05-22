@@ -628,7 +628,9 @@ fu! changes#GetDiff(arg, bang, ...) "{{{1
 	    \ line2byte(line('$')) == -1
 	    call add(s:msg, 'Buffer is ignored, use ! to force command')
 	    " ignore error messages
-	    sil call remove(s:ignore, bufnr('%'))
+	    if get(s:ignore, bufnr('%'), 0)
+		call remove(s:ignore, bufnr('%'))
+	    endif
 	    return
 	endif
 
