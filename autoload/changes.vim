@@ -642,8 +642,8 @@ fu! changes#GetDiff(arg, bang, ...) "{{{1
 	let scratchbuf = 0
 
 	try
-	    call changes#Init()
 	    call s:PlaceSignDummy(1)
+	    call changes#Init()
 
 	    if !filereadable(bufname(''))
 		call add(s:msg,"You've opened a new file so viewing changes ".
