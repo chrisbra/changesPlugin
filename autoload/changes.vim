@@ -66,8 +66,12 @@ fu! s:AuCmd(arg) "{{{1
 endfu
 
 fu! s:DefineSigns() "{{{1
+    if !s:DefinedSignsNotExists()
+	for key in keys(s:signs)
+	    exe "silent sign undefine " key
+	endfor
+    endif
     for key in keys(s:signs)
-	exe "silent! sign undefine " key
 	exe "sign define" key s:signs[key]
     endfor
 endfu
@@ -135,7 +139,18 @@ fu! s:PlaceSignDummy(place) "{{{1
     endif
 endfu
 
+fu! s:DefinedSignsNotExists() "{{{1
+    redir => a|exe "sil sign list"|redir end
+    let b = split(a, "\n")
+    let pat = join(map(keys(s:signs),'"^sign ".v:val'), '\|')
+    call filter(b, 'v:val =~ pat')
+    return empty(b)
+endfu
+
 fu! s:PlaceSigns(dict) "{{{1
+    if s:DefinedSignsNotExists()
+	call s:DefineSigns()
+    endif
     for [ id, lines ] in items(a:dict)
 	for item in lines
 	    " One special case could occur:
@@ -583,7 +598,7 @@ fu! changes#Init() "{{{1
 
     " Delete previously placed signs
     call s:UnPlaceSigns(0)
-    "call s:DefineSigns() " already defined
+    call s:DefineSigns()
     call s:AuCmd(s:autocmd)
 endfu
 
