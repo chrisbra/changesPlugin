@@ -152,6 +152,9 @@ fu! s:PlaceSigns(dict) "{{{1
 endfu
 
 fu! s:UnPlaceSigns(force) "{{{1
+    if !exists("s:sign_prefix")
+	return
+    endif
     redir => a
     silent sign place
     redir end
@@ -167,11 +170,15 @@ fu! s:UnPlaceSigns(force) "{{{1
     endfor
 endfu
 
+fu! s:Cwd() "{{{1
+    return escape(getcwd(), ' ')
+endfu
+
 fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
     try
-	let _pwd = getcwd()
+	let _pwd = s:Cwd()
 	exe ":sil noa :w" s:diff_in_cur
 	if !s:vcs || !empty(a:file)
 	    let file = !empty(a:file) ? a:file : bufname('')
@@ -230,7 +237,7 @@ fu! s:MakeDiff(...) "{{{1
     " Old version, only needed, when GetDiff(3) is called (or argument 1 is
     " non-empty)
     " Get diff for current buffer with original
-    let o_pwd = getcwd()
+    let o_pwd = s:Cwd()
     let bnr = bufnr('%')
     let ft  = &l:ft
     noa vert new
@@ -327,7 +334,7 @@ fu! s:ReturnGitRepPath() "{{{1
     let git_path = system('git rev-parse --git-dir')
     if !v:shell_error
 	" we need the directory right above the .git metatdata directory
-	return git_path[:-2].'/..'
+	return escape(git_path[:-2].'/..', ' ')
     else
 	return ''
     endif
@@ -376,7 +383,7 @@ fu! s:GuessVCSSystem() "{{{1
 	endif
     endif
     let file = fnamemodify(expand("%"), ':p')
-    let path = fnamemodify(file, ':h')
+    let path = escape(fnamemodify(file, ':h'), ' ')
     " First try git and hg, they seem to be the most popular ones these days
     if !empty(finddir('.git',path.';'))
 	return 'git'
