@@ -18,6 +18,7 @@ Copyright: (c) 2010 by Christian Brabandt        *ChangesPlugin-copyright*
    3.3 Show the meaning of the indicator bars.......: |ChangesPlugin-bars|
    3.4 Specify different colors.....................: |ChangesPlugin-colors|
    3.5 Check against a file in a VCS................: |ChangesPlugin-VCS|
+   3.6 Get error messages...........................: |ChangesPlugin-errors|
   4.  ChangesPlugin Feedback........................: |ChangesPlugin-Feedback|
   5.  ChangesPlugin History.........................: |ChangesPlugin-history|
 
@@ -65,6 +66,10 @@ file ~/project/foobar.c
 Alternatively, you can enter the shortcut >
      :EC
 which basically calls :EnableChanges and supports the same arguments.
+
+If errors happen, the current buffer will be silently ignored when :EC
+is called later. Use the ! attribute, to force reevaluating the command (and
+see error messages).
 
                                                         *:DC* *:DisableChanges*
 If you want to disable the plugin, enter >
@@ -213,6 +218,11 @@ VCS System should work fairely well and in case it doesn't, please report a
 bug to the maintainer of the plugin. Setting g:changes_vcs_check will however
 disable the check against the on-disk version of a buffer.
 
+                                                          *ChangesPlugin-errors*
+3.5 Get error messages
+
+By default the plugin will not display error messages. If you want to see
+them, set the 'verbose' option to 1.
 ==============================================================================
 4. ChangesPlugin Feedback                           *ChangesPlugin-feedback*
 
@@ -235,6 +245,12 @@ third line of this document.
                         BF: parse diff output instead of relying on vimdiff
                         and parsing the syntax items (prevents flickering
                         since no window needs to be split)
+                        BF: avoid error messages, when buffer is ignored
+                        (https://github.com/chrisbra/changesPlugin/issues/6
+                        reported by mpfusion, thanks!)
+                        BF: avoid error messages, using |DC| 
+                        (https://github.com/chrisbra/changesPlugin/issues/7
+                        reported by mpfusion, thanks!)
     0.13: Feb 16, 2013:
                         BF: Plugin used :EnableDisplayChanges, but
                         documentation talked about EnableChanges
