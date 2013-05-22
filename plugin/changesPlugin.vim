@@ -25,23 +25,23 @@ let s:autocmd  = get(g:, 'changes_autocmd', 0)
 " Public Interface: {{{1
 
 " Define the Shortcuts:
-com! -nargs=? -complete=file EC	 EnableChanges <args>
+com! -nargs=? -complete=file -bang EC	 EnableChanges<bang> <args>
 com! DC	 DisableChanges
 com! TCV ToggleChangeView
 com! CC  ChangesCaption
 com! CL  ChangesLinesOverview
 com! CD  ChangesDiffMode
 
-com! -nargs=? -complete=file EnableChanges	call changes#GetDiff(1,<q-args>)
+com! -nargs=? -complete=file -bang EnableChanges	call changes#GetDiff(1, <q-bang>, <q-args>)
 com! DisableChanges		call changes#CleanUp()
 com! ToggleChangeView		call changes#TCV()
 com! ChangesCaption		call changes#Output(1)
-com! ChangesLinesOverview	call changes#GetDiff(2)
-com! ChangesDiffMode		call changes#GetDiff(3)
+com! ChangesLinesOverview	call changes#GetDiff(2, '')
+com! ChangesDiffMode		call changes#GetDiff(3, '')
 
 if s:autocmd
     exe "try | call changes#Init() | catch | call changes#WarningMsg() | endtry"
-    exe "au BufWinEnter * call changes#GetDiff(1)"
+    exe "au BufWinEnter * call changes#GetDiff(1, '')"
 endif
 " =====================================================================
 " Restoration And Modelines: {{{1
