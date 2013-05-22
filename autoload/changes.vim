@@ -15,9 +15,9 @@
 fu! s:Check() "{{{1
     " Check for the existence of unsilent
     if exists(":unsilent")
-	let s:echo_cmd='unsilent echomsg'
+	let s:echo_cmd='unsilent echo'
     else
-	let s:echo_cmd='echomsg'
+	let s:echo_cmd='echo'
     endif
 
     if !has("diff")
@@ -108,7 +108,7 @@ fu! s:UpdateView() "{{{1
     if  b:changes_chg_tick != b:changedtick
 	" Turn off displaying the Caption
 	let s:verbose=0
-	call changes#GetDiff(1)
+	call changes#GetDiff(1, '')
 	let b:changes_chg_tick = b:changedtick
     endif
 endfu
@@ -186,11 +186,12 @@ fu! s:MakeDiff_new(file) "{{{1
 		throw "changes:abort"
 	    endif
 	    if !s:Is('unix')
-		call system("copy ". shellescape(file). " ". s:diff_in_old)
+		let output = system("copy ". shellescape(file). " ". s:diff_in_old)
 	    else
-		call system("cp -- ". shellescape(file). " ". s:diff_in_old)
+		let output = system("cp -- ". shellescape(file). " ". s:diff_in_old)
 	    endif
 	    if v:shell_error
+		call add(s:msg, output[:-2])
 		throw "changes:abort"
 	    endif
 	    "exe ':sil !diff -u '.  shellescape(bufname(''),1). ' '. s:diff_in_cur. '>' s:diff_out
@@ -205,19 +206,21 @@ fu! s:MakeDiff_new(file) "{{{1
 		" to consider CVSROOT
 		exe 'lcd' fnamemodify(expand('%'), ':p:h')
 	    endif
-	    let cmd = printf(":sil !%s %s%s > %s", (b:vcs_type==?'rcs'?'':b:vcs_type),
+	    let cmd = printf("%s %s%s > %s", (b:vcs_type==?'rcs'?'':b:vcs_type),
 			\ s:vcs_cat[b:vcs_type], shellescape(expand('%')),
 			\ s:diff_in_old)
-	    exe cmd
+	    let output = system(cmd)
 	    if v:shell_error
+		call add(s:msg, output[:-2])
 		throw "changes:abort"
 	    endif
 	endif
-	let cmd = printf(":sil !diff -a -U0 -N %s %s > %s", 
+	let cmd = printf("diff -a -U0 -N %s %s > %s", 
 	    \ s:diff_in_old, s:diff_in_cur, s:diff_out)
-	exe cmd
+	let output = system(cmd)
 	if v:shell_error >= 2 || v:shell_error < 0
 	    " diff returns 2 on errors
+	    call add(s:msg, output[:-2])
 	    throw "changes:abort"
 	endif
 	if getfsize(s:diff_out) == 0
@@ -259,8 +262,9 @@ fu! s:MakeDiff(...) "{{{1
 		" to consider CVSROOT
 		exe 'lcd' fnamemodify(expand('#'), ':p:h')
 	    endif
-	    call system((vcs==?'rcs'?'':vcs) . ' '. s:vcs_cat[vcs] .  expand("#") . '>'.  s:diff_out)
+	    let output = system((vcs==?'rcs'?'':vcs) . ' '. s:vcs_cat[vcs] .  expand("#") . '>'.  s:diff_out)
 	    if v:shell_error
+		call add(s:msg, output[:-2])
 		throw "changes:abort"
 	    endif
 	    let fsize=getfsize(s:diff_out)
@@ -460,13 +464,13 @@ fu! changes#WarningMsg() "{{{1
 	" Set verbose to 1 to have messages displayed!
 	return
     endif
-    redraw!
     if !empty(s:msg)
+	redraw!
 	let msg=["Changes.vim: " . s:msg[0]] + s:msg[1:]
 	echohl WarningMsg
 	" s:echo_cmd might not yet exist
 	if !exists("s:echo_cmd")
-	    let s:echo_cmd = 'echomsg'
+	    let s:echo_cmd = 'echo'
 	endif
 	for mess in msg
 	    exe s:echo_cmd "mess"
@@ -474,6 +478,7 @@ fu! changes#WarningMsg() "{{{1
 
 	echohl Normal
 	let v:errmsg=msg[0]
+	let s:msg = []
     endif
 endfu
 
@@ -602,128 +607,133 @@ fu! changes#TCV() "{{{1
         let b:changes_view_enabled = 0
         echo "Hiding changes since last save"
     else
-	call changes#GetDiff(1)
+	call changes#GetDiff(1, '')
         let b:changes_view_enabled = 1
         echo "Showing changes since last save"
     endif
 endfunction
 
-fu! changes#GetDiff(arg, ...) "{{{1
+fu! changes#GetDiff(arg, bang, ...) "{{{1
     " a:arg == 1 Create signs
     " a:arg == 2 Show changed lines in locationlist
     " a:arg == 3 Stay in diff mode
     
     " If error happened, don't try to get a diff list
-    if (exists("s:ignore") && get(s:ignore, bufnr('%'), 0)) ||
-	\ !empty(&l:bt) ||
-	\ line2byte(line('$')) == -1
-	return
-    endif
-
-    " Save some settings
-    " fdm, wrap, and fdc will be reset by :diffoff!
-    let _settings = [ &fdm, &lz, &fdc, &wrap, &diff ]
-    let _wsv   = winsaveview()
-    " Lazy redraw
-    setl lz
-    let isfolded = foldclosed('.')
-    let scratchbuf = 0
-
     try
-	call changes#Init()
-	call s:PlaceSignDummy(1)
-
-	if !filereadable(bufname(''))
-	    call add(s:msg,"You've opened a new file so viewing changes ".
-		\ "is disabled until the file is saved ".
-		\ "(You have to reenable it if not using autocmd).")
-	    let s:verbose = 0
-	    call changes#WarningMsg()
+	if (exists("s:ignore") && get(s:ignore, bufnr('%'), 0) && empty(a:bang)) ||
+	    \ !empty(&l:bt) ||
+	    \ line2byte(line('$')) == -1
+	    call add(s:msg, 'Buffer is ignored, use ! to force command')
+	    " ignore error messages
+	    sil call remove(s:ignore, bufnr('%'))
 	    return
 	endif
 
-	" Does not make sense to check an empty buffer
-	if empty(bufname(''))
-	    call add(s:msg,"The buffer does not contain a name. Check aborted!")
+	" Save some settings
+	" fdm, wrap, and fdc will be reset by :diffoff!
+	let _settings = [ &fdm, &lz, &fdc, &wrap, &diff ]
+	let _wsv   = winsaveview()
+	" Lazy redraw
+	setl lz
+	let isfolded = foldclosed('.')
+	let scratchbuf = 0
+
+	try
+	    call changes#Init()
+	    call s:PlaceSignDummy(1)
+
+	    if !filereadable(bufname(''))
+		call add(s:msg,"You've opened a new file so viewing changes ".
+		    \ "is disabled until the file is saved ".
+		    \ "(You have to reenable it if not using autocmd).")
+		let s:verbose = 0
+		return
+	    endif
+
+	    " Does not make sense to check an empty buffer
+	    if empty(bufname(''))
+		call add(s:msg,"The buffer does not contain a name. Check aborted!")
+		let s:ignore[bufnr('%')] = 1
+		let s:verbose = 0
+		return
+	    endif
+
+	    let b:diffhl={'add': [], 'del': [], 'ch': []}
+	    if a:arg == 3
+		let s:temp = {'del': []}
+		let curbuf = bufnr('%')
+		let _ft = &ft
+		let scratchbuf = s:MakeDiff(exists("a:1") ? a:1 : '')
+		call s:CheckLines(1)
+		exe "noa" bufwinnr(scratchbuf) "wincmd w"
+		exe "setl ft=". _ft
+		"call s:MoveToPrevWindow()
+		call s:CheckLines(0)
+		" Switch to other buffer and check for deleted lines
+		"call s:MoveToPrevWindow()
+		exe "noa" bufwinnr(curbuf) "wincmd w"
+		let b:diffhl['del'] = s:temp['del']
+	    else
+		let scratchbuf = s:MakeDiff_new(exists("a:1") ? a:1 : '')
+	    endif
+
+	    " Check for empty dict of signs
+	    if (empty(values(b:diffhl)[0]) && 
+	    \empty(values(b:diffhl)[1]) && 
+	    \empty(values(b:diffhl)[2]))
+		call add(s:msg, 'No differences found!')
+		let s:verbose=0
+		let s:nodiff=1
+	    else
+		call s:PlaceSigns(b:diffhl)
+	    endif
+	    " :diffoff resets some options (see :h :diffoff
+	    " so we need to restore them here
+	    " We don't reset the fdm, in case we are staying in diff mode
+	    if a:arg != 3 || s:nodiff
+		if  _settings[2] == 1
+		    " When foldcolumn is 1, folds won't be shown because of
+		    " the signs, so increasing its value by 1 so that folds will
+		    " also be shown
+		    let _settings[2] += 1
+		endif
+		let b:changes_view_enabled=1
+	    endif
+	    if a:arg ==# 2
+	    call s:ShowDifferentLines()
+	    let s:verbose=0
+	    endif
+	catch /^Vim\%((\a\+)\)\=:E139/	" catch error E139
+	    return
+	catch /^changes/
+	    let b:changes_view_enabled=0
 	    let s:ignore[bufnr('%')] = 1
 	    let s:verbose = 0
-	    return
-	endif
-
-	let b:diffhl={'add': [], 'del': [], 'ch': []}
-	if a:arg == 3
-	    let s:temp = {'del': []}
-	    let curbuf = bufnr('%')
-	    let _ft = &ft
-	    let scratchbuf = s:MakeDiff(exists("a:1") ? a:1 : '')
-	    call s:CheckLines(1)
-	    exe "noa" bufwinnr(scratchbuf) "wincmd w"
-	    exe "setl ft=". _ft
-	    "call s:MoveToPrevWindow()
-	    call s:CheckLines(0)
-	    " Switch to other buffer and check for deleted lines
-	    "call s:MoveToPrevWindow()
-	    exe "noa" bufwinnr(curbuf) "wincmd w"
-	    let b:diffhl['del'] = s:temp['del']
-	else
-	    let scratchbuf = s:MakeDiff_new(exists("a:1") ? a:1 : '')
-	endif
-
-	" Check for empty dict of signs
-	if (empty(values(b:diffhl)[0]) && 
-	   \empty(values(b:diffhl)[1]) && 
-	   \empty(values(b:diffhl)[2]))
-	    call add(s:msg, 'No differences found!')
-	    let s:verbose=0
-	    let s:nodiff=1
-	else
-	    call s:PlaceSigns(b:diffhl)
-	endif
-	" :diffoff resets some options (see :h :diffoff
-	" so we need to restore them here
-	" We don't reset the fdm, in case we are staying in diff mode
-	if a:arg != 3 || s:nodiff
-	    if  _settings[2] == 1
-		" When foldcolumn is 1, folds won't be shown because of
-		" the signs, so increasing its value by 1 so that folds will
-		" also be shown
-		let _settings[2] += 1
+	finally
+	    if scratchbuf && a:arg < 3
+		exe "bw" scratchbuf
 	    endif
-	    let b:changes_view_enabled=1
-	endif
-	if a:arg ==# 2
-	   call s:ShowDifferentLines()
-	   let s:verbose=0
-	endif
-    catch /^Vim\%((\a\+)\)\=:E139/	" catch error E139
-	return
-    catch /^changes/
-	let b:changes_view_enabled=0
-	let s:ignore[bufnr('%')] = 1
-	let s:verbose = 0
+	    if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
+		call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
+	    endif
+	    " remove dummy sign
+	    call s:PlaceSignDummy(0)
+	    " redraw (there seems to be some junk left)
+	    redr!
+	    call changes#Output(0)
+	    if a:arg < 3
+		let [ &fdm, &lz, &fdc, &wrap, &diff ] = _settings
+	    else
+		let [ &lz, &fdc, &wrap ] = _settings[1:3]
+	    endif
+	    if isfolded == -1
+		" resetting 'fdm' might fold the cursorline, reopen it
+		norm! zv
+	    endif
+	    call winrestview(_wsv)
+	endtry
     finally
-	if scratchbuf && a:arg < 3
-	    exe "bw" scratchbuf
-	endif
-	if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
-	    call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
-	endif
-	" remove dummy sign
-	call s:PlaceSignDummy(0)
-	" redraw (there seems to be some junk left)
-	redr!
 	call changes#WarningMsg()
-	call changes#Output(0)
-	if a:arg < 3
-	    let [ &fdm, &lz, &fdc, &wrap, &diff ] = _settings
-	else
-	    let [ &lz, &fdc, &wrap ] = _settings[1:3]
-	endif
-	if isfolded == -1
-	    " resetting 'fdm' might fold the cursorline, reopen it
-	    norm! zv
-	endif
-	call winrestview(_wsv)
     endtry
 endfu
 " Old functions "{{{1
