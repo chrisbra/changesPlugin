@@ -590,6 +590,9 @@ endfu
 fu! changes#CleanUp() "{{{1
     " only delete signs, that have been set by this plugin
     call s:UnPlaceSigns(1)
+    if !exists("s:signs") || !exists("s:autocmd")
+	return
+    endif
     for key in keys(s:signs)
 	exe "sil! sign undefine " key
     endfor
