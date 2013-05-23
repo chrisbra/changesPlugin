@@ -140,10 +140,12 @@ fu! s:PlaceSignDummy(place) "{{{1
 endfu
 
 fu! s:DefinedSignsNotExists() "{{{1
-    redir => a|exe "sil sign list"|redir end
-    let b = split(a, "\n")
+    if !exists("s:sign_definition")
+	redir => a|exe "sil sign list"|redir end
+	let s:sign_definition = split(a, "\n")
+    endif
     let pat = join(map(keys(s:signs),'"^sign ".v:val'), '\|')
-    call filter(b, 'v:val =~ pat')
+    let b = filter(copy(s:sign_definition), 'v:val =~ pat')
     return empty(b)
 endfu
 
@@ -753,6 +755,7 @@ fu! changes#GetDiff(arg, bang, ...) "{{{1
 	    call winrestview(_wsv)
 	endtry
     finally
+	unlet! s:sign_definition " make sure on next call, s:sign-defition will be recreated by DefinedSignsNotExists()
 	call changes#WarningMsg()
     endtry
 endfu
