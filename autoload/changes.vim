@@ -66,7 +66,7 @@ fu! s:AuCmd(arg) "{{{1
 endfu
 
 fu! s:DefineSigns() "{{{1
-    if !s:DefinedSignsNotExists()
+    if !empty(s:DefinedSignsNotExists())
 	for key in keys(s:signs)
 	    exe "silent sign undefine " key
 	endfor
@@ -146,11 +146,11 @@ fu! s:DefinedSignsNotExists() "{{{1
     endif
     let pat = join(map(keys(s:signs),'"^sign ".v:val'), '\|')
     let b = filter(copy(s:sign_definition), 'v:val =~ pat')
-    return empty(b)
+    return b
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
-    if s:DefinedSignsNotExists()
+    if empty(s:DefinedSignsNotExists())
 	call s:DefineSigns()
     endif
     for [ id, lines ] in items(a:dict)
@@ -600,7 +600,17 @@ fu! changes#Init() "{{{1
 
     " Delete previously placed signs
     call s:UnPlaceSigns(0)
-    call s:DefineSigns()
+    if exists("s:sign_definition")
+	let def = s:DefinedSignsNotExists()
+	if (     match(def, s:signs.add) == -1
+	    \ || match (def, s:signs.del) == -1
+	    \ || match (def, s:signs.ch)  == -1)
+	    " Sign definition changed, redefine them
+	    call s:DefineSigns()
+	endif
+    else
+	call s:DefineSigns()
+    endif
     call s:AuCmd(s:autocmd)
 endfu
 
