@@ -191,12 +191,24 @@ fu! s:Cwd() "{{{1
     return escape(getcwd(), ' ')
 endfu
 
+fu! s:Writefile(name)
+    let a = getline(1,'$')
+    if &ff ==? 'dos'
+	" TODO: What about mac format?
+	call map(a, 'v:val.nr2char(13)')
+    endif
+    if writefile(a + [''], a:name, 'b') == -1
+	throw "changes:abort"
+    endif
+endfu
+
 fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
     try
 	let _pwd = s:Cwd()
-	exe ":sil noa :w" s:diff_in_cur
+	call s:Writefile(s:diff_in_cur)
+	" exe ":sil noa :w" s:diff_in_cur
 	if !s:vcs || !empty(a:file)
 	    let file = !empty(a:file) ? a:file : bufname('')
 	    if empty(file)
