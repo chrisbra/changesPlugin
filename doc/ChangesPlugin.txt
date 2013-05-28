@@ -251,6 +251,9 @@ third line of this document.
                         BF: avoid error messages, using |DC| 
                         (https://github.com/chrisbra/changesPlugin/issues/7
                         reported by mpfusion, thanks!)
+                        BF: don't mess with the |alternate-file| 
+                        (https://github.com/chrisbra/changesPlugin/issues/8
+                        reported by mpfusion, thanks!)
     0.13: Feb 16, 2013:
                         BF: Plugin used :EnableDisplayChanges, but
                         documentation talked about EnableChanges
