@@ -43,6 +43,10 @@ if s:autocmd
     exe "try | call changes#Init() | catch | call changes#WarningMsg() | endtry"
     exe "au BufWinEnter * call changes#GetDiff(1, '')"
 endif
+
+if get(g:, 'changes_diff_preview', 0)
+    au VimEnter * let g:changes_did_startup = 1
+endif
 " =====================================================================
 " Restoration And Modelines: {{{1
 " vim: fdm=marker

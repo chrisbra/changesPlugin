@@ -191,7 +191,7 @@ fu! s:Cwd() "{{{1
     return escape(getcwd(), ' ')
 endfu
 
-fu! s:Writefile(name)
+fu! s:Writefile(name) "{{{1
     let a = getline(1,'$')
     if &ff ==? 'dos'
 	" TODO: What about mac format?
@@ -202,11 +202,29 @@ fu! s:Writefile(name)
     endif
 endfu
 
+fu! s:PreviewDiff(file) "{{{1
+    if	!exists('g:changes_did_startup')
+	return
+    elseif !get(g:, 'changes_diff_preview', 0)
+	return
+    endif
+    let bufnr = bufnr('')
+    let cur = exists("b:current_line") ? b:current_line : 0
+    if cur
+	exe printf(':sil! pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
+	call setbufvar(a:file, "&ft", "diff")
+	call setbufvar(a:file, '&bt', 'nofile')
+	exe "noa" bufwinnr(bufnr)."wincmd w"
+    else
+	sil! pclose
+    endif
+endfu
 fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
     try
 	let _pwd = s:Cwd()
+	unlet! b:current_line
 	call s:Writefile(s:diff_in_cur)
 	" exe ":sil noa :w" s:diff_in_cur
 	if !s:vcs || !empty(a:file)
@@ -258,6 +276,7 @@ fu! s:MakeDiff_new(file) "{{{1
 	endif
 	call s:ParseDiffOutput(s:diff_out)
     finally
+	call s:PreviewDiff(s:diff_out)
 	for file in [s:diff_in_cur, s:diff_in_old, s:diff_out]
 	    call delete(file)
 	endfor
@@ -329,6 +348,7 @@ fu! s:MakeDiff(...) "{{{1
 endfu
 
 fu! s:ParseDiffOutput(file) "{{{1
+    let b:current_line = 1000000 
     for line in filter(readfile(a:file), 'v:val=~''^@@''')
 	let submatch = matchlist(line, '@@ -\(\d\+\),\?\(\d*\) +\(\d\+\),\?\(\d*\) @@')
 
@@ -340,6 +360,9 @@ fu! s:ParseDiffOutput(file) "{{{1
 	    let old_count = (empty(submatch[2]) ? 1 : submatch[2]) + 0
 	    let new_line = submatch[3] + 0
 	    let new_count = (empty(submatch[4]) ? 1 : submatch[4]) + 0
+	    if b:current_line > (old_line - line('.'))
+		let b:current_line = old_line
+	    endif
 	endif
 
 	" Line added
@@ -774,10 +797,10 @@ fu! changes#GetDiff(arg, bang, ...) "{{{1
 		" resetting 'fdm' might fold the cursorline, reopen it
 		norm! zv
 	    endif
-	    call winrestview(_wsv)
+	    "call winrestview(_wsv)
 	endtry
     finally
-	unlet! s:sign_definition " make sure on next call, s:sign-defition will be recreated by DefinedSignsNotExists()
+	unlet! s:sign_definition " make sure on next call, s:sign-definition will be recreated by DefinedSignsNotExists()
 	call changes#WarningMsg()
     endtry
 endfu
