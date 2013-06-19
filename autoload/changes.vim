@@ -207,6 +207,13 @@ fu! s:PreviewDiff(file) "{{{1
 		\ || &diff
 	return
     endif
+    let bufcontent = readfile(a:file)
+    if len(bufcontent) > 2
+	let bufcontent[0] = substitute(bufcontent[0], s:diff_in_old, expand("%"), '')
+	let bufcontent[1] = substitute(bufcontent[1], s:diff_in_cur, expand("%")." (cur)", '')
+	call writefile(bufcontent, a:file)
+    endif
+
     let bufnr = bufnr('')
     let cur = exists("b:current_line") ? b:current_line : 0
     if cur
