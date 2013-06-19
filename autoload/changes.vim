@@ -55,7 +55,7 @@ fu! s:AuCmd(arg) "{{{1
 	augroup Changes
 	    autocmd!
 	    let s:verbose=0
-	    au InsertLeave,CursorHold * :call s:UpdateView()
+	    au InsertLeave,CursorHold,BufWritePost * :call s:UpdateView()
 	augroup END
     else
 	augroup Changes
@@ -203,9 +203,8 @@ fu! s:Writefile(name) "{{{1
 endfu
 
 fu! s:PreviewDiff(file) "{{{1
-    if	!exists('g:changes_did_startup')
-	return
-    elseif !get(g:, 'changes_diff_preview', 0)
+    if	!exists('g:changes_did_startup') || !get(g:, 'changes_diff_preview', 0)
+		\ || &diff
 	return
     endif
     let bufnr = bufnr('')
