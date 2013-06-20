@@ -203,27 +203,30 @@ fu! s:Writefile(name) "{{{1
 endfu
 
 fu! s:PreviewDiff(file) "{{{1
-    if	!exists('g:changes_did_startup') || !get(g:, 'changes_diff_preview', 0)
-		\ || &diff
-	return
-    endif
-    let bufcontent = readfile(a:file)
-    if len(bufcontent) > 2
-	let bufcontent[0] = substitute(bufcontent[0], s:diff_in_old, expand("%"), '')
-	let bufcontent[1] = substitute(bufcontent[1], s:diff_in_cur, expand("%")." (cur)", '')
-	call writefile(bufcontent, a:file)
-    endif
+    try
+	if	!exists('g:changes_did_startup') || !get(g:, 'changes_diff_preview', 0)
+		    \ || &diff
+	    return
+	endif
+	let bufcontent = readfile(a:file)
+	if len(bufcontent) > 2
+	    let bufcontent[0] = substitute(bufcontent[0], s:diff_in_old, expand("%"), '')
+	    let bufcontent[1] = substitute(bufcontent[1], s:diff_in_cur, expand("%")." (cur)", '')
+	    call writefile(bufcontent, a:file)
+	endif
 
-    let bufnr = bufnr('')
-    let cur = exists("b:current_line") ? b:current_line : 0
-    if cur
-	exe printf(':sil! pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
-	call setbufvar(a:file, "&ft", "diff")
-	call setbufvar(a:file, '&bt', 'nofile')
-	exe "noa" bufwinnr(bufnr)."wincmd w"
-    else
-	sil! pclose
-    endif
+	let bufnr = bufnr('')
+	let cur = exists("b:current_line") ? b:current_line : 0
+	if cur
+	    exe printf(':noa sil! pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
+	    call setbufvar(a:file, "&ft", "diff")
+	    call setbufvar(a:file, '&bt', 'nofile')
+	    exe "noa" bufwinnr(bufnr)."wincmd w"
+	else
+	    sil! pclose
+	endif
+    catch
+    endtry
 endfu
 fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
