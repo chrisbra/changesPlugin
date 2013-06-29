@@ -232,7 +232,7 @@ fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
     try
-	let _pwd = s:Cwd()
+	let _pwd = s:ChangeDir()
 	unlet! b:current_line
 	call s:Writefile(s:diff_in_cur)
 	" exe ":sil noa :w" s:diff_in_cur
@@ -254,7 +254,9 @@ fu! s:MakeDiff_new(file) "{{{1
 	else
 	    if b:vcs_type == 'git'
 		let git_rep_p = s:ReturnGitRepPath()
-		exe 'lcd' git_rep_p
+		if !empty(git_rep_p)
+		    exe 'lcd' git_rep_p
+		endif
 	    elseif b:vcs_type == 'cvs'
 		" I am not sure, if this is the best way
 		" to query CVS. But just to make sure, 
@@ -293,11 +295,18 @@ fu! s:MakeDiff_new(file) "{{{1
     endtry
 endfu
 
+fu! s:ChangeDir()
+    let _pwd = s:Cwd()
+    exe "lcd " fnameescape(fnamemodify(expand("%"), ':h'))
+    return _pwd
+endfu
+
+
 fu! s:MakeDiff(...) "{{{1
     " Old version, only needed, when GetDiff(3) is called (or argument 1 is
     " non-empty)
     " Get diff for current buffer with original
-    let o_pwd = s:Cwd()
+    let o_pwd = s:ChangeDir()
     let bnr = bufnr('%')
     let ft  = &l:ft
     noa vert new
@@ -311,7 +320,9 @@ fu! s:MakeDiff(...) "{{{1
 	try
 	    if vcs == 'git'
 		let git_rep_p = s:ReturnGitRepPath()
-		exe 'lcd' git_rep_p
+		if !empty(git_rep_p)
+		    exe 'lcd' git_rep_p
+		endif
 	    elseif vcs == 'cvs'
 		" I am not sure, if this is the best way
 		" to query CVS. But just to make sure, 
