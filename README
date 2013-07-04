@@ -117,6 +117,10 @@ that contains the changes from either your VCS or from the unmodified buffer
 as it is saved on disk. See |copy-diffs| for how to merge changes between
 those two buffers.
 
+                                                    *ChangesPlugin-Maps*
+ChangesPlugin also sets up some mappings to move from to another. By default,
+`[h` is used to move backwards to the next changed line, while `[h` moves
+forward to the next changed line.
 ==============================================================================
                                                         *ChangesPlugin-Config*
 3. Configuring ChangesPlugin.vim
@@ -279,6 +283,8 @@ third line of this document.
                         (https://github.com/chrisbra/changesPlugin/issues/8
                         reported by mpfusion, thanks!)
                         NF: |ChangesPlugin-preview|
+                        NF: |ChangesPlugin-Maps| 
+                            [h/]h move to previous/next changed line
     0.13: Feb 16, 2013:                                                 {{{1
                         BF: Plugin used :EnableDisplayChanges, but
                         documentation talked about EnableChanges
@@ -364,4 +370,4 @@ third line of this document.
                         First working version
 
 ==============================================================================
-vim:tw=78:ts=8:ft=help:et
+vim:tw=78:ts=8:ft=help:et:fdm=marker

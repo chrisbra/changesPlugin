@@ -116,6 +116,12 @@ If you issue any of these commands, a vertical split buffer will open,
 that contains the changes from either your VCS or from the unmodified buffer
 as it is saved on disk. See |copy-diffs| for how to merge changes between
 those two buffers.
+                                                *ChangesPlugin-Maps* *[h* *]h*
+ChangesPlugin also sets up some mappings to move from one changed line to
+another. By default, those mappings are defined:
+
+`[h`        move backwards to the next changed line,
+`]h`        moves forward to the next changed line.
 
 ==============================================================================
                                                         *ChangesPlugin-Config*
@@ -279,6 +285,8 @@ third line of this document.
                         (https://github.com/chrisbra/changesPlugin/issues/8
                         reported by mpfusion, thanks!)
                         NF: |ChangesPlugin-preview|
+                        NF: |ChangesPlugin-Maps| 
+                            [h/]h move to previous/next changed line
     0.13: Feb 16, 2013:                                                 {{{1
                         BF: Plugin used :EnableDisplayChanges, but
                         documentation talked about EnableChanges
@@ -362,6 +370,6 @@ third line of this document.
                         created an autoload version
     0.1: Apr 10, 2010:                                                  {{{1
                         First working version
-
+Modeline: {{{1
 ==============================================================================
-vim:tw=78:ts=8:ft=help:et
+vim:tw=78:ts=8:ft=help:et:fdm=marker:fdl=0

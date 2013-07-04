@@ -824,6 +824,30 @@ fu! changes#GetDiff(arg, bang, ...) "{{{1
 	call changes#WarningMsg()
     endtry
 endfu
+
+fu changes#MoveToNextChange(fwd) "{{{1
+    let cur = line('.')
+    let dict = get(b:, "diffhl", {})
+    let lines = get(dict, "add", []) +
+	    \   get(dict, "del", []) +
+	    \   get(dict, "ch",  [])
+
+    if !exists("b:diffhl") || empty(lines)
+	echo "There are no ". (a:fwd ? "next" : "previous"). "differences!"
+	return "\<esc>"
+    elseif (a:fwd && max(lines) < cur) ||
+	\ (!a:fwd && min(lines) > cur)
+	echo "There are no more ". (a:fwd ? "next" : "previous"). "differences!"
+	return "\<esc>"
+    endif
+    if a:fwd
+	call filter(lines, 'v:val > cur')
+	return min(lines). "G"
+    else
+	call filter(lines, 'v:val < cur')
+	return max(lines). "G"
+    endif
+endfu
 " Old functions "{{{1
 fu! s:DiffOff() "{{{2
     if !&diff

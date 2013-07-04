@@ -45,6 +45,15 @@ if s:autocmd
 endif
 
 au VimEnter * let g:changes_did_startup = 1
+
+" Mappings:  "{{{1
+if !hasmapto("[h")
+    map <expr> <silent> [h changes#MoveToNextChange(0)
+endif
+if !hasmapto("]h")
+    map <expr> <silent> ]h changes#MoveToNextChange(1)
+endif
+    
 " =====================================================================
 " Restoration And Modelines: {{{1
 " vim: fdm=marker
