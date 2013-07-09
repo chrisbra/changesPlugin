@@ -832,12 +832,23 @@ fu changes#MoveToNextChange(fwd) "{{{1
 	    \   get(dict, "del", []) +
 	    \   get(dict, "ch",  [])
 
+    " only keep the start/end of a bunch of successive lines
+
+    let temp = -1
+    for item in a:fwd ? lines : reverse(lines)
+	if  ( a:fwd && temp == item - 1) ||
+	\   (!a:fwd && temp == item + 1)
+	    call remove(lines, index(lines, item))
+	endif
+	let temp = item
+    endfor
+
     if !exists("b:diffhl") || empty(lines)
-	echo "There are no ". (a:fwd ? "next" : "previous"). "differences!"
+	echo "There are no ". (a:fwd ? "next" : "previous"). " differences!"
 	return "\<esc>"
-    elseif (a:fwd && max(lines) < cur) ||
-	\ (!a:fwd && min(lines) > cur)
-	echo "There are no more ". (a:fwd ? "next" : "previous"). "differences!"
+    elseif (a:fwd && max(lines) <= cur) ||
+	\ (!a:fwd && min(lines) >= cur)
+	echo "There are no more ". (a:fwd ? "next" : "previous"). " differences!"
 	return "\<esc>"
     endif
     if a:fwd
