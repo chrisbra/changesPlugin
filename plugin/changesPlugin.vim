@@ -53,6 +53,15 @@ endif
 if !hasmapto("]h")
     map <expr> <silent> ]h changes#MoveToNextChange(1)
 endif
+
+" Text-object: A hunk
+if !hasmapto("ah", 'v')
+    vmap <expr> <silent> ah changes#CurrentHunk()
+endif
+
+if !hasmapto("ah", 'o')
+    omap <silent> ah :norm Vah<cr>
+endif
     
 " =====================================================================
 " Restoration And Modelines: {{{1

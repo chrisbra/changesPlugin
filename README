@@ -116,11 +116,14 @@ If you issue any of these commands, a vertical split buffer will open,
 that contains the changes from either your VCS or from the unmodified buffer
 as it is saved on disk. See |copy-diffs| for how to merge changes between
 those two buffers.
+                                                *ChangesPlugin-Maps* *[h* *]h*
+ChangesPlugin also sets up some mappings to move from one changed line to
+another. By default, those mappings are defined:
 
-                                                    *ChangesPlugin-Maps*
-ChangesPlugin also sets up some mappings to move from to another. By default,
-`[h` is used to move backwards to the next changed line, while `[h` moves
-forward to the next changed line.
+`[h`        move backwards to the next changed line,
+`]h`        moves forward to the next changed line.
+`ah`        selects the current hunk (only in Visual and Operator pending mode)
+
 ==============================================================================
                                                         *ChangesPlugin-Config*
 3. Configuring ChangesPlugin.vim
@@ -368,6 +371,6 @@ third line of this document.
                         created an autoload version
     0.1: Apr 10, 2010:                                                  {{{1
                         First working version
-
+Modeline: {{{1
 ==============================================================================
-vim:tw=78:ts=8:ft=help:et:fdm=marker
+vim:tw=78:ts=8:ft=help:et:fdm=marker:fdl=0

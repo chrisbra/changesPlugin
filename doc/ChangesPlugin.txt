@@ -122,6 +122,7 @@ another. By default, those mappings are defined:
 
 `[h`        move backwards to the next changed line,
 `]h`        moves forward to the next changed line.
+`ah`        selects the current hunk (only in Visual and Operator pending mode)
 
 ==============================================================================
                                                         *ChangesPlugin-Config*

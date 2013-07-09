@@ -531,6 +531,20 @@ fu! s:Is(os) "{{{1
     endif
 endfu
 
+fu! s:RemoveConsecutiveLines(fwd, list) "{{{1
+    " only keep the start/end of a bunch of successive lines
+    let temp  = -1
+    let lines = a:list
+    for item in a:fwd ? lines : reverse(lines)
+	if  ( a:fwd && temp == item - 1) ||
+	\   (!a:fwd && temp == item + 1)
+	    call remove(lines, index(lines, item))
+	endif
+	let temp = item
+    endfor
+    return lines
+endfu
+
 fu! changes#WarningMsg() "{{{1
     if !&vbs
 	" Set verbose to 1 to have messages displayed!
@@ -813,7 +827,7 @@ fu! changes#GetDiff(arg, bang, ...) "{{{1
 	    else
 		let [ &lz, &fdc, &wrap ] = _settings[1:3]
 	    endif
-	    if isfolded == -1
+	    if isfolded != -1
 		" resetting 'fdm' might fold the cursorline, reopen it
 		norm! zv
 	    endif
@@ -825,7 +839,15 @@ fu! changes#GetDiff(arg, bang, ...) "{{{1
     endtry
 endfu
 
-fu changes#MoveToNextChange(fwd) "{{{1
+fu! changes#MoveToNextChange(fwd) "{{{1
+    " Make sure, the hunks are up to date
+    let _fen = &fen
+    set nofen
+    let _wsv = winsaveview()
+    call s:UpdateView()
+    let &fen = _fen
+    call winrestview(_wsv)
+
     let cur = line('.')
     let dict = get(b:, "diffhl", {})
     let lines = get(dict, "add", []) +
@@ -833,22 +855,15 @@ fu changes#MoveToNextChange(fwd) "{{{1
 	    \   get(dict, "ch",  [])
 
     " only keep the start/end of a bunch of successive lines
-
-    let temp = -1
-    for item in a:fwd ? lines : reverse(lines)
-	if  ( a:fwd && temp == item - 1) ||
-	\   (!a:fwd && temp == item + 1)
-	    call remove(lines, index(lines, item))
-	endif
-	let temp = item
-    endfor
+    let lines = s:RemoveConsecutiveLines(1, copy(lines)) +
+	      \ s:RemoveConsecutiveLines(0, copy(lines))
 
     if !exists("b:diffhl") || empty(lines)
-	echo "There are no ". (a:fwd ? "next" : "previous"). " differences!"
+	echomsg "There are no ". (a:fwd ? "next" : "previous"). " differences!"
 	return "\<esc>"
     elseif (a:fwd && max(lines) <= cur) ||
 	\ (!a:fwd && min(lines) >= cur)
-	echo "There are no more ". (a:fwd ? "next" : "previous"). " differences!"
+	echomsg "There are no more ". (a:fwd ? "next" : "previous"). " differences!"
 	return "\<esc>"
     endif
     if a:fwd
@@ -857,6 +872,15 @@ fu changes#MoveToNextChange(fwd) "{{{1
     else
 	call filter(lines, 'v:val < cur')
 	return max(lines). "G"
+    endif
+endfu
+
+fu! changes#CurrentHunk() "{{{1
+    if changes#MoveToNextChange(0) == "\<Esc>"
+	" outside of a hunk
+	return "\<Esc>"
+    else
+	return "[ho]h"
     endif
 endfu
 " Old functions "{{{1
