@@ -32,16 +32,16 @@ com! CC  ChangesCaption
 com! CL  ChangesLinesOverview
 com! CD  ChangesDiffMode
 
-com! -nargs=? -complete=file -bang EnableChanges	call changes#GetDiff(1, <q-bang>, <q-args>)
+com! -nargs=? -complete=file -bang EnableChanges	call changes#EnableChanges(1, <q-bang>, <q-args>)
 com! DisableChanges		call changes#CleanUp()
 com! ToggleChangeView		call changes#TCV()
 com! ChangesCaption		call changes#Output(1)
-com! ChangesLinesOverview	call changes#GetDiff(2, '')
-com! ChangesDiffMode		call changes#GetDiff(3, '')
+com! ChangesLinesOverview	call changes#EnableChanges(2, '')
+com! ChangesDiffMode		call changes#EnableChanges(3, '')
 
 if s:autocmd
     exe "try | call changes#Init() | catch | call changes#WarningMsg() | endtry"
-    exe "au BufWinEnter,BufWritePost * call changes#GetDiff(1, '')"
+    exe "au BufWinEnter,BufWritePost * call changes#EnableChanges(1, '')"
 endif
 
 au VimEnter * let g:changes_did_startup = 1
