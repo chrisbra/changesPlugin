@@ -20,6 +20,7 @@ Copyright: (c) 2010 by Christian Brabandt        *ChangesPlugin-copyright*
    3.5 Check against a file in a VCS................: |ChangesPlugin-VCS|
    3.6 Get error messages...........................: |ChangesPlugin-errors|
    3.7 Display unified diff in preview window.......: |ChangesPlugin-preview|
+   3.8 Don't overwrite other signs..................: |ChangesPlugin-others|
   4.  ChangesPlugin Feedback........................: |ChangesPlugin-Feedback|
   5.  ChangesPlugin History.........................: |ChangesPlugin-history|
 
@@ -122,6 +123,7 @@ another. By default, those mappings are defined:
 
 `[h`        move backwards to the next changed line,
 `]h`        moves forward to the next changed line.
+                                                                    *v_ah*
 `ah`        selects the current hunk (only in Visual and Operator pending mode)
 
 ==============================================================================
@@ -249,6 +251,19 @@ g:changes_diff_preview. e.g. in your |.vimrc| set >
 <
 This will display and update the preview window, whenever the indicator signs
 are displayed.
+
+                                                          *ChangesPlugin-others*
+3.8 Don't overwrite other signs
+-------------------------------
+
+By default the plugin places its signs on lines, on which already has been
+placed a sign. To prevent this, set the variable g:changes_respect_other_signs
+to 1 (e.g. in your |.vimrc| place >
+
+    :let g:changes_respect_other_signs = 1
+<
+This will prevent placing signs on lines, on which other plugins have already
+placed their signs, which would then be overwritten).
 
 ==============================================================================
 4. ChangesPlugin Feedback                           *ChangesPlugin-feedback*
