@@ -48,10 +48,10 @@ au VimEnter * let g:changes_did_startup = 1
 
 " Mappings:  "{{{1
 if !hasmapto("[h")
-    map <expr> <silent> [h changes#MoveToNextChange(0)
+    map <expr> <silent> [h changes#MoveToNextChange(0, v:count1)
 endif
 if !hasmapto("]h")
-    map <expr> <silent> ]h changes#MoveToNextChange(1)
+    map <expr> <silent> ]h changes#MoveToNextChange(1, v:count1)
 endif
 
 " Text-object: A hunk
