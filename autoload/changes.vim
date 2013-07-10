@@ -77,6 +77,7 @@ fu! s:DefineSigns() "{{{1
 endfu
 
 fu! s:CheckLines(arg) "{{{1
+    " OLD: not needed any more.
     " a:arg  1: check original buffer
     "        0: check diffed scratch buffer
     let line=1
@@ -842,32 +843,35 @@ fu! changes#GetDiff(arg, bang, ...) "{{{1
 	    else
 		let [ &lz, &fdc, &wrap ] = _settings[1:3]
 	    endif
-	    if isfolded != -1
+	    if isfolded == -1 && foldclosed('.') != -1
 		" resetting 'fdm' might fold the cursorline, reopen it
 		norm! zv
 	    endif
-	    "call winrestview(_wsv)
 	endtry
     finally
-	unlet! s:sign_definition " make sure on next call, s:sign-definition will be recreated by DefinedSignsNotExists()
+	if exists("_wsv")
+	    call winrestview(_wsv)
+	endif
+	" make sure on next call, s:sign-definition will be recreated by
+	" DefinedSignsNotExists()
+	unlet! s:sign_definition
 	call changes#WarningMsg()
     endtry
 endfu
 
-fu! changes#MoveToNextChange(fwd) "{{{1
+fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     " Make sure, the hunks are up to date
     let _fen = &fen
     set nofen
-    let _wsv = winsaveview()
     call s:UpdateView()
     let &fen = _fen
-    call winrestview(_wsv)
 
     let cur = line('.')
     let dict = get(b:, "diffhl", {})
     let lines = get(dict, "add", []) +
 	    \   get(dict, "del", []) +
 	    \   get(dict, "ch",  [])
+    let cnt = a:cnt-1
 
     " only keep the start/end of a bunch of successive lines
     let lines = s:RemoveConsecutiveLines(1, copy(lines)) +
@@ -882,20 +886,33 @@ fu! changes#MoveToNextChange(fwd) "{{{1
 	return "\<esc>"
     endif
     if a:fwd
-	call filter(lines, 'v:val >= cur')
+	call filter(lines, 'v:val > cur')
 	if empty(lines)
 	    return "\<esc>"
 	else
-	    return min(lines). "G"
+	    call sort(lines)
 	endif
     else
-	call filter(lines, 'v:val <= cur')
+	call filter(lines, 'v:val < cur')
 	if empty(lines)
 	    return "\<esc>"
 	else
-	    return max(lines). "G"
+	    call reverse(sort(lines))
 	endif
     endif
+    if cnt > len(lines)
+	let cnt=length(lines)
+    endif
+
+    if cnt > 0
+	" Cancel the user given count
+	" otherwise the count would be multiplied with
+	" the given line number
+	let prefix="\<esc>"
+    else
+	let prefix=""
+    endif
+    return prefix.lines[cnt]. "G"
 endfu
 
 fu! changes#CurrentHunk() "{{{1
