@@ -125,11 +125,7 @@ fu! s:PlaceSignDummy(place) "{{{1
 	return
     endif
     if a:place
-	redir => a
-	    silent sign place
-	redir end
-	let b=split(a,"\n")
-	let b=filter(b, 'v:val =~ "id=".s:sign_prefix')
+	let b = copy(s:placed_signs[0])
 	if !empty(b)
 	    " only place signs, if signs have been defined
 	    exe "sign place " s:sign_prefix.'0 line=1 name=dummy buffer='. bufnr('')
@@ -153,6 +149,8 @@ fu! s:PlaceSigns(dict) "{{{1
     if empty(s:DefinedSignsNotExists())
 	call s:DefineSigns()
     endif
+    let b = copy(s:placed_signs[1])
+    let b = map(b, 'matchstr(v:val, ''line=\zs\d\+'')')
     for [ id, lines ] in items(a:dict)
 	for item in lines
 	    " One special case could occur:
@@ -162,7 +160,13 @@ fu! s:PlaceSigns(dict) "{{{1
 	    if item > line('$')
 		let item=line('$')
 	    endif
-	    exe "sign place " s:sign_prefix . item . " line=" . item .
+	    " There already exists a sign in this line, we might skip placing
+	    " a sign here  
+	    if index(b, string(item)) > -1 &&
+	    \  get(g:, 'changes_respect_other_signs', 0)
+		continue
+	    endif
+	    exe "sil sign place " s:sign_prefix . item . " line=" . item .
 		\ " name=" . id . " buffer=" . bufnr('')
 	endfor
     endfor
@@ -172,11 +176,7 @@ fu! s:UnPlaceSigns(force) "{{{1
     if !exists("s:sign_prefix")
 	return
     endif
-    redir => a
-    silent sign place
-    redir end
-    let b=split(a,"\n")
-    let b=filter(b, 'v:val =~ "id=".s:sign_prefix')
+    let b = copy(s:placed_signs[0])
     let b=map(b, 'matchstr(v:val, ''id=\zs\d\+'')')
     for id in sort(b)
 	if id == s:sign_prefix.'0' && !a:force
@@ -432,11 +432,7 @@ fu! s:ReturnGitRepPath() "{{{1
 endfu
 
 fu! s:ShowDifferentLines() "{{{1
-    redir => a
-    silent sign place
-    redir end
-    let b=split(a,"\n")
-    let b=filter(b, 'v:val =~ "id=".s:sign_prefix')
+    let b=copy(s:placed_signs[0])
     let b=map(b, 'matchstr(v:val, ''line=\zs\d\+'')')
     let b=map(b, '''\%(^\%''.v:val.''l\)''')
     if !empty(b)
@@ -448,6 +444,24 @@ fu! s:ShowDifferentLines() "{{{1
 	lclose
     endif
 endfun
+
+fu! s:PlacedSigns() "{{{1
+    if !exists("s:sign_prefix")
+	return [[],[]]
+    endif
+    redir => a| exe "silent sign place buffer=".bufnr('')|redir end
+    let b=split(a,"\n")[1:]
+    if empty(b)
+	return [[],[]]
+    else
+	" Filter from the second item. The first one contains the buffer name:
+	" Signs for [NULL]: or  Signs for <buffername>:
+	let b=b[1:]
+    endif
+    let c=filter(copy(b), 'v:val =~ "id=".s:sign_prefix')
+    let d=filter(copy(b), 'v:val !~ "id=".s:sign_prefix')
+    return [c,d]
+endfu
 
 fu! s:GuessVCSSystem() "{{{1
     " Check global config variable
@@ -667,6 +681,7 @@ fu! changes#Init() "{{{1
 	let s:precheck=1
     endif
 
+    let s:placed_signs = s:PlacedSigns()
     " Delete previously placed signs
     call s:UnPlaceSigns(0)
     if exists("s:sign_definition")
@@ -867,11 +882,19 @@ fu! changes#MoveToNextChange(fwd) "{{{1
 	return "\<esc>"
     endif
     if a:fwd
-	call filter(lines, 'v:val > cur')
-	return min(lines). "G"
+	call filter(lines, 'v:val >= cur')
+	if empty(lines)
+	    return "\<esc>"
+	else
+	    return min(lines). "G"
+	endif
     else
-	call filter(lines, 'v:val < cur')
-	return max(lines). "G"
+	call filter(lines, 'v:val <= cur')
+	if empty(lines)
+	    return "\<esc>"
+	else
+	    return max(lines). "G"
+	endif
     endif
 endfu
 
