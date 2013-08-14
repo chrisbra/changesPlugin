@@ -1,8 +1,8 @@
-*ChangesPlugin.txt*  Print indication of changed lines for a buffer 
+*ChangesPlugin.txt*  Print indication of changed lines for a buffer
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.13 Sat, 16 Feb 2013 23:17:36 +0100
-Copyright: (c) 2010 by Christian Brabandt        *ChangesPlugin-copyright*
+Version: 0.14 Wed, 14 Aug 2013 22:10:39 +0200
+Copyright: (c) 2010-2013 by Christian Brabandt        *ChangesPlugin-copyright*
            The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
            except use unicode instead of "Vim".  NO WARRANTY, EXPRESS OR
            IMPLIED.  USE AT-YOUR-OWN-RISK.
@@ -20,6 +20,7 @@ Copyright: (c) 2010 by Christian Brabandt        *ChangesPlugin-copyright*
    3.5 Check against a file in a VCS................: |ChangesPlugin-VCS|
    3.6 Get error messages...........................: |ChangesPlugin-errors|
    3.7 Display unified diff in preview window.......: |ChangesPlugin-preview|
+   3.8 Don't overwrite other signs..................: |ChangesPlugin-others|
   4.  ChangesPlugin Feedback........................: |ChangesPlugin-Feedback|
   5.  ChangesPlugin History.........................: |ChangesPlugin-history|
 
@@ -100,7 +101,7 @@ If you are editing a huge file with several hundreds of lines, it may be hard
 to find the lines that have been changed. >
     :CL
 or >
-    :ChangesLineOverview        
+    :ChangesLineOverview
 provide an easy view to only see all modified lines. This will open the
 |location-list| buffer where you can easily see the affected lines. Pushing
 enter on any line, allows you to easily jump to that line in the buffer.
@@ -122,6 +123,7 @@ another. By default, those mappings are defined:
 
 `[h`        move backwards to the next changed line,
 `]h`        moves forward to the next changed line.
+                                                                    *v_ah*
 `ah`        selects the current hunk (only in Visual and Operator pending mode)
 
 ==============================================================================
@@ -189,12 +191,12 @@ highlighting colors using your own build |colorscheme|.
 3.5 Check differences against a checked-in file from a VCS
 ----------------------------------------------------------
 
-Warning: This feature is rather experimental. So use it with care. 
+Warning: This feature is rather experimental. So use it with care.
 
 You can configure ChangesPlugin to check the differrences of the current
 buffer not only against the file stored on disk, but rather query a Version
 Control System (VCS) for its latest version and indicate changes based on
-this version. 
+this version.
 
 Currently, ChangesPlugin supports these VCS Systems:
     - git
@@ -211,7 +213,7 @@ To enable this feature, you need to set the variable g:changes_vcs_check to
 1. ChangesPlugin will then try to auto-detect, which of the above supported
 VCS-Systems is in use. That means, if it can't detect neither of git, cvs,
 svn, bzr or hg it will assume you are using svk. This may fail obviously, so
-you can always force ChangesPlugin to use any of the above by setting the 
+you can always force ChangesPlugin to use any of the above by setting the
 g:changes_vcs_system Variable.
 
 To enable this feature, you need to set the g:changes_vcs_check variable to 1.
@@ -250,6 +252,19 @@ g:changes_diff_preview. e.g. in your |.vimrc| set >
 This will display and update the preview window, whenever the indicator signs
 are displayed.
 
+                                                          *ChangesPlugin-others*
+3.8 Don't overwrite other signs
+-------------------------------
+
+By default the plugin places its signs on lines, on which already has been
+placed a sign. To prevent this, set the variable g:changes_respect_other_signs
+to 1 (e.g. in your |.vimrc| place >
+
+    :let g:changes_respect_other_signs = 1
+<
+This will prevent placing signs on lines, on which other plugins have already
+placed their signs, which would then be overwritten).
+
 ==============================================================================
 4. ChangesPlugin Feedback                           *ChangesPlugin-feedback*
 
@@ -269,108 +284,108 @@ third line of this document.
     BF: Bugfix
     NF: New Feature
 
-    0.14: (unreleased):                                                 {{{1
-                        BF: Exception not caught (reported by Marco, thanks!)
-                        BF: Prevent flickering by resetting SignColumn on
-                        updates (reported by Marco, thanks!)
-                        BF: parse diff output instead of relying on vimdiff
-                        and parsing the syntax items (prevents flickering
-                        since no window needs to be split)
-                        BF: avoid error messages, when buffer is ignored
-                        (https://github.com/chrisbra/changesPlugin/issues/6
-                        reported by mpfusion, thanks!)
-                        BF: avoid error messages, using |DC| 
-                        (https://github.com/chrisbra/changesPlugin/issues/7
-                        reported by mpfusion, thanks!)
-                        BF: don't mess with the |alternate-file| 
-                        (https://github.com/chrisbra/changesPlugin/issues/8
-                        reported by mpfusion, thanks!)
-                        NF: |ChangesPlugin-preview|
-                        NF: |ChangesPlugin-Maps| 
-                            [h/]h move to previous/next changed line
+    0.14: Aug 14, 2013:                                                 {{{1
+        BF: Exception not caught (reported by Marco, thanks!)
+        BF: Prevent flickering by resetting SignColumn on
+        updates (reported by Marco, thanks!)
+        BF: parse diff output instead of relying on vimdiff
+        and parsing the syntax items (prevents flickering
+        since no window needs to be split)
+        BF: avoid error messages, when buffer is ignored
+        (https://github.com/chrisbra/changesPlugin/issues/6
+        reported by mpfusion, thanks!)
+        BF: avoid error messages, using |DC|
+        (https://github.com/chrisbra/changesPlugin/issues/7
+        reported by mpfusion, thanks!)
+        BF: don't mess with the |alternate-file|
+        (https://github.com/chrisbra/changesPlugin/issues/8
+        reported by mpfusion, thanks!)
+        NF: |ChangesPlugin-preview|
+        NF: |ChangesPlugin-Maps|
+            [h/]h move to previous/next changed line
     0.13: Feb 16, 2013:                                                 {{{1
-                        BF: Plugin used :EnableDisplayChanges, but
-                        documentation talked about EnableChanges
-                        (same for DisableChanges)
-                        BF: Don't load the autoload script when sourcing
-                        the plugin (reported by Sergey Kholev, thanks!)
+        BF: Plugin used :EnableDisplayChanges, but
+        documentation talked about EnableChanges
+        (same for DisableChanges)
+        BF: Don't load the autoload script when sourcing
+        the plugin (reported by Sergey Kholev, thanks!)
     0.12: Jan, 31, 2012:                                                {{{1
-                        NF: Fix issue #3 from github (check changes against
-                            any file, suggested by Alessio Bolognino, Thanks!)
-                        BF: Fix E117 error (patch by Mate Gabri, Thanks!)
-                        BF: Check, that the current file is readable, before
-                            diffing (patch by Mate Gabri, Thanks!)
-                        BF: Sometimes, the previous Window is not accessible
-                            anymore
-                            (http://github.com/chrisbra/changesPlugin/issues/5
-                            by Mate Gabri, Thanks!)
+        NF: Fix issue #3 from github (check changes against
+            any file, suggested by Alessio Bolognino, Thanks!)
+        BF: Fix E117 error (patch by Mate Gabri, Thanks!)
+        BF: Check, that the current file is readable, before
+            diffing (patch by Mate Gabri, Thanks!)
+        BF: Sometimes, the previous Window is not accessible
+            anymore
+            (http://github.com/chrisbra/changesPlugin/issues/5
+            by Mate Gabri, Thanks!)
     0.11: May 04, 2010:                                                 {{{1
-                        BF: Document, that |InsertLeave| autocommand is used
-                            as autocommand
-                        BF: generate the help file with 'et' set, so that the
-                            README at github looks prettier
-                        BF: When staying in diff mode, don't reset 'fdm'
-                            and apply syntax coloring to scratch buffer
-                        BF: the check for the diff executable does not work
-                            as expected (Reported by Sergey Khorev),
-                            additionally outputting the Warnings did not work
-                            in that case
+        BF: Document, that |InsertLeave| autocommand is used
+            as autocommand
+        BF: generate the help file with 'et' set, so that the
+            README at github looks prettier
+        BF: When staying in diff mode, don't reset 'fdm'
+            and apply syntax coloring to scratch buffer
+        BF: the check for the diff executable does not work
+            as expected (Reported by Sergey Khorev),
+            additionally outputting the Warnings did not work
+            in that case
     0.10: Apr 28, 2010:                                                 {{{1
-                        NF: Fixed Issue 1 from github
-                            (http://github.com/chrisbra/changesPlugin/issues/1/find)
+        NF: Fixed Issue 1 from github
+            (http://github.com/chrisbra/changesPlugin/issues/1/find)
     0.9: Apr 24, 2010:                                                  {{{1
-                        NF: You can now use different VCS Systems for each
-                            buffer you are using.
-                        NF: Stay in diff mode
-                        BF: Fix the display of deleted signs
-                        BF: Undefining old signs, so that changing
-                            g:changes_hl_lines works
-                        BF: Some more error handling.
-                        NF: Show an overview for changed lines in location-list
-                            (|:CL|)
-                        NF: Show what each sign means using |:CC|
+        NF: You can now use different VCS Systems for each
+            buffer you are using.
+        NF: Stay in diff mode
+        BF: Fix the display of deleted signs
+        BF: Undefining old signs, so that changing
+            g:changes_hl_lines works
+        BF: Some more error handling.
+        NF: Show an overview for changed lines in location-list
+            (|:CL|)
+        NF: Show what each sign means using |:CC|
     0.8: Apr 22, 2010:                                                  {{{1
-                        NF: Renamed the helpfile, to make it more obvious, 
-                        that it refers to a plugin
-                        NF: Outputting name of checked file, if checking
-                            against VCS
-                        BF: Don't check for empty files.
-                        BF: Reworked the Message function
-                        BF: Don't try to place signs, if there are no
-                            differences
-                            (unreleased, VCS successfully tested with
-                             git, hg, svn, cvs, bzr)
+        NF: Renamed the helpfile, to make it more obvious,
+        that it refers to a plugin
+        NF: Outputting name of checked file, if checking
+            against VCS
+        BF: Don't check for empty files.
+        BF: Reworked the Message function
+        BF: Don't try to place signs, if there are no
+            differences
+            (unreleased, VCS successfully tested with
+                git, hg, svn, cvs, bzr)
     0.7: Apr 19, 2010:                                                  {{{1
-                        NF: Check against a file in a VCS
-                            (unreleased, first working version,
-                            needs to be checked for each VCS)
+        NF: Check against a file in a VCS
+            (unreleased, first working version,
+            needs to be checked for each VCS)
     0.6: Apr 12, 2010:                                                  {{{1
-                        BF: fixed a missing highlight for DiffText
+        BF: fixed a missing highlight for DiffText
     0.5: Apr 12, 2010:                                                  {{{1
-                        BF: error when trying to access b:diffhl in the
-                            scratch buffer. This should be fixed now (thanks
-                            Jeet Sukumaran!)
-                        BF: Use the correct highlighting groups (thanks Jeet
-                            Sukumaran!)
+        BF: error when trying to access b:diffhl in the
+            scratch buffer. This should be fixed now (thanks
+            Jeet Sukumaran!)
+        BF: Use the correct highlighting groups (thanks Jeet
+            Sukumaran!)
     0.4: Apr 12, 2010:                                                  {{{1
-                        NF: |ToggleChangesView|
-                        NF: The autocommand checks, if the buffer has been
-                            modified, since the last time.
-                        BF: Do not mess with signs, that have not been placed
-                            by ChangesPlugin.vim
-                        BF: CleanUp was seriously messed up (sorry, I must
-                            have been asleep, when writing that)
-                        BF: Take care of 'foldcolumn' setting, which would be
-                            overwritten by the signs-column
+        NF: |ToggleChangesView|
+        NF: The autocommand checks, if the buffer has been
+            modified, since the last time.
+        BF: Do not mess with signs, that have not been placed
+            by ChangesPlugin.vim
+        BF: CleanUp was seriously messed up (sorry, I must
+            have been asleep, when writing that)
+        BF: Take care of 'foldcolumn' setting, which would be
+            overwritten by the signs-column
     0.3: Apr 11, 2010:                                                  {{{1
-                        BF: redraw, so that the diff window will not be
-                            displayed
-                        NF: enabled GLVS (see |GLVS|)
+        BF: redraw, so that the diff window will not be
+            displayed
+        NF: enabled GLVS (see |GLVS|)
     0.2: Apr 11, 2010:                                                  {{{1
-                        Added Documentation
-                        created an autoload version
+        Added Documentation
+        created an autoload version
     0.1: Apr 10, 2010:                                                  {{{1
-                        First working version
+        First working version
 Modeline: {{{1
 ==============================================================================
 vim:tw=78:ts=8:ft=help:et:fdm=marker:fdl=0
