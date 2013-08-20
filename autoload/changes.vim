@@ -630,7 +630,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    endif
 
 	    " Check for empty dict of signs
-	    if (!exists(b:diffhl) || (empty(values(b:diffhl)[0]) && 
+	    if (!exists("b:diffhl") || (empty(values(b:diffhl)[0]) && 
 	    \empty(values(b:diffhl)[1]) && 
 	    \empty(values(b:diffhl)[2])))
 		call add(s:msg, 'No differences found!')
