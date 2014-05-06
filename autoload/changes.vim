@@ -132,7 +132,7 @@ fu! s:PlaceSignDummy(place) "{{{1
 	let b = copy(s:placed_signs[0])
 	if !empty(b)
 	    " only place signs, if signs have been defined
-	    exe "sign place " s:sign_prefix.'0 line=1 name=dummy buffer='. bufnr('')
+	    exe "sign place " s:sign_prefix.'0 line='.(line('$')+1). ' name=dummy buffer='. bufnr('')
 	endif
     else
 	exe "sign unplace " s:sign_prefix.'0'
@@ -802,7 +802,7 @@ fu! changes#Init() "{{{1
     let s:signs["add"] = "text=+ texthl=DiffAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
     let s:signs["del"] = "text=- texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
     let s:signs["ch"] = "text=* texthl=DiffChange " . ( (s:hl_lines) ? " linehl=DiffChange" : "")
-    let s:signs["dummy"] = "text=_ texthl=SignColumn "
+    let s:signs["dummy"] = "text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn "
 
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time
