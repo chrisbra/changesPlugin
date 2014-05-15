@@ -100,6 +100,12 @@ fu! s:UpdateView(...) "{{{1
     if  b:changes_chg_tick != b:changedtick || force
 	" Turn off displaying the Caption
 	let s:verbose=0
+	if !exists("s:msg")
+	    try
+		call changes#Init()
+	    catch
+	    endtry
+	endif
 	call s:GetDiff(1, '')
 	let b:changes_chg_tick = b:changedtick
     endif
