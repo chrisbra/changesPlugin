@@ -602,8 +602,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	endif
 
 	" Save some settings
-	" fdm, wrap, and fdc will be reset by :diffoff!
-	let _settings = [ &fdm, &lz, &fdc, &wrap, &diff ]
 	let _wsv   = winsaveview()
 	" Lazy redraw
 	setl lz
@@ -663,12 +661,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    " so we need to restore them here
 	    " We don't reset the fdm, in case we are staying in diff mode
 	    if a:arg != 3 || s:nodiff
-		if  _settings[2] == 1
-		    " When foldcolumn is 1, folds won't be shown because of
-		    " the signs, so increasing its value by 1 so that folds will
-		    " also be shown
-		    let _settings[2] += 1
-		endif
 		let b:changes_view_enabled=1
 	    endif
 	    if a:arg ==# 2
@@ -693,11 +685,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    " redraw (there seems to be some junk left)
 	    redr!
 	    call changes#Output(0)
-	    if a:arg < 3
-		let [ &fdm, &lz, &fdc, &wrap, &diff ] = _settings
-	    else
-		let [ &lz, &fdc, &wrap ] = _settings[1:3]
-	    endif
 	    if isfolded == -1 && foldclosed('.') != -1
 		" resetting 'fdm' might fold the cursorline, reopen it
 		norm! zv
