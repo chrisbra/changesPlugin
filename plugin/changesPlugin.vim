@@ -3,14 +3,10 @@
 " Version:  0.14
 " Authors:  Christian Brabandt <cb@256bit.org>
 " Last Change: Wed, 14 Aug 2013 22:10:39 +0200
-
-
 " Script:  http://www.vim.org/scripts/script.php?script_id=3052
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
 " GetLatestVimScripts: 3052 14 :AutoInstall: ChangesPlugin.vim
-
-
 " ---------------------------------------------------------------------
 "  Load Once: {{{1
 if &cp || exists("g:loaded_changes")
