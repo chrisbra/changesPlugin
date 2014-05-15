@@ -1,0 +1,3 @@
+URL: http://www.designkode.com/blog/free-developer-icons
+License: Creative Commons (Attribution 3.0 Unported)
+"DesignKode is releasing this set of 40 free high quality icons for your web site and application GUI designs. All icons in this set are 32 x 32 pixel PNG image files. You may freely use these icons in your commercial or personal projects without attribution."
