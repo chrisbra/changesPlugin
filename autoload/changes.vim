@@ -51,6 +51,7 @@ fu! s:Check() "{{{1
     let s:ids["ch"]    = hlID("DiffChange")
     let s:ids["ch2"]   = hlID("DiffText")
 
+    call s:SetupSignTextHl()
     call s:DefineSigns()
 endfu
 
@@ -144,6 +145,12 @@ fu! s:DefinedSignsNotExists() "{{{1
     let pat = join(map(keys(s:signs),'"^sign ".v:val'), '\|')
     let b = filter(copy(s:sign_definition), 'v:val =~ pat')
     return b
+endfu
+
+fu! s:SetupSignTextHl() "{{{1
+    hi ChangesSignTextAdd ctermfg=green   guifg=boldgreen
+    hi ChangesSignTextDel ctermfg=darkred guifg=boldred
+    hi ChangesSignTextCh  ctermfg=blue    guifg=boldblue
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
@@ -800,9 +807,9 @@ fu! changes#Init() "{{{1
     let del = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-')
     let ch = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨂' : '*')
 
-    let s:signs["add"] = "text=".add." texthl=DiffAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
-    let s:signs["del"] = "text=".del." texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
-    let s:signs["ch"] = "text=".ch." texthl=DiffChange " . ( (s:hl_lines) ? " linehl=DiffChange" : "")
+    let s:signs["add"] = "text=".add." texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
+    let s:signs["del"] = "text=".del." texthl=ChangesSignTextDel " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
+    let s:signs["ch"] = "text=".ch.  " texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "")
     let s:signs["dummy"] = "text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn "
 
     " Only check the first time this file is loaded
