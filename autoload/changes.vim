@@ -155,9 +155,9 @@ fu! s:DefinedSignsNotExists() "{{{1
 endfu
 
 fu! s:SetupSignTextHl() "{{{1
-    hi ChangesSignTextAdd ctermbg=green    ctermfg=black guibg=green guifg=black
-    hi ChangesSignTextDel ctermbg=darkred  ctermfg=black guibg=darkred  guifg=black
-    hi ChangesSignTextCh  ctermbg=darkblue ctermfg=black guibg=darkblue guifg=black
+    hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green guifg=black
+    hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=darkred  guifg=black
+    hi ChangesSignTextCh  ctermbg=21  ctermfg=black guibg=darkblue guifg=black
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
