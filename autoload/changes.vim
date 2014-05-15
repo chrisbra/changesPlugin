@@ -105,10 +105,7 @@ fu! s:UpdateView(...) "{{{1
 	" Turn off displaying the Caption
 	let s:verbose=0
 	if !exists("s:msg")
-	    try
-		call changes#Init()
-	    catch
-	    endtry
+	    call changes#Init()
 	endif
 	call s:GetDiff(1, '')
 	let b:changes_chg_tick = b:changedtick
@@ -147,9 +144,9 @@ fu! s:DefinedSignsNotExists() "{{{1
 endfu
 
 fu! s:SetupSignTextHl() "{{{1
-    hi ChangesSignTextAdd ctermbg=green   ctermfg=black guibg=green guifg=black
-    hi ChangesSignTextDel ctermbg=darkred ctermfg=black guibg=darkred guifg=black
-    hi ChangesSignTextCh  ctermbg=blue    ctermfg=black guibg=blue guifg=black
+    hi ChangesSignTextAdd ctermbg=green    ctermfg=black guibg=green guifg=black
+    hi ChangesSignTextDel ctermbg=darkred  ctermfg=black guibg=darkred  guifg=black
+    hi ChangesSignTextCh  ctermbg=darkblue ctermfg=black guibg=darkblue guifg=black
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
@@ -750,6 +747,9 @@ fu! changes#Init() "{{{1
     if !exists("b:vcs_type")
 	let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
     endif
+    if s:vcs && empty(b:vcs_type)
+	let s:vcs=0
+    endif
     if !exists("s:vcs_cat")
 	let s:vcs_cat  = {'git': 'show HEAD:', 
 			 \'bzr': 'cat ', 
@@ -781,11 +781,12 @@ fu! changes#Init() "{{{1
 "    endif
 
     " Settings for Version Control
-    if s:vcs
+    if s:vcs && !empty(b:vcs_type)
 	if get(s:vcs_cat, b:vcs_type, 'NONE') == 'NONE'
 	    call add(s:msg,"Don't know VCS " . b:vcs_type)
 	    call add(s:msg,"VCS check will be disabled for now.")
 	    let s:vcs=0
+	    " Probably file not in a repository/working dir
 	    throw 'changes:NoVCS'
 	endif
 	if !executable(b:vcs_type)
@@ -797,8 +798,8 @@ fu! changes#Init() "{{{1
     endif
     if !exists("s:diff_out")
 	let s:diff_out    = tempname()
-	let s:diff_in_cur = tempname()
-	let s:diff_in_old = tempname()
+	let s:diff_in_cur = s:diff_out.'cur'
+	let s:diff_in_old = s:diff_out.'old'
     endif
     let s:nodiff=0
 
