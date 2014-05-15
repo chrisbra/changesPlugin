@@ -186,7 +186,7 @@ fu! s:UnPlaceSigns(force) "{{{1
 	return
     endif
     let b = s:PlacedSigns()[0]
-    let b=map(b, 'matchstr(v:val, ''id=\zs\d\+'')')
+    let b = map(b, 'matchstr(v:val, ''id=\zs\d\+'')+0')
     for id in sort(b)
 	if id == s:sign_prefix.'0' && !a:force
 	    " Keep dummy, so the sign column does not vanish
