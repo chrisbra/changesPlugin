@@ -462,11 +462,10 @@ fu! s:PlacedSigns() "{{{1
     let b=split(a,"\n")[1:]
     if empty(b)
 	return [[],[]]
-    else
-	" Filter from the second item. The first one contains the buffer name:
-	" Signs for [NULL]: or  Signs for <buffername>:
-	let b=b[1:]
     endif
+    " Filter from the second item. The first one contains the buffer name:
+    " Signs for [NULL]: or  Signs for <buffername>:
+    let b=b[1:]
     let c=filter(copy(b), 'v:val =~ "id=".s:sign_prefix')
     let d=filter(copy(b), 'v:val !~ "id=".s:sign_prefix')
     return [c,d]
