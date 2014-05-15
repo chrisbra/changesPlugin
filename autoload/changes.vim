@@ -11,7 +11,6 @@
 " See :h ChangesPlugin.txt
 
 scriptencoding utf-8
-let s:plugin = fnamemodify(expand("<sfile>"), ':t:r')
 let s:i_path = fnamemodify(expand("<sfile>"), ':p:h'). '/changes_icons/'
 
 fu! <sid>GetSID()
@@ -24,11 +23,7 @@ delf <sid>GetSID "not needed anymore
 " Check preconditions
 fu! s:Check() "{{{1
     " Check for the existence of unsilent
-    if exists(":unsilent")
-	let s:echo_cmd='unsilent echo'
-    else
-	let s:echo_cmd='echo'
-    endif
+    let s:echo_cmd='unsilent echo'
 
     if !has("diff")
 	call add(s:msg,"Diff support not available in your Vim version.")
@@ -222,17 +217,6 @@ fu! s:Cwd() "{{{1
     return escape(getcwd(), ' ')
 endfu
 
-fu! s:Writefile(name) "{{{1
-    let a = getline(1,'$')
-    if &ff ==? 'dos'
-	" TODO: What about mac format?
-	call map(a, 'v:val.nr2char(13)')
-    endif
-    if writefile(a + [''], a:name, 'b') == -1
-	throw "changes:abort"
-    endif
-endfu
-
 fu! s:PreviewDiff(file) "{{{1
     try
 	if	!exists('g:changes_did_startup') || !get(g:, 'changes_diff_preview', 0)
@@ -265,8 +249,7 @@ fu! s:MakeDiff_new(file) "{{{1
     try
 	let _pwd = s:ChangeDir()
 	unlet! b:current_line
-	call s:Writefile(s:diff_in_cur)
-	" exe ":sil noa :w" s:diff_in_cur
+	exe ":sil keepalt noa :w" s:diff_in_cur
 	if !s:vcs || !empty(a:file)
 	    let file = !empty(a:file) ? a:file : bufname('')
 	    if empty(file)
@@ -332,10 +315,8 @@ fu! s:ChangeDir()
     return _pwd
 endfu
 
-
 fu! s:MakeDiff(...) "{{{1
-    " Old version, only needed, when GetDiff(3) is called (or argument 1 is
-    " non-empty)
+    " Old version, only needed, when GetDiff(3) is called (or argument 1 is non-empty)
     " Get diff for current buffer with original
     let o_pwd = s:ChangeDir()
     let bnr = bufnr('%')
@@ -553,18 +534,6 @@ fu! s:CheckDeletedLines() "{{{1
     endfor
 endfu
 
-fu! s:MoveToPrevWindow() "{{{1
-    let winnr = winnr()
-    noa wincmd p
-    if winnr() == winnr
-	" Best effort, there doesn't exist a previous window
-	" where wincmd p can jump to, so move to the next window
-	" (e.g. latexsuite does this:
-	" https://github.com/chrisbra/changesPlugin/issues/5
-	noa wincmd w
-    endif
-endfu
-
 fu! s:Is(os) "{{{1
     if (a:os == "win")
         return has("win32") || has("win16") || has("win64")
@@ -760,6 +729,7 @@ fu! changes#Init() "{{{1
 	let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
     endif
     if s:vcs && empty(b:vcs_type)
+	" disable VCS checking...
 	let s:vcs=0
     endif
     if !exists("s:vcs_cat")
@@ -888,13 +858,15 @@ fu! changes#CleanUp() "{{{1
 endfu
 fu! changes#AuCmd(arg) "{{{1
     if a:arg
-	augroup Changes
-	    autocmd!
-	    let s:verbose=0
-	    au TextChanged,InsertLeave,BufWritePost * :call s:UpdateView()
-	    au FocusGained,BufWinEnter * :call s:UpdateView(1)
-	    au GUIEnter * :call s:Check() " make sure, hightlighting groups are not cleared
-	augroup END
+	if !exists("#Changes")
+	    augroup Changes
+		autocmd!
+		let s:verbose=0
+		au TextChanged,InsertLeave,BufWritePost * :call s:UpdateView()
+		au FocusGained,BufWinEnter * :call s:UpdateView(1)
+		au GUIEnter * :call s:Check() " make sure, hightlighting groups are not cleared
+	    augroup END
+	endif
     else
 	augroup Changes
 	    autocmd!
@@ -991,7 +963,5 @@ fu! s:DiffOff() "{{{2
     diffoff!
     q
 endfu
-
-
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
