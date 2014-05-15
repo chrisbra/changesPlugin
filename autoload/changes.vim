@@ -12,7 +12,7 @@
 
 scriptencoding utf-8
 let s:plugin = fnamemodify(expand("<sfile>"), ':t:r')
-let s:i_path = fnamemodify(expand("<sfile>"), ':p:h'). '/'. s:plugin. '/'
+let s:i_path = fnamemodify(expand("<sfile>"), ':p:h'). '/changes_icons/'
 
 fu! <sid>GetSID()
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_GetSID$')
@@ -155,9 +155,9 @@ fu! s:DefinedSignsNotExists() "{{{1
 endfu
 
 fu! s:SetupSignTextHl() "{{{1
-    hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green guifg=black
-    hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=darkred  guifg=black
-    hi ChangesSignTextCh  ctermbg=21  ctermfg=black guibg=darkblue guifg=black
+    hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green
+    hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=red
+    hi ChangesSignTextCh  ctermbg=21  ctermfg=black guibg=blue
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
@@ -817,11 +817,14 @@ fu! changes#Init() "{{{1
     let s:signs={}
     let add = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+')
     let del = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-')
-    let ch = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨂' : '*')
+    let ch  = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨂' : '*')
 
-    let s:signs["add"] = "text=".add." texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
-    let s:signs["del"] = "text=".del." texthl=ChangesSignTextDel " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
-    let s:signs["ch"]  = "text=".ch. " texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "")
+    let s:signs["add"] = "text=".add." texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "") . 
+		\ (has("gui_running") ? 'icon='.s:i_path.'add1.bmp' : '')
+    let s:signs["del"] = "text=".del." texthl=ChangesSignTextDel " . ( (s:hl_lines) ? " linehl=DiffDelete" : "") .
+		\ (has("gui_running") ? 'icon='.s:i_path.'delete1.bmp' : '')
+    let s:signs["ch"]  = "text=".ch. " texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "") .
+		\ (has("gui_running") ? 'icon='.s:i_path.'warning1.bmp' : '')
     " Add some more dummy signs
     let s:signs["dummy"]    = "text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn "
     let s:signs["dummyadd"] = "text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
