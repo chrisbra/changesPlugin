@@ -3,7 +3,6 @@
 " Version:  0.14
 " Authors:  Christian Brabandt <cb@256bit.org>
 " Last Change: Wed, 14 Aug 2013 22:10:39 +0200
-" Script:  http://www.vim.org/scripts/script.php?script_id=3052
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
 " GetLatestVimScripts: 3052 14 :AutoInstall: ChangesPlugin.vim
@@ -148,9 +147,9 @@ fu! s:DefinedSignsNotExists() "{{{1
 endfu
 
 fu! s:SetupSignTextHl() "{{{1
-    hi ChangesSignTextAdd ctermfg=green   guifg=green
-    hi ChangesSignTextDel ctermfg=darkred guifg=darkred
-    hi ChangesSignTextCh  ctermfg=blue    guifg=blue
+    hi ChangesSignTextAdd ctermbg=green   ctermfg=black guibg=green guifg=black
+    hi ChangesSignTextDel ctermbg=darkred ctermfg=black guibg=darkred guifg=black
+    hi ChangesSignTextCh  ctermbg=blue    ctermfg=black guibg=blue guifg=black
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
@@ -160,6 +159,7 @@ fu! s:PlaceSigns(dict) "{{{1
     let b = copy(s:placed_signs[1])
     let b = map(b, 'matchstr(v:val, ''line=\zs\d\+'')')
     for [ id, lines ] in items(a:dict)
+	let prev_line = 0
 	for item in lines
 	    " One special case could occur:
 	    " You could delete the last lines. In that case, we couldn't place
@@ -175,7 +175,8 @@ fu! s:PlaceSigns(dict) "{{{1
 		continue
 	    endif
 	    exe "sil sign place " s:sign_prefix . item . " line=" . item .
-		\ " name=" . id . " buffer=" . bufnr('')
+		\ " name=" . (prev_line+1 == item ? "dummy".id : id) . " buffer=" . bufnr('')
+	    let prev_line = item
 	endfor
     endfor
 endfu
@@ -809,8 +810,12 @@ fu! changes#Init() "{{{1
 
     let s:signs["add"] = "text=".add." texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
     let s:signs["del"] = "text=".del." texthl=ChangesSignTextDel " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
-    let s:signs["ch"] = "text=".ch.  " texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "")
-    let s:signs["dummy"] = "text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn "
+    let s:signs["ch"]  = "text=".ch. " texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "")
+    " Add some more dummy signs
+    let s:signs["dummy"]    = "text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn "
+    let s:signs["dummyadd"] = "text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
+    let s:signs["dummydel"] = "text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextDel " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
+    let s:signs["dummych"]  = "text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "")
 
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time
