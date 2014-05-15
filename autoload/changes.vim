@@ -792,9 +792,13 @@ fu! changes#Init() "{{{1
     let s:nodiff=0
 
     let s:signs={}
-    let s:signs["add"] = "text=+ texthl=DiffAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
-    let s:signs["del"] = "text=- texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
-    let s:signs["ch"] = "text=* texthl=DiffChange " . ( (s:hl_lines) ? " linehl=DiffChange" : "")
+    let add = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+')
+    let del = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-')
+    let ch = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨂' : '*')
+
+    let s:signs["add"] = "text=".add." texthl=DiffAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
+    let s:signs["del"] = "text=".del." texthl=DiffDelete " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
+    let s:signs["ch"] = "text=".ch." texthl=DiffChange " . ( (s:hl_lines) ? " linehl=DiffChange" : "")
     let s:signs["dummy"] = "text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn "
 
     " Only check the first time this file is loaded
