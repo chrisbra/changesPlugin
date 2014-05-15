@@ -10,6 +10,17 @@
 " Documentation: "{{{1
 " See :h ChangesPlugin.txt
 
+scriptencoding utf-8
+let s:plugin = fnamemodify(expand("<sfile>"), ':t:r')
+let s:i_path = fnamemodify(expand("<sfile>"), ':p:h'). '/'. s:plugin. '/'
+
+fu! <sid>GetSID()
+    return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_GetSID$')
+endfu
+
+let s:sid    = <sid>GetSID()
+delf <sid>GetSID "not needed anymore
+
 " Check preconditions
 fu! s:Check() "{{{1
     " Check for the existence of unsilent
