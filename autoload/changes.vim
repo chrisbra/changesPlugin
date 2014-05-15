@@ -37,6 +37,10 @@ fu! s:Check() "{{{1
 	call add(s:msg,"changes plugin will not be working!")
 	throw 'changes:abort'
     endif
+    if !get(g:, 'changes_respect_SignColumn', 0)
+	" Make the Sign column not standout
+	hi! link SignColumn Normal
+    endif
 
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
