@@ -148,9 +148,9 @@ fu! s:DefinedSignsNotExists() "{{{1
 endfu
 
 fu! s:SetupSignTextHl() "{{{1
-    hi ChangesSignTextAdd ctermfg=green   guifg=boldgreen
-    hi ChangesSignTextDel ctermfg=darkred guifg=boldred
-    hi ChangesSignTextCh  ctermfg=blue    guifg=boldblue
+    hi ChangesSignTextAdd ctermfg=green   guifg=green
+    hi ChangesSignTextDel ctermfg=darkred guifg=darkred
+    hi ChangesSignTextCh  ctermfg=blue    guifg=blue
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
@@ -873,6 +873,7 @@ fu! changes#AuCmd(arg) "{{{1
 	    let s:verbose=0
 	    au TextChanged,InsertLeave,BufWritePost * :call s:UpdateView()
 	    au FocusGained,BufWinEnter * :call s:UpdateView(1)
+	    au GUIEnter * :call s:Check() " make sure, hightlighting groups are not cleared
 	augroup END
     else
 	augroup Changes
