@@ -284,6 +284,8 @@ third line of this document.
     BF: Bugfix
     NF: New Feature
 
+    0.15: (unreleased)
+        NF: use |TextChanged| autocommand to update signs faster
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on

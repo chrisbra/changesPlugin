@@ -50,21 +50,6 @@ fu! s:Check() "{{{1
     call s:DefineSigns()
 endfu
 
-fu! changes#AuCmd(arg) "{{{1
-    if a:arg
-	augroup Changes
-	    autocmd!
-	    let s:verbose=0
-	    au TextChanged,BufWritePost * :call s:UpdateView()
-	augroup END
-    else
-	augroup Changes
-	    autocmd!
-	augroup END
-	augroup! Changes
-    endif
-endfu
-
 fu! s:DefineSigns() "{{{1
     if !empty(s:DefinedSignsNotExists())
 	for key in keys(s:signs)
@@ -105,12 +90,14 @@ fu! s:CheckLines(arg) "{{{1
     endw
 endfu
 
-fu! s:UpdateView() "{{{1
+fu! s:UpdateView(...) "{{{1
+    " if a:1 is given, force update!
+    let force = exists("a:1") && a:1
     if !exists("b:changes_chg_tick")
 	let b:changes_chg_tick = 0
     endif
     " Only update, if there have been changes to the buffer
-    if  b:changes_chg_tick != b:changedtick
+    if  b:changes_chg_tick != b:changedtick || force
 	" Turn off displaying the Caption
 	let s:verbose=0
 	call s:GetDiff(1, '')
@@ -858,7 +845,23 @@ fu! changes#CleanUp() "{{{1
 	call changes#AuCmd(0)
     endif
 endfu
-
+fu! changes#AuCmd(arg) "{{{1
+    if a:arg
+	augroup Changes
+	    autocmd!
+	    let s:verbose=0
+	    au TextChanged,BufWritePost * :call s:UpdateView()
+	    if get(g:, 'changes_autocmd', 0)
+		au BufWinEnter * :call s:UpdateView(1)
+	    endif
+	augroup END
+    else
+	augroup Changes
+	    autocmd!
+	augroup END
+	augroup! Changes
+    endif
+endfu
 fu! changes#TCV() "{{{1
     if  exists("b:changes_view_enabled") && b:changes_view_enabled
 	call s:UnPlaceSigns(1)
