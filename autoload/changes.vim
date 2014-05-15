@@ -50,12 +50,12 @@ fu! s:Check() "{{{1
     call s:DefineSigns()
 endfu
 
-fu! s:AuCmd(arg) "{{{1
+fu! changes#AuCmd(arg) "{{{1
     if a:arg
 	augroup Changes
 	    autocmd!
 	    let s:verbose=0
-	    au InsertLeave,CursorHold,BufWritePost * :call s:UpdateView()
+	    au TextChanged,BufWritePost * :call s:UpdateView()
 	augroup END
     else
 	augroup Changes
@@ -830,7 +830,7 @@ fu! changes#Init() "{{{1
     else
 	call s:DefineSigns()
     endif
-    call s:AuCmd(s:autocmd)
+    call changes#AuCmd(s:autocmd)
 endfu
 
 fu! changes#EnableChanges(arg, bang, ...) "{{{1
@@ -855,7 +855,7 @@ fu! changes#CleanUp() "{{{1
 	exe "sil! sign undefine " key
     endfor
     if s:autocmd
-	call s:AuCmd(0)
+	call changes#AuCmd(0)
     endif
 endfu
 

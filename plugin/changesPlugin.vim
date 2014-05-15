@@ -20,7 +20,6 @@ let g:loaded_changes       = 1
 let s:keepcpo              = &cpo
 set cpo&vim
 
-let s:autocmd  = get(g:, 'changes_autocmd', 0)
 " ------------------------------------------------------------------------------
 " Public Interface: {{{1
 
@@ -38,10 +37,12 @@ com! ToggleChangeView		call changes#TCV()
 com! ChangesCaption		call changes#Output(1)
 com! ChangesLinesOverview	call changes#EnableChanges(2, '')
 com! ChangesDiffMode		call changes#EnableChanges(3, '')
+let g:changes_did_startup=1
 
-if s:autocmd
-    exe "try | call changes#Init() | catch | call changes#WarningMsg() | endtry"
-    exe "au BufWinEnter,BufWritePost * call changes#EnableChanges(1, '')"
+if get(g:, 'changes_autocmd', 0)
+    "exe "try | call changes#Init() | catch | call changes#WarningMsg() | endtry"
+    "exe "au BufWinEnter,BufWritePost * call changes#EnableChanges(1, '')"
+    exe ":call changes#AuCmd(1)"
 endif
 
 au VimEnter * let g:changes_did_startup = 1
