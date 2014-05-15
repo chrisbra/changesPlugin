@@ -814,7 +814,7 @@ fu! changes#Init() "{{{1
     call s:UnPlaceSigns(0)
     if exists("s:sign_definition")
 	let def = s:DefinedSignsNotExists()
-	if (     match(def, s:signs.add) == -1
+	if (     match(def, s:signs.add)  == -1
 	    \ || match (def, s:signs.del) == -1
 	    \ || match (def, s:signs.ch)  == -1)
 	    " Sign definition changed, redefine them
@@ -856,10 +856,8 @@ fu! changes#AuCmd(arg) "{{{1
 	augroup Changes
 	    autocmd!
 	    let s:verbose=0
-	    au TextChanged,BufWritePost * :call s:UpdateView()
-	    if get(g:, 'changes_autocmd', 0)
-		au BufWinEnter * :call s:UpdateView(1)
-	    endif
+	    au TextChanged,InsertLeave,BufWritePost * :call s:UpdateView()
+	    au FocusGained,BufWinEnter * :call s:UpdateView(1)
 	augroup END
     else
 	augroup Changes
