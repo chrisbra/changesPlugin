@@ -165,7 +165,9 @@ fu! s:PlaceSigns(dict) "{{{1
 	call s:DefineSigns()
     endif
     let b = copy(s:placed_signs[1])
-    let b = map(b, 'matchstr(v:val, ''line=\zs\d\+'')')
+    " signs by other plugins
+    let b = map(b, 'matchstr(v:val, ''line=\zs\d\+'')+0')
+    let changes_signs=[]
     for [ id, lines ] in items(a:dict)
 	let prev_line = 0
 	for item in lines
@@ -176,14 +178,20 @@ fu! s:PlaceSigns(dict) "{{{1
 	    if item > line('$')
 		let item=line('$')
 	    endif
-	    " There already exists a sign in this line, we might skip placing
-	    " a sign here  
-	    if index(b, string(item)) > -1 &&
+	    if index(changes_signs, item) > -1
+		" There is already a Changes sign placed
+		continue
+	    endif
+	    " There already exists a sign in this line, we might skip placing a sign here  
+	    if index(b, item) > -1 &&
 	    \  get(g:, 'changes_respect_other_signs', 0)
 		continue
 	    endif
 	    exe "sil sign place " s:sign_prefix . item . " line=" . item .
 		\ " name=" . (prev_line+1 == item ? "dummy".id : id) . " buffer=" . bufnr('')
+	    " remember line number, so that we don't place a second sign
+	    " there!
+	    call add(changes_signs, item)
 	    let prev_line = item
 	endfor
     endfor
