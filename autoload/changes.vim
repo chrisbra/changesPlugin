@@ -73,7 +73,10 @@ fu! s:DefineSigns() "{{{1
 	endfor
     endif
     for key in keys(s:signs)
-	exe "sign define" key s:signs[key]
+	try
+	    exe "sign define" key s:signs[key]
+	catch /^Vim\%((\a\+)\)\=:E155/	" sign does not exist
+	endtry
     endfor
 endfu
 
