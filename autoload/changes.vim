@@ -378,10 +378,9 @@ endfu
 
 fu! s:ParseDiffOutput(file) "{{{1
     let b:current_line = 1000000 
-    let b:prev_diffhl = exists("b:diffhl") ? b:diffhl : {'add': [], 'ch': [], 'del': []}
     for line in filter(readfile(a:file), 'v:val=~''^@@''')
-	let submatch = matchlist(line, '@@ -\(\d\+\),\?\(\d*\) +\(\d\+\),\?\(\d*\) @@')
-
+	let submatch = matchlist(line,
+	    \ '@@ -\(\d\+\),\?\(\d*\) +\(\d\+\),\?\(\d*\) @@')
 	if empty(submatch)
 	    " There was probably an error, skip parsing now
 	    return
@@ -565,8 +564,8 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
     
     " If error happened, don't try to get a diff list
     try
-	if (exists("s:ignore") && get(s:ignore, bufnr('%'), 0) && empty(a:bang)) ||
-	    \ !empty(&l:bt) ||
+	if (exists("s:ignore") && get(s:ignore, bufnr('%'), 0) &&
+	    \ empty(a:bang)) || !empty(&l:bt) ||
 	    \ line2byte(line('$')) == -1
 	    call add(s:msg, 'Buffer is ignored, use ! to force command')
 	    " ignore error messages
@@ -589,18 +588,20 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 
 	    if !filereadable(bufname(''))
 		call add(s:msg,"You've opened a new file so viewing changes ".
-		    \ "is disabled until the file is saved ".
-		    \ "(You have to reenable it if not using autocmd).")
+		    \ "is disabled until the file is saved ")
 		return
 	    endif
 
 	    " Does not make sense to check an empty buffer
 	    if empty(bufname(''))
-		call add(s:msg,"The buffer does not contain a name. Check aborted!")
-		let s:ignore[bufnr('%')] = 1
+		call add(s:msg,"The buffer does not contain a name. Aborted!")
+		" don't ignore buffer, it could get a name later...
+		" let s:ignore[bufnr('%')] = 1
 		return
 	    endif
 
+	    let b:prev_diffhl = (exists("b:diffhl") ? b:diffhl :
+			\ {'add': [], 'ch': [], 'del': []})
 	    let b:diffhl={'add': [], 'del': [], 'ch': []}
 	    if a:arg == 3
 		let s:temp = {'del': []}
@@ -610,33 +611,28 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		call s:CheckLines(1)
 		exe "noa" bufwinnr(scratchbuf) "wincmd w"
 		exe "setl ft=". _ft
-		"call s:MoveToPrevWindow()
 		call s:CheckLines(0)
 		" Switch to other buffer and check for deleted lines
-		"call s:MoveToPrevWindow()
 		exe "noa" bufwinnr(curbuf) "wincmd w"
 		let b:diffhl['del'] = s:temp['del']
 	    else
+		" parse diff output
 		let scratchbuf = s:MakeDiff_new(exists("a:1") ? a:1 : '')
 	    endif
 
 	    " Check for empty dict of signs
-	    if (!exists("b:diffhl") || (empty(values(b:diffhl)[0]) && 
-	    \empty(values(b:diffhl)[1]) && 
-	    \empty(values(b:diffhl)[2])))
+	    if (!exists("b:diffhl") || 
+	    \ b:diffhl ==? {'add': [], 'del': [], 'ch': []})
 		call add(s:msg, 'No differences found!')
 		let s:nodiff=1
 	    else
 		call s:PlaceSigns(b:diffhl)
 	    endif
-	    " :diffoff resets some options (see :h :diffoff
-	    " so we need to restore them here
-	    " We don't reset the fdm, in case we are staying in diff mode
 	    if a:arg != 3 || s:nodiff
 		let b:changes_view_enabled=1
 	    endif
 	    if a:arg ==# 2
-	    call s:ShowDifferentLines()
+		call s:ShowDifferentLines()
 	    endif
 	catch /^Vim\%((\a\+)\)\=:E139/	" catch error E139
 	    return
@@ -647,8 +643,10 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    if scratchbuf && a:arg < 3
 		exe "bw" scratchbuf
 	    endif
-	    if s:vcs && exists("b:changes_view_enabled") && b:changes_view_enabled
-		call add(s:msg,"Check against " . fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
+	    if s:vcs && exists("b:changes_view_enabled") &&
+			\ b:changes_view_enabled
+		call add(s:msg,"Check against " .
+		    \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
 	    endif
 	    " remove dummy sign
 	    call s:PlaceSignDummy(0)
@@ -810,9 +808,9 @@ fu! changes#Init() "{{{1
     call s:UnPlaceSigns(0)
     if exists("s:sign_definition")
 	let def = s:DefinedSignsNotExists()
-	if (     match(def, s:signs.add)  == -1
-	    \ || match (def, s:signs.del) == -1
-	    \ || match (def, s:signs.ch)  == -1)
+	if (     match(def, s:signs.add) == -1
+	    \ || match(def, s:signs.del) == -1
+	    \ || match(def, s:signs.ch)  == -1)
 	    " Sign definition changed, redefine them
 	    call s:DefineSigns()
 	endif
