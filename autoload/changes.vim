@@ -68,10 +68,14 @@ endfu
 
 fu! s:DefineSigns() "{{{1
     if !empty(s:DefinedSignsNotExists())
-	for key in keys(s:signs)
-	    exe "silent sign undefine " key
-	endfor
+	return
     endif
+    for key in keys(s:signs)
+	try
+	    exe "silent sign undefine " key
+	catch /^Vim\%((\a\+)\)\=:E155/	" sign does not exist
+	endtry
+    endfor
     for key in keys(s:signs)
 	exe "sign define" key s:signs[key]
     endfor
@@ -154,9 +158,34 @@ fu! s:DefinedSignsNotExists() "{{{1
 endfu
 
 fu! s:SetupSignTextHl() "{{{1
+    " guibg needs to match the bg of the gui icons!
     hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green
     hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=red
     hi ChangesSignTextCh  ctermbg=21  ctermfg=black guibg=blue
+endfu
+
+fu! s:CheckSignsToPlace() "{{{1
+    " do not reset all lines, but only add new signs 
+    " and remove old invalid signs.
+    if !exists("b:prev_diffhl")
+	return
+    endif
+    for type in keys(b:prev_diffhl)
+	for line in b:prev_diffhl[type]
+	    let idx = index(b:diffhl[type], line)
+	    if idx > -1
+		" sign already place, no need to replace it
+		call remove(b:diffhl[type], idx)
+		call remove(b:prev_diffhl[type],
+		    \ index(b:prev_diffhl[type], line))
+	    endif
+	endfor
+	for oldline in b:prev_diffhl[type]
+	    " remove invalid signs
+	    exe "sign unplace ". s:sign_prefix.line. " buffer=".bufnr('')
+	endfor
+    endfor
+    unlet! b:prev_diffhl
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
@@ -181,13 +210,15 @@ fu! s:PlaceSigns(dict) "{{{1
 		" There is already a Changes sign placed
 		continue
 	    endif
-	    " There already exists a sign in this line, we might skip placing a sign here  
+	    " There already exists a sign in this line, we
+	    " might skip placing a sign here  
 	    if index(b, item) > -1 &&
 	    \  get(g:, 'changes_respect_other_signs', 0)
 		continue
 	    endif
 	    exe "sil sign place " s:sign_prefix . item . " line=" . item .
-		\ " name=" . (prev_line+1 == item ? "dummy".id : id) . " buffer=" . bufnr('')
+		\ " name=" . (prev_line+1 == item ? "dummy".id : id).
+		\ " buffer=" . bufnr('')
 	    " remember line number, so that we don't place a second sign
 	    " there!
 	    call add(changes_signs, item)
@@ -207,7 +238,7 @@ fu! s:UnPlaceSigns(force) "{{{1
 	    " Keep dummy, so the sign column does not vanish
 	    continue
 	endif
-	exe "sign unplace" id
+	exe "sign unplace ". id. " buffer=".bufnr('')
     endfor
 endfu
 
@@ -217,14 +248,16 @@ endfu
 
 fu! s:PreviewDiff(file) "{{{1
     try
-	if	!exists('g:changes_did_startup') || !get(g:, 'changes_diff_preview', 0)
-		    \ || &diff
+	if !exists('g:changes_did_startup') || &diff ||
+	    \ !get(g:, 'changes_diff_preview', 0)
 	    return
 	endif
 	let bufcontent = readfile(a:file)
 	if len(bufcontent) > 2
-	    let bufcontent[0] = substitute(bufcontent[0], s:diff_in_old, expand("%"), '')
-	    let bufcontent[1] = substitute(bufcontent[1], s:diff_in_cur, expand("%")." (cur)", '')
+	    let bufcontent[0] = substitute(bufcontent[0], s:diff_in_old,
+		    \ expand("%"), '')
+	    let bufcontent[1] = substitute(bufcontent[1], s:diff_in_cur,
+		    \ expand("%")." (cur)", '')
 	    call writefile(bufcontent, a:file)
 	endif
 
@@ -254,15 +287,16 @@ fu! s:MakeDiff_new(file) "{{{1
 		throw "changes:abort"
 	    endif
 	    if !s:Is('unix')
-		let output = system("copy ". shellescape(file). " ". s:diff_in_old)
+		let output = system("copy ". shellescape(file).
+		    \ " ". s:diff_in_old)
 	    else
-		let output = system("cp -- ". shellescape(file). " ". s:diff_in_old)
+		let output = system("cp -- ". shellescape(file).
+		    \ " ". s:diff_in_old)
 	    endif
 	    if v:shell_error
 		call add(s:msg, output[:-2])
 		throw "changes:abort"
 	    endif
-	    "exe ':sil !diff -u '.  shellescape(bufname(''),1). ' '. s:diff_in_cur. '>' s:diff_out
 	else
 	    if b:vcs_type == 'git'
 		let git_rep_p = s:ReturnGitRepPath()
@@ -297,6 +331,7 @@ fu! s:MakeDiff_new(file) "{{{1
 	    call add(s:msg,"No differences found!")
 	    return
 	endif
+	call s:ParseDiffOutput(s:diff_out)
     finally
 	call s:PreviewDiff(s:diff_out)
 	for file in [s:diff_in_cur, s:diff_in_old, s:diff_out]
@@ -600,8 +635,9 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		return
 	    endif
 
-	    let b:prev_diffhl = (exists("b:diffhl") ? b:diffhl :
-			\ {'add': [], 'ch': [], 'del': []})
+	    if exists("b:diffhl")
+		let b:prev_diffhl = copy(b:diffhl)
+	    endif
 	    let b:diffhl={'add': [], 'del': [], 'ch': []}
 	    if a:arg == 3
 		let s:temp = {'del': []}
@@ -626,6 +662,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		call add(s:msg, 'No differences found!')
 		let s:nodiff=1
 	    else
+		call s:CheckSignsToPlace()
 		call s:PlaceSigns(b:diffhl)
 	    endif
 	    if a:arg != 3 || s:nodiff
@@ -805,7 +842,7 @@ fu! changes#Init() "{{{1
 
     let s:placed_signs = s:PlacedSigns()
     " Delete previously placed signs
-    call s:UnPlaceSigns(0)
+    "call s:UnPlaceSigns(0)
     if exists("s:sign_definition")
 	let def = s:DefinedSignsNotExists()
 	if (     match(def, s:signs.add) == -1
