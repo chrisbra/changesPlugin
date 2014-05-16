@@ -856,7 +856,7 @@ fu! changes#AuCmd(arg) "{{{1
 	if !exists("#Changes")
 	    augroup Changes
 		autocmd!
-		au TextChanged,InsertLeave,BufWritePost * :call s:UpdateView()
+		au TextChanged,InsertLeave,FilterReadPost * :call s:UpdateView()
 		au FocusGained,BufWinEnter * :call s:UpdateView(1)
 		au GUIEnter * :call s:Check() " make sure, hightlighting groups are not cleared
 	    augroup END
