@@ -35,7 +35,7 @@ com! ChangesLinesOverview	call changes#EnableChanges(2, '')
 com! ChangesDiffMode		call changes#EnableChanges(3, '')
 let g:changes_did_startup=1
 
-if get(g:, 'changes_autocmd', 0)
+if get(g:, 'changes_autocmd', 1)
     "exe "try | call changes#Init() | catch | call changes#WarningMsg() | endtry"
     "exe "au BufWinEnter,BufWritePost * call changes#EnableChanges(1, '')"
     exe ":call changes#AuCmd(1)"
