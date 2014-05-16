@@ -114,8 +114,6 @@ fu! s:UpdateView(...) "{{{1
     endif
     " Only update, if there have been changes to the buffer
     if  b:changes_chg_tick != b:changedtick || force
-	" Turn off displaying the Caption
-	let s:verbose=0
 	if !exists("s:msg")
 	    call changes#Init()
 	endif
@@ -593,7 +591,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		call add(s:msg,"You've opened a new file so viewing changes ".
 		    \ "is disabled until the file is saved ".
 		    \ "(You have to reenable it if not using autocmd).")
-		let s:verbose = 0
 		return
 	    endif
 
@@ -601,7 +598,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    if empty(bufname(''))
 		call add(s:msg,"The buffer does not contain a name. Check aborted!")
 		let s:ignore[bufnr('%')] = 1
-		let s:verbose = 0
 		return
 	    endif
 
@@ -629,7 +625,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    \empty(values(b:diffhl)[1]) && 
 	    \empty(values(b:diffhl)[2])))
 		call add(s:msg, 'No differences found!')
-		let s:verbose=0
 		let s:nodiff=1
 	    else
 		call s:PlaceSigns(b:diffhl)
@@ -642,14 +637,12 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    endif
 	    if a:arg ==# 2
 	    call s:ShowDifferentLines()
-	    let s:verbose=0
 	    endif
 	catch /^Vim\%((\a\+)\)\=:E139/	" catch error E139
 	    return
 	catch /^changes/
 	    let b:changes_view_enabled=0
 	    let s:ignore[bufnr('%')] = 1
-	    let s:verbose = 0
 	finally
 	    if scratchbuf && a:arg < 3
 		exe "bw" scratchbuf
@@ -720,8 +713,7 @@ fu! changes#Init() "{{{1
     " Ignore buffer
     let s:ignore   = {}
     let s:hl_lines = get(g:, 'changes_hl_lines', 0)
-    let s:autocmd  = get(g:, 'changes_autocmd', 0)
-    let s:verbose  = get(g:, 'changes_verbose', &vbs)
+    let s:autocmd  = get(g:, 'changes_autocmd', 1)
     " Check against a file in a vcs system
     let s:vcs      = get(g:, 'changes_vcs_check', 0)
     if !exists("b:vcs_type")
@@ -860,7 +852,6 @@ fu! changes#AuCmd(arg) "{{{1
 	if !exists("#Changes")
 	    augroup Changes
 		autocmd!
-		let s:verbose=0
 		au TextChanged,InsertLeave,BufWritePost * :call s:UpdateView()
 		au FocusGained,BufWinEnter * :call s:UpdateView(1)
 		au GUIEnter * :call s:Check() " make sure, hightlighting groups are not cleared
