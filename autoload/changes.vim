@@ -117,9 +117,7 @@ fu! s:UpdateView(...) "{{{1
     endif
     " Only update, if there have been changes to the buffer
     if  b:changes_chg_tick != b:changedtick || force
-	if !exists("s:msg")
-	    call changes#Init()
-	endif
+	call changes#Init()
 	call s:GetDiff(1, '')
 	let b:changes_chg_tick = b:changedtick
     endif
@@ -589,9 +587,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	let scratchbuf = 0
 
 	try
-	    call s:PlaceSignDummy(1)
-	    call changes#Init()
-
 	    if !filereadable(bufname(''))
 		call add(s:msg,"You've opened a new file so viewing changes ".
 		    \ "is disabled until the file is saved ")
@@ -811,8 +806,8 @@ fu! changes#Init() "{{{1
 	endtry
 	let s:precheck=1
     endif
-
     let s:placed_signs = s:PlacedSigns()
+    call s:PlaceSignDummy(1)
     " Delete previously placed signs
     call s:UnPlaceSigns(0)
     if exists("s:sign_definition")
@@ -834,6 +829,7 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
     if exists("s:ignore") && get(s:ignore, bufnr('%'), 0)
 	call remove(s:ignore, bufnr('%'))
     endif
+    call changes#Init()
     if exists("a:1")
 	call s:GetDiff(a:arg, a:bang, a:1)
     else
@@ -881,6 +877,7 @@ fu! changes#TCV() "{{{1
         let b:changes_view_enabled = 0
         echo "Hiding changes since last save"
     else
+	call changes#Init()
 	call s:GetDiff(1, '')
         let b:changes_view_enabled = 1
         echo "Showing changes since last save"
@@ -950,16 +947,6 @@ fu! changes#CurrentHunk() "{{{1
     else
 	return "[ho]h"
     endif
-endfu
-" Old functions "{{{1
-fu! s:DiffOff() "{{{2
-    if !&diff
-	return
-    endif
-    " Turn off Diff Mode and close buffer
-    call s:MoveToPrevWindow()
-    diffoff!
-    q
 endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
