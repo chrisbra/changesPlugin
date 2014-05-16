@@ -74,7 +74,7 @@ fu! s:DefineSigns() "{{{1
     endif
     for key in keys(s:signs)
 	try
-	    exe "sign define" key s:signs[key]
+	    exe "sign define" s:signs[key]
 	catch /^Vim\%((\a\+)\)\=:E155/	" sign does not exist
 	endtry
     endfor
@@ -151,8 +151,10 @@ fu! s:DefinedSignsNotExists() "{{{1
 	redir => a|exe "sil sign list"|redir end
 	let s:sign_definition = split(a, "\n")
     endif
-    let pat = join(map(keys(s:signs),'"^sign ".v:val'), '\|')
+    let s:sign_definition = filter(s:sign_definition, 'v:val !~# "dummy"')
+    let pat = '^sign \(add\|del\|ch\)'
     let b = filter(copy(s:sign_definition), 'v:val =~ pat')
+    let b = map(b, 'substitute(v:val, ''^\w\+\s\+'', "", "")')
     return b
 endfu
 
@@ -783,17 +785,20 @@ fu! changes#Init() "{{{1
     let del = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-')
     let ch  = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨂' : '*')
 
-    let s:signs["add"] = "text=".add." texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "") . 
+    let s:signs["add"] = "add text=".add."  texthl=ChangesSignTextAdd " .
+		\( (s:hl_lines) ? " linehl=DiffAdd" : "") . 
 		\ (has("gui_running") ? 'icon='.s:i_path.'add1.bmp' : '')
-    let s:signs["del"] = "text=".del." texthl=ChangesSignTextDel " . ( (s:hl_lines) ? " linehl=DiffDelete" : "") .
+    let s:signs["del"] = "del text=".del."  texthl=ChangesSignTextDel " .
+		\( (s:hl_lines) ? " linehl=DiffDelete" : "") .
 		\ (has("gui_running") ? 'icon='.s:i_path.'delete1.bmp' : '')
-    let s:signs["ch"]  = "text=".ch. " texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "") .
+    let s:signs["ch"]  = "ch text=".ch. "  texthl=ChangesSignTextCh "  .
+		\ ( (s:hl_lines) ? " linehl=DiffChange" : "") .
 		\ (has("gui_running") ? 'icon='.s:i_path.'warning1.bmp' : '')
     " Add some more dummy signs
-    let s:signs["dummy"]    = "text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn "
-    let s:signs["dummyadd"] = "text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
-    let s:signs["dummydel"] = "text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextDel " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
-    let s:signs["dummych"]  = "text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "")
+    let s:signs["dummy"]    = "dummy text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn "
+    let s:signs["dummyadd"] = "dummyadd text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
+    let s:signs["dummydel"] = "dummydel text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextDel " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
+    let s:signs["dummych"]  = "dummych text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "")
 
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time
@@ -811,10 +816,11 @@ fu! changes#Init() "{{{1
     " Delete previously placed signs
     call s:UnPlaceSigns(0)
     if exists("s:sign_definition")
-	let def = s:DefinedSignsNotExists()
-	if (     match(def, s:signs.add) == -1
-	    \ || match(def, s:signs.del) == -1
-	    \ || match(def, s:signs.ch)  == -1)
+	let def = sort(s:DefinedSignsNotExists())
+	if len(def) < 3 || split(def[0]) !=? split(s:signs.add)
+	    \ || split(def[1]) !=? split(s:signs.ch)
+	    \ || split(def[2]) !=? split(s:signs.del)
+		
 	    " Sign definition changed, redefine them
 	    call s:DefineSigns()
 	endif
