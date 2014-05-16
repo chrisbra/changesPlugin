@@ -299,7 +299,6 @@ fu! s:MakeDiff_new(file) "{{{1
 	    call add(s:msg,"No differences found!")
 	    return
 	endif
-	call s:ParseDiffOutput(s:diff_out)
     finally
 	call s:PreviewDiff(s:diff_out)
 	for file in [s:diff_in_cur, s:diff_in_old, s:diff_out]
@@ -381,6 +380,7 @@ endfu
 
 fu! s:ParseDiffOutput(file) "{{{1
     let b:current_line = 1000000 
+    let b:prev_diffhl = exists("b:diffhl") ? b:diffhl : {'add': [], 'ch': [], 'del': []}
     for line in filter(readfile(a:file), 'v:val=~''^@@''')
 	let submatch = matchlist(line, '@@ -\(\d\+\),\?\(\d*\) +\(\d\+\),\?\(\d*\) @@')
 
@@ -413,6 +413,8 @@ fu! s:ParseDiffOutput(file) "{{{1
 	    let b:diffhl.add += range(new_line, new_line + new_count - 1)
 	endif
     endfor
+    " Check with the old signs and only add new signs and delete invalid signs
+    " b:prev_diffhl
 endfu
 
 fu! s:ReturnGitRepPath() "{{{1
@@ -659,7 +661,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    call s:PlaceSignDummy(0)
 	    " redraw (there seems to be some junk left)
 	    redr!
-	    call changes#Output(0)
 	    if isfolded == -1 && foldclosed('.') != -1
 		" resetting 'fdm' might fold the cursorline, reopen it
 		norm! zv
@@ -699,20 +700,18 @@ fu! changes#WarningMsg() "{{{1
     endif
 endfu
 
-fu! changes#Output(force) "{{{1
-    if s:verbose || a:force
-	echohl Title
-	echo "Differences will be highlighted like this:"
-	echohl Normal
-	echo "========================================="
-	echohl DiffAdd
-	echo "+ Added Lines"
-	echohl DiffDelete
-	echo "- Deleted Lines"
-	echohl DiffChange
-	echo "* Changed Lines"
-	echohl Normal
-    endif
+fu! changes#Output() "{{{1
+    echohl Title
+    echo "Differences will be highlighted like this:"
+    echohl Normal
+    echo "========================================="
+    echohl DiffAdd
+    echo "+ Added Lines"
+    echohl DiffDelete
+    echo "- Deleted Lines"
+    echohl DiffChange
+    echo "* Changed Lines"
+    echohl Normal
 endfu
 
 fu! changes#Init() "{{{1

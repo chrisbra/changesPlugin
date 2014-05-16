@@ -30,7 +30,7 @@ com! CD  ChangesDiffMode
 com! -nargs=? -complete=file -bang EnableChanges	call changes#EnableChanges(1, <q-bang>, <q-args>)
 com! DisableChanges		call changes#CleanUp()
 com! ToggleChangeView		call changes#TCV()
-com! ChangesCaption		call changes#Output(1)
+com! ChangesCaption		call changes#Output()
 com! ChangesLinesOverview	call changes#EnableChanges(2, '')
 com! ChangesDiffMode		call changes#EnableChanges(3, '')
 let g:changes_did_startup=1
