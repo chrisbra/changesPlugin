@@ -7,3 +7,5 @@ vim_passfile
 *.vmb
 # ignore *.orig files
 *.orig
+# ignore some zip files
+*-*.zip
