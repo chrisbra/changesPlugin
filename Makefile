@@ -4,11 +4,13 @@ DOC=$(wildcard doc/*.txt)
 PLUGIN=$(shell basename "$$PWD")
 VERSION=$(shell sed -n '/Version:/{s/^.*\(\S\.\S\+\)$$/\1/;p}' $(SCRIPT))
 
-.PHONY: $(PLUGIN).vmb README
+.PHONY: $(PLUGIN).vmb README $(PLUGIN).zip
 
-all: uninstall vimball install README
+all: uninstall vimball install
 
 vimball: $(PLUGIN).vmb
+
+release: uninstall vim
 
 clean:
 	rm -rf *.vmb *.vba */*.orig *.~* .VimballRecord doc/tags
@@ -29,6 +31,16 @@ undo:
 
 README:
 	cp -f $(DOC) README
+
+archive: $(PLUGIN).zip
+
+$(PLUGIN).zip:
+	-@/bin/sh -c "if [ -f $(PLUGIN).zip ]; then \
+	    zip -u --verbose $(PLUGIN).zip ${SCRIPT} ${AUTOL} ${DOC} autoload/*/* ; \
+	else \
+	    zip $(PLUGIN).zip ${SCRIPT} ${AUTOL} ${DOC} autoload/*/* ; \
+	fi "
+	ln -f $(PLUGIN).zip $(PLUGIN)-$(VERSION).zip
 
 $(PLUGIN).vmb:
 	rm -f $(PLUGIN)-$(VERSION).vmb
