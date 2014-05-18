@@ -207,8 +207,13 @@ fu! s:UnPlaceSigns(force) "{{{1
     if !exists("s:sign_prefix")
 	return
     endif
-    let b = s:PlacedSigns()[0]
-    let b = map(b, 'matchstr(v:val, ''id=\zs\d\+'')')
+    let c = s:PlacedSigns()
+    if empty(c[1]) && a:force
+	" only changes sign present, can remove all of them now
+	exe "sign unplace * buffer=".bufnr('')
+	return
+    endif
+    let b = map(c[0], 'matchstr(v:val, ''id=\zs\d\+'')')
     for id in sort(b, 's:MySortValues')
 	if id == s:sign_prefix.'0' && !a:force
 	    " Keep dummy, so the sign column does not vanish
