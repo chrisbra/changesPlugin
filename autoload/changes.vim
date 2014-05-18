@@ -159,7 +159,7 @@ endfu
 fu! s:SetupSignTextHl() "{{{1
     hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green
     hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=red
-    hi ChangesSignTextCh  ctermbg=21  ctermfg=black guibg=blue
+    hi ChangesSignTextCh  ctermbg=21  ctermfg=white guibg=blue
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
@@ -171,7 +171,7 @@ fu! s:PlaceSigns(dict) "{{{1
     let b = map(b, 'matchstr(v:val, ''line=\zs\d\+'')+0')
     let changes_signs=[]
     for [ id, lines ] in items(a:dict)
-	let prev_line = 0
+	let prev_line = -1 
 	for item in lines
 	    " One special case could occur:
 	    " You could delete the last lines. In that case, we couldn't place
@@ -199,18 +199,22 @@ fu! s:PlaceSigns(dict) "{{{1
     endfor
 endfu
 
+fu! s:MySortValues(i1, i2) "{{{1
+    return (a:i1+0) == (a:i2+0) ? 0 : (a:i1+0) > (a:i2+0) ? 1 : -1
+endfu
+
 fu! s:UnPlaceSigns(force) "{{{1
     if !exists("s:sign_prefix")
 	return
     endif
     let b = s:PlacedSigns()[0]
-    let b = map(b, 'matchstr(v:val, ''id=\zs\d\+'')+0')
-    for id in sort(b)
+    let b = map(b, 'matchstr(v:val, ''id=\zs\d\+'')')
+    for id in sort(b, 's:MySortValues')
 	if id == s:sign_prefix.'0' && !a:force
 	    " Keep dummy, so the sign column does not vanish
 	    continue
 	endif
-	exe "sign unplace" id
+	exe "sign unplace ". id. " buffer=".bufnr('')
     endfor
 endfu
 
@@ -778,7 +782,7 @@ fu! changes#Init() "{{{1
     let s:signs={}
     let add = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+')
     let del = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-')
-    let ch  = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨂' : '*')
+    let ch  = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*')
 
     let s:signs["add"] = "add text=".add."  texthl=ChangesSignTextAdd " .
 		\( (s:hl_lines) ? " linehl=DiffAdd" : "") . 
@@ -786,7 +790,7 @@ fu! changes#Init() "{{{1
     let s:signs["del"] = "del text=".del."  texthl=ChangesSignTextDel " .
 		\( (s:hl_lines) ? " linehl=DiffDelete" : "") .
 		\ (has("gui_running") ? 'icon='.s:i_path.'delete1.bmp' : '')
-    let s:signs["ch"]  = "ch text=".ch. "  texthl=ChangesSignTextCh "  .
+    let s:signs["ch"]  = "ch text=\<Char-0xa0>".ch. "  texthl=ChangesSignTextCh "  .
 		\ ( (s:hl_lines) ? " linehl=DiffChange" : "") .
 		\ (has("gui_running") ? 'icon='.s:i_path.'warning1.bmp' : '')
     " Add some more dummy signs
