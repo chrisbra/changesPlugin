@@ -59,6 +59,7 @@ fu! s:Check() "{{{1
 	" signs
 	set linespace=-1
     endif
+    unlet! s:sign_definition
     call s:SetupSignTextHl()
     call s:DefineSigns()
 endfu
@@ -154,14 +155,14 @@ fu! s:DefinedSignsNotExists() "{{{1
 endfu
 
 fu! s:SetupSignTextHl() "{{{1
-    if !hlID('ChangesSignTextAdd')
+    if !hlID('ChangesSignTextAdd') || empty(synIDattr(hlID('ChangesSignTextAdd'), 'fg'))
 	" highlighting group does not exist yet
 	hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green
     endif
-    if !hlID('ChangesSignTextDel')
+    if !hlID('ChangesSignTextDel') || empty(synIDattr(hlID('ChangesSignTextDel'), 'fg'))
 	hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=red
     endif
-    if !hlID('ChangesSignTextCh')
+    if !hlID('ChangesSignTextCh') || empty(synIDattr(hlID('ChangesSignTextCh'), 'fg'))
 	hi ChangesSignTextCh  ctermbg=21  ctermfg=white guibg=blue
     endif
 endfu
