@@ -640,7 +640,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		let b:diffhl['del'] = s:temp['del']
 	    else
 		" parse diff output
-		let scratchbuf = s:MakeDiff_new(exists("a:1") ? a:1 : '')
+		call s:MakeDiff_new(exists("a:1") ? a:1 : '')
 	    endif
 
 	    " Check for empty dict of signs
