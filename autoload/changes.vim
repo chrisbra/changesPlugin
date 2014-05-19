@@ -154,9 +154,16 @@ fu! s:DefinedSignsNotExists() "{{{1
 endfu
 
 fu! s:SetupSignTextHl() "{{{1
-    hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green
-    hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=red
-    hi ChangesSignTextCh  ctermbg=21  ctermfg=white guibg=blue
+    if !hlID('ChangesSignTextAdd')
+	" highlighting group does not exist yet
+	hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green
+    endif
+    if !hlID('ChangesSignTextDel')
+	hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=red
+    endif
+    if !hlID('ChangesSignTextCh')
+	hi ChangesSignTextCh  ctermbg=21  ctermfg=white guibg=blue
+    endif
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
