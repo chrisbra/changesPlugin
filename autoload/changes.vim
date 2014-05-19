@@ -27,19 +27,16 @@ fu! s:Check() "{{{1
 
     if !has("diff")
 	call add(s:msg,"Diff support not available in your Vim version.")
-	call add(s:msg,"changes plugin will not be working!")
 	throw 'changes:abort'
     endif
 
     if  !has("signs")
-	call add(s:msg,"Sign Support support not available in your Vim version.")
-	call add(s:msg,"changes plugin will not be working!")
+	call add(s:msg,"Sign Support support not available in your Vim.")
 	throw 'changes:abort'
     endif
 
     if !executable("diff") || executable("diff") == -1
 	call add(s:msg,"No diff executable found")
-	call add(s:msg,"changes plugin will not be working!")
 	throw 'changes:abort'
     endif
     if !get(g:, 'changes_respect_SignColumn', 0)
@@ -809,6 +806,7 @@ fu! changes#Init() "{{{1
 	try
 	    call s:Check()
 	catch
+	    call add(s:msg,"changes plugin will not be working!")
 	    " Rethrow exception
 	    throw v:exception
 	endtry
@@ -866,7 +864,8 @@ fu! changes#AuCmd(arg) "{{{1
 		autocmd!
 		au TextChanged,InsertLeave,FilterReadPost * :call s:UpdateView()
 		au FocusGained,BufWinEnter * :call s:UpdateView(1)
-		au GUIEnter * :call s:Check() " make sure, hightlighting groups are not cleared
+		" make sure, hightlighting groups are not cleared
+		au GUIEnter * :try|call s:Check() |catch|endtry
 	    augroup END
 	endif
     else
