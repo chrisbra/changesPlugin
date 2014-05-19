@@ -449,16 +449,27 @@ fu! s:ReturnGitRepPath() "{{{1
 endfu
 
 fu! s:ShowDifferentLines() "{{{1
-    let b=copy(s:placed_signs[0])
-    let b=map(b, 'matchstr(v:val, ''line=\zs\d\+'')')
-    let b=map(b, '''\%(^\%''.v:val.''l\)''')
-    if !empty(b)
-	exe ":silent! lvimgrep /".join(b, '\|').'/gj %'
-	lw
+    if !exists("b:diffhl")
+	return
     else
-	" This should not happen!
-	call setloclist(winnr(),[],'a')
-	lclose
+	let list=[]
+	let placed={}
+	let types={'ch':'*', 'add': '+', 'del': '-'}
+	for type in ['ch', 'del', 'add']
+	    for line in b:diffhl[type]
+		if has_key(placed, line)
+		    continue
+		endif
+		call add(list, {'bufnr': bufnr(''),
+		    \ 'lnum': line, 'text': getline(line),
+		    \ 'type': types[type]})
+		let placed.line=1
+	    endfor
+	endfor
+    endif
+    if !empty(list)
+	call setloclist(winnr(), list)
+	lopen
     endif
 endfun
 
