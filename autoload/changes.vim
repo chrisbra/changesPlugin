@@ -429,8 +429,6 @@ fu! s:ParseDiffOutput(file) "{{{1
 	    let b:diffhl.add += range(new_line, new_line + new_count - 1)
 	endif
     endfor
-    " Check with the old signs and only add new signs and delete invalid signs
-    " b:prev_diffhl
 endfu
 
 fu! s:ReturnGitRepPath() "{{{1
@@ -627,8 +625,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		return
 	    endif
 
-	    let b:prev_diffhl = (exists("b:diffhl") ? b:diffhl :
-			\ {'add': [], 'ch': [], 'del': []})
 	    let b:diffhl={'add': [], 'del': [], 'ch': []}
 	    if a:arg == 3
 		let s:temp = {'del': []}
