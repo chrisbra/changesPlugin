@@ -687,7 +687,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 endfu
 
 fu! s:CheckDifferenceDefinition(a) "{{{1
-    return sort(split(a:a[0])) !=? sort(split(s:signs.add))
+    return   sort(split(a:a[0])) !=? sort(split(s:signs.add))
 	\ || sort(split(a:a[1])) !=? sort(split(s:signs.ch))
 	\ || sort(split(a:a[2])) !=? sort(split(s:signs.del))
 endfu
@@ -879,6 +879,7 @@ fu! changes#CleanUp() "{{{1
     if s:autocmd
 	call changes#AuCmd(0)
     endif
+    let b:changes_view_enabled = 0
 endfu
 fu! changes#AuCmd(arg) "{{{1
     if a:arg
