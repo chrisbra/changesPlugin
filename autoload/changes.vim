@@ -65,11 +65,6 @@ fu! s:Check() "{{{1
 endfu
 
 fu! s:DefineSigns() "{{{1
-    if !empty(s:DefinedSignsNotExists())
-	for key in keys(s:signs)
-	    exe "silent sign undefine " key
-	endfor
-    endif
     for key in keys(s:signs)
 	try
 	    exe "sign define" s:signs[key]
