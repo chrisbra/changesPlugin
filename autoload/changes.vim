@@ -170,9 +170,10 @@ fu! s:PlaceSigns(dict) "{{{1
     " signs by other plugins
     let b = map(b, 'matchstr(v:val, ''line=\zs\d\+'')+0')
     let changes_signs=[]
-    for [ id, lines ] in items(a:dict)
+    " Give changes a higher prio than adds
+    for id in ['ch', 'del', 'add']
 	let prev_line = -1 
-	for item in lines
+	for item in a:dict[id]
 	    " One special case could occur:
 	    " You could delete the last lines. In that case, we couldn't place
 	    " here the deletion marks. If this happens, place the deletion
@@ -184,9 +185,8 @@ fu! s:PlaceSigns(dict) "{{{1
 		" There is already a Changes sign placed
 		continue
 	    endif
-	    " There already exists a sign in this line, we might skip placing a sign here  
-	    if index(b, item) > -1 &&
-	    \  get(g:, 'changes_respect_other_signs', 0)
+	    " There already exists a sign in this line, skip now
+	    if index(b, item) > -1
 		continue
 	    endif
 	    exe "sil sign place " s:sign_prefix . item . " line=" . item .
