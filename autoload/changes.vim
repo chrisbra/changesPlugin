@@ -691,6 +691,11 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
     endtry
 endfu
 
+fu! s:CheckDifferenceDefinition(a) "{{{1
+    return sort(split(a:a[0])) !=? sort(split(s:signs.add))
+	\ || sort(split(a:a[1])) !=? sort(split(s:signs.ch))
+	\ || sort(split(a:a[2])) !=? sort(split(s:signs.del))
+endfu
 fu! changes#WarningMsg() "{{{1
     if !&vbs
 	" Set verbose to 1 to have messages displayed!
@@ -844,10 +849,7 @@ fu! changes#Init() "{{{1
     call s:UnPlaceSigns(0)
     if exists("s:sign_definition")
 	let def = sort(s:DefinedSignsNotExists())
-	if len(def) < 3 || split(def[0]) !=? split(s:signs.add)
-	    \ || split(def[1]) !=? split(s:signs.ch)
-	    \ || split(def[2]) !=? split(s:signs.del)
-		
+	if len(def) < 3 || s:CheckDifferenceDefinition(def)
 	    " Sign definition changed, redefine them
 	    call s:DefineSigns()
 	endif
