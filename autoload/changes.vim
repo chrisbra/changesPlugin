@@ -698,16 +698,25 @@ fu! changes#WarningMsg() "{{{1
 endfu
 
 fu! changes#Output() "{{{1
+    let add = '+'
+    let ch  = '*'
+    let del = '-'
+    let sign_def = s:DefinedSignsNotExists()
+    if !empty(sign_def)
+	let add = matchstr(sign_def[0], 'text=\zs..')
+	let ch  = matchstr(sign_def[1], 'text=\zs..')
+	let del = matchstr(sign_def[2], 'text=\zs..')
+    endif
     echohl Title
     echo "Differences will be highlighted like this:"
     echohl Normal
     echo "========================================="
-    echohl DiffAdd
-    echo "+ Added Lines"
-    echohl DiffDelete
-    echo "- Deleted Lines"
-    echohl DiffChange
-    echo "* Changed Lines"
+    echohl ChangesSignTextAdd
+    echo add. " Added Lines"
+    echohl ChangesSignTextDel
+    echo del. " Deleted Lines"
+    echohl ChangesSignTextCh
+    echo ch. " Changed Lines"
     echohl Normal
 endfu
 
