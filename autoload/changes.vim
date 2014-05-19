@@ -265,16 +265,12 @@ fu! s:MakeDiff_new(file) "{{{1
 	    if empty(file)
 		throw "changes:abort"
 	    endif
-	    if !s:Is('unix')
-		let output = system("copy ". shellescape(file). " ". s:diff_in_old)
-	    else
-		let output = system("cp -- ". shellescape(file). " ". s:diff_in_old)
-	    endif
+	    let cp = (!s:Is('unix') ? 'copy ' : 'cp ')
+	    let output = system(cp. shellescape(file). " ". s:diff_in_old)
 	    if v:shell_error
 		call add(s:msg, output[:-2])
 		throw "changes:abort"
 	    endif
-	    "exe ':sil !diff -u '.  shellescape(bufname(''),1). ' '. s:diff_in_cur. '>' s:diff_out
 	else
 	    if b:vcs_type == 'git'
 		let git_rep_p = s:ReturnGitRepPath()
