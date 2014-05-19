@@ -259,7 +259,7 @@ fu! s:MakeDiff_new(file) "{{{1
     try
 	let _pwd = s:ChangeDir()
 	unlet! b:current_line
-	exe ":sil keepalt noa :w" s:diff_in_cur
+	exe ":sil keepalt noa :w!" s:diff_in_cur
 	if !s:vcs || !empty(a:file)
 	    let file = !empty(a:file) ? a:file : bufname('')
 	    if empty(file)
