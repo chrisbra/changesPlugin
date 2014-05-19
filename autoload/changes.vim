@@ -242,6 +242,11 @@ fu! s:PreviewDiff(file) "{{{1
 	    call setbufvar(a:file, "&ft", "diff")
 	    call setbufvar(a:file, '&bt', 'nofile')
 	    exe "noa" bufwinnr(bufnr)."wincmd w"
+	    if get(g:, 'neocomplcache_enable_auto_close_preview', 0)
+		" Neocomplache closes preview window, GRR!
+		" don't close preview window
+		let g:neocomplcache_enable_auto_close_preview = 0
+	    endif
 	else
 	    sil! pclose
 	endif
