@@ -213,7 +213,7 @@ fu! s:UnPlaceSigns(force) "{{{1
 	return
     endif
     for sign in b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del']
-	exe "sign unplace ". s:sign_prefix.id. " buffer=".bufnr('')
+	exe "sign unplace ". s:sign_prefix.sign. " buffer=".bufnr('')
     endfor
 endfu
 
