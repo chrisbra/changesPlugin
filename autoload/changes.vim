@@ -743,7 +743,6 @@ fu! changes#Init() "{{{1
     let s:msg      = []
     " Ignore buffer
     let s:ignore   = {}
-    let s:hl_lines = get(g:, 'changes_hl_lines', 0)
     let s:autocmd  = get(g:, 'changes_autocmd', 1)
     " Check against a file in a vcs system
     let s:vcs      = get(g:, 'changes_vcs_check', 0)
@@ -812,20 +811,18 @@ fu! changes#Init() "{{{1
     let del = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-')
     let ch  = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*')
 
-    let s:signs["add"] = "add text=".add."  texthl=ChangesSignTextAdd " .
-		\( (s:hl_lines) ? " linehl=DiffAdd" : "") . 
+    let s:signs["add"] = "add text=".add."  texthl=ChangesSignTextAdd ".
 		\ (has("gui_running") ? 'icon='.s:i_path.'add1.bmp' : '')
-    let s:signs["del"] = "del text=".del."  texthl=ChangesSignTextDel " .
-		\( (s:hl_lines) ? " linehl=DiffDelete" : "") .
+    let s:signs["del"] = "del text=".del."  texthl=ChangesSignTextDel ".
 		\ (has("gui_running") ? 'icon='.s:i_path.'delete1.bmp' : '')
-    let s:signs["ch"]  = "ch text=\<Char-0xa0>".ch. "  texthl=ChangesSignTextCh "  .
-		\ ( (s:hl_lines) ? " linehl=DiffChange" : "") .
+    let s:signs["ch"]  = "ch text=\<Char-0xa0>".ch.
+		\ "  texthl=ChangesSignTextCh "  .
 		\ (has("gui_running") ? 'icon='.s:i_path.'warning1.bmp' : '')
     " Add some more dummy signs
-    let s:signs["dummy"]    = "dummy text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn "
-    let s:signs["dummyadd"] = "dummyadd text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextAdd " . ( (s:hl_lines) ? " linehl=DiffAdd" : "")
-    let s:signs["dummydel"] = "dummydel text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextDel " . ( (s:hl_lines) ? " linehl=DiffDelete" : "")
-    let s:signs["dummych"]  = "dummych text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextCh "  . ( (s:hl_lines) ? " linehl=DiffChange" : "")
+    let s:signs["dummy"]    = "dummy text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn"
+    let s:signs["dummyadd"] = "dummyadd text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextAdd"
+    let s:signs["dummydel"] = "dummydel text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextDel"
+    let s:signs["dummych"]  = "dummych text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextCh"
 
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time

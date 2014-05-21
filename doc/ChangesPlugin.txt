@@ -128,17 +128,6 @@ another. By default, those mappings are defined:
 
 There are several different configuration options available.
 
-                                                        *ChangesPlugin-hlLine*
-g:changes_hl_lines (default: 0)
--------------------------------
-
-By default, ChangesPlugin.vim will only indicate a change in the first column.
-Setting g:changes_hl_lines to 1 will highlight the whole line. By default this
-variable is unset (which is the same as setting it to 0).
-If you'd like to have this, set this variable in your |.vimrc| >
-
-    :let g:changes_hl_lines=1
-<
                                                         *ChangesPlugin-aucmd*
 g:changes_autocmd (default: 1)
 ------------------------------
