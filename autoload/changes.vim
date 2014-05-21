@@ -692,6 +692,13 @@ fu! s:CheckDifferenceDefinition(a) "{{{1
 	\ || sort(split(a:a[1])) !=? sort(split(s:signs.ch))
 	\ || sort(split(a:a[2])) !=? sort(split(s:signs.del))
 endfu
+
+fu! changes#GetStats() "{{{1
+    return [len(get(get(b:, 'diffhl', []), 'add', [])),
+	    \ len(get(get(b:, 'diffhl', []), 'ch', [])),
+	    \ len(get(get(b:, 'diffhl', []), 'del', []))]
+endfu
+
 fu! changes#WarningMsg() "{{{1
     if !&vbs
 	" Set verbose to 1 to have messages displayed!
