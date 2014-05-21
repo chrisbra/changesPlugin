@@ -287,8 +287,9 @@ fu! s:MakeDiff_new(file) "{{{1
 		" to consider CVSROOT
 		exe 'lcd' fnamemodify(expand('%'), ':p:h')
 	    endif
-	    let cmd = printf("%s %s%s > %s", (b:vcs_type==?'rcs'?'':b:vcs_type),
-			\ s:vcs_cat[b:vcs_type], shellescape(expand('%')),
+	    let cmd = printf("%s %s%s > %s", (b:vcs_type==?'rcs'?'':
+			\ b:vcs_type), s:vcs_cat[b:vcs_type],
+			\ shellescape(fnamemodify(resolve(expand('%')), ':.')),
 			\ s:diff_in_old)
 	    let output = system(cmd)
 	    if v:shell_error
@@ -429,7 +430,7 @@ endfu
 fu! s:ReturnGitRepPath() "{{{1
     " return the top level of the repository path. This is needed, so
     " git show will correctly return the file
-    "exe 'lcd' fnamemodify(expand('%'), ':h')
+    exe 'lcd' fnamemodify(resolve(expand('%')), ':h')
     let git_path = system('git rev-parse --git-dir')
     if !v:shell_error
 	" we need the directory right above the .git metatdata directory
@@ -505,7 +506,7 @@ fu! s:GuessVCSSystem() "{{{1
 	    return vcs
 	endif
     endif
-    let file = fnamemodify(expand("%"), ':p')
+    let file = fnamemodify(resolve(expand("%")), ':p')
     let path = escape(fnamemodify(file, ':h'), ' ')
     " First try git and hg, they seem to be the most popular ones these days
     if !empty(finddir('.git',path.';'))
