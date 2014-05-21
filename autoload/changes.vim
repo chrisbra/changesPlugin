@@ -973,7 +973,7 @@ fu! changes#MoveToNextChange(fwd, cnt) "{{{1
 endfu
 
 fu! changes#CurrentHunk() "{{{1
-    if changes#MoveToNextChange(0) == "\<Esc>"
+    if changes#MoveToNextChange(0,1) == "\<Esc>"
 	" outside of a hunk
 	return "\<Esc>"
     else
