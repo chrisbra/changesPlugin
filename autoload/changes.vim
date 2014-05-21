@@ -969,7 +969,7 @@ fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     else
 	let prefix=""
     endif
-    return prefix.lines[cnt]. "G"
+    return prefix.lines[cnt]. "G". (a:fwd ? '$' : '0')
 endfu
 
 fu! changes#CurrentHunk() "{{{1
