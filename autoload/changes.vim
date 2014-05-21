@@ -928,48 +928,57 @@ fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     let lines = get(dict, "add", []) +
 	    \   get(dict, "del", []) +
 	    \   get(dict, "ch",  [])
+    let lines = sort(lines, 's:MySortValues')
+    if exists('*uniq')
+	" remove duplicates
+	let lines = uniq(lines)
+    endif
+    if mode() =~? '[vs]' && index(lines, cur) == -1
+	" in visual mode and not within a hunk!
+	return "\<esc>"
+    endif
+
+    let suffix = '0' " move to start of hunk
     let cnt = a:cnt-1
 
     " only keep the start/end of a bunch of successive lines
     let lines = s:RemoveConsecutiveLines(1, copy(lines)) +
 	      \ s:RemoveConsecutiveLines(0, copy(lines))
+    " sort again...
+    let lines = sort(lines, 's:MySortValues')
 
-    if !exists("b:diffhl") || empty(lines)
-	echomsg "There are no ". (a:fwd ? "next" : "previous"). " differences!"
+    if empty(lines)
+	echomsg   "There are no ". (a:fwd ? "next" : "previous").
+		\ " differences!"
 	return "\<esc>"
     elseif (a:fwd && max(lines) <= cur) ||
 	\ (!a:fwd && min(lines) >= cur)
-	echomsg "There are no more ". (a:fwd ? "next" : "previous"). " differences!"
+	echomsg   "There are no more ". (a:fwd ? "next" : "previous").
+		\ " differences!"
 	return "\<esc>"
     endif
     if a:fwd
 	call filter(lines, 'v:val > cur')
 	if empty(lines)
 	    return "\<esc>"
-	else
-	    call sort(lines)
 	endif
     else
 	call filter(lines, 'v:val < cur')
 	if empty(lines)
 	    return "\<esc>"
 	else
-	    call reverse(sort(lines))
+	    call reverse(lines)
 	endif
     endif
     if cnt > len(lines)
 	let cnt=length(lines)
     endif
 
-    if cnt > 0
-	" Cancel the user given count
-	" otherwise the count would be multiplied with
-	" the given line number
-	let prefix="\<esc>"
-    else
-	let prefix=""
-    endif
-    return prefix.lines[cnt]. "G". (a:fwd ? '$' : '0')
+    " Cancel the user given count
+    " otherwise the count would be multiplied with
+    " the given line number
+    let prefix=(cnt > 0 ? "\<esc>" : "")
+    return prefix.lines[cnt]. "G".suffix
 endfu
 
 fu! changes#CurrentHunk() "{{{1
@@ -977,7 +986,7 @@ fu! changes#CurrentHunk() "{{{1
 	" outside of a hunk
 	return "\<Esc>"
     else
-	return "[ho]h"
+	return "[ho]h$"
     endif
 endfu
 " Modeline "{{{1
