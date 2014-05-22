@@ -26,6 +26,7 @@ com! TCV ToggleChangeView
 com! CC  ChangesCaption
 com! CL  ChangesLinesOverview
 com! CD  ChangesDiffMode
+com! CT  ChangesStyleToggle
 com! -bang CF ChangesFoldDiff<bang>
 
 com! -nargs=? -complete=file -bang EnableChanges	call changes#EnableChanges(1, <q-bang>, <q-args>)
@@ -34,6 +35,7 @@ com! ToggleChangeView		call changes#TCV()
 com! ChangesCaption		call changes#Output()
 com! ChangesLinesOverview	call changes#EnableChanges(2, '')
 com! ChangesDiffMode		call changes#EnableChanges(3, '')
+com! ChangesStyleToggle		call changes#ToggleHiStyle()
 com! -bang ChangesFoldDifferences call changes#FoldDifferences(<q-bang>)
 let g:changes_did_startup=1
 

@@ -124,6 +124,18 @@ The non-bang versions of those commands will fold away all lines, that were
 not modified and the bang-versions (:CF!/:ChangesFoldDiff!) will reset
 the folding.
 
+                                                 *:CT* *:ChangesStyleToggle*
+This command changes how changed lines will be highlighted. It toggles between
+three states. Initially changed lines will only be indicated by a sign in the
+first column. After toggling, the sign will be displayed and additionally, all
+lines will be highlighted. After calling it a second time, all lines will be
+highlighted, but there won't be an indicator sign in the first line. Use: >
+    :CT
+and >
+    :ChangesStyleToggle
+
+To toggle between all states.
+
                                                 *ChangesPlugin-Maps* *[h* *]h*
 ChangesPlugin also sets up some mappings to move from one changed line to
 another. By default, those mappings are defined:
@@ -277,6 +289,7 @@ third line of this document.
         BF: resolve symlinks
         NF: airline integration
         NF: |:CF|
+        NF: |:CT|
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on

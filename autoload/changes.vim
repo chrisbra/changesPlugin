@@ -67,6 +67,11 @@ endfu
 fu! s:DefineSigns() "{{{1
     for key in keys(s:signs)
 	try
+	    " Try undefining first, so that refining will actually work!
+	    exe "sil! sign undefine " key
+	catch /^Vim\%((\a\+)\)\=:E155/	" sign does not exist
+	endtry
+	try
 	    exe "sign define" s:signs[key]
 	catch /^Vim\%((\a\+)\)\=:E155/	" sign does not exist
 	endtry
@@ -693,6 +698,53 @@ fu! s:CheckDifferenceDefinition(a) "{{{1
 	\ || sort(split(a:a[2])) !=? sort(split(s:signs.del))
 endfu
 
+fu! s:InitSignDef() "{{{1
+    let signs={}
+    let s:changes_sign_hi_style = get(s:, 'changes_sign_hi_style', 0)
+    let sign_hi = s:changes_sign_hi_style
+    if sign_hi == 2
+	let add = printf("%s texthl=SignColumn", "\<Char-0xa0>")
+	let del = printf("%s texthl=SignColumn", "\<Char-0xa0>")
+	let ch  = printf("%s texthl=SignColumn", "\<Char-0xa0>")
+    else
+	let add = printf("%s texthl=%s %s",
+		\ (get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+'), 
+		\ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn"),
+		\ (has("gui_running") ? 'icon='.s:i_path.'add1.bmp' : ''))
+	let del = printf("%s texthl=%s %s",
+		\ (get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-'),
+		\ (sign_hi<2 ? "ChangesSignTextDel" : "SignColumn"),
+		\ (has("gui_running") ? 'icon='.s:i_path.'delete1.bmp' : ''))
+	let ch  = printf("%s texthl=%s  %s",
+		\ (get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*'),
+		\ (sign_hi<2 ? "ChangesSignTextCh" : "SignColumn"),
+		\ (has("gui_running") ? 'icon='.s:i_path.'warning1.bmp' : ''))
+    endif
+
+    let signs["add"] = "add text=".add
+    let signs["ch"]  = "ch  text=".ch
+    let signs["del"] = "del text=".del
+
+    " Add some more dummy signs
+    let signs["dummy"]    = "dummy text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn"
+    let signs["dummyadd"] = "dummyadd text=\<Char-0xa0>\<Char-0xa0> texthl=".
+		\ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn")
+    let signs["dummydel"] = "dummydel text=\<Char-0xa0>\<Char-0xa0> texthl=".
+		\ (sign_hi<2 ? "ChangesSignTextDel" : "SignColumn")
+    let signs["dummych"]  = "dummych text=\<Char-0xa0>\<Char-0xa0> texthl=".
+		\ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn")
+
+    if sign_hi > 0
+	let signs['add'] .= ' linehl=DiffAdd'
+	let signs['ch'] .= ' linehl=DiffChange'
+	let signs['del'] .= ' linehl=DiffDelete'
+	let signs['dummyadd'] .= ' linehl=DiffAdd'
+	let signs['dummych'] .= ' linehl=DiffChange'
+	let signs['dummydel'] .= ' linehl=DiffDelete'
+    endif
+    return signs
+endfu
+
 fu! changes#GetStats() "{{{1
     return [len(get(get(b:, 'diffhl', []), 'add', [])),
 	    \ len(get(get(b:, 'diffhl', []), 'ch', [])),
@@ -812,24 +864,7 @@ fu! changes#Init() "{{{1
 	let s:diff_in_old = s:diff_out.'old'
     endif
     let s:nodiff=0
-
-    let s:signs={}
-    let add = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+')
-    let del = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-')
-    let ch  = printf("%s", get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*')
-
-    let s:signs["add"] = "add text=".add."  texthl=ChangesSignTextAdd ".
-		\ (has("gui_running") ? 'icon='.s:i_path.'add1.bmp' : '')
-    let s:signs["del"] = "del text=".del."  texthl=ChangesSignTextDel ".
-		\ (has("gui_running") ? 'icon='.s:i_path.'delete1.bmp' : '')
-    let s:signs["ch"]  = "ch text=\<Char-0xa0>".ch.
-		\ "  texthl=ChangesSignTextCh "  .
-		\ (has("gui_running") ? 'icon='.s:i_path.'warning1.bmp' : '')
-    " Add some more dummy signs
-    let s:signs["dummy"]    = "dummy text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn"
-    let s:signs["dummyadd"] = "dummyadd text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextAdd"
-    let s:signs["dummydel"] = "dummydel text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextDel"
-    let s:signs["dummych"]  = "dummych text=\<Char-0xa0>\<Char-0xa0> texthl=ChangesSignTextCh"
+    let s:signs=s:InitSignDef()
 
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time
@@ -1012,5 +1047,13 @@ fu! changes#FoldDifferences(enable) "{{{1
     endif
 endfu
 
+fu! changes#ToggleHiStyle() "{{{1
+    let s:changes_sign_hi_style += 1
+    if s:changes_sign_hi_style > 2
+	let s:changes_sign_hi_style = 0
+    endif
+    call changes#Init()
+    call s:GetDiff(1, '')
+endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
