@@ -885,6 +885,7 @@ fu! changes#CleanUp() "{{{1
 	call changes#AuCmd(0)
     endif
     let b:changes_view_enabled = 0
+    unlet! b:diffhl
 endfu
 fu! changes#AuCmd(arg) "{{{1
     if a:arg
