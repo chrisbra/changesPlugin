@@ -115,9 +115,15 @@ fu! s:UpdateView(...) "{{{1
     endif
     " Only update, if there have been changes to the buffer
     if  b:changes_chg_tick != b:changedtick || force
-	call changes#Init()
-	call s:GetDiff(1, '')
-	let b:changes_chg_tick = b:changedtick
+	try
+	    call changes#Init()
+	    call s:GetDiff(1, '')
+	    let b:changes_chg_tick = b:changedtick
+	catch
+	    " Make sure, the message is actually displayed!
+	    verbose call chagnes#WarningMsg()
+	    call changes#CleanUp()
+	endtry
     endif
 endfu
 
@@ -874,7 +880,7 @@ fu! changes#Init() "{{{1
 	catch
 	    call add(s:msg,"changes plugin will not be working!")
 	    " Rethrow exception
-	    throw v:exception
+	    throw changes:abort
 	endtry
 	let s:precheck=1
     endif
@@ -898,12 +904,18 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
     if exists("s:ignore") && get(s:ignore, bufnr('%'), 0)
 	call remove(s:ignore, bufnr('%'))
     endif
-    call changes#Init()
-    if exists("a:1")
-	call s:GetDiff(a:arg, a:bang, a:1)
-    else
-	call s:GetDiff(a:arg, a:bang)
-    endif
+    try
+	call changes#Init()
+	if exists("a:1")
+	    call s:GetDiff(a:arg, a:bang, a:1)
+	else
+	    call s:GetDiff(a:arg, a:bang)
+	endif
+    catch
+	" Make sure, the message is actually displayed!
+	verbose call chagnes#WarningMsg()
+	call changes#CleanUp()
+    endtry
 endfu
 
 fu! changes#CleanUp() "{{{1
@@ -949,10 +961,16 @@ fu! changes#TCV() "{{{1
         let b:changes_view_enabled = 0
         echo "Hiding changes since last save"
     else
-	call changes#Init()
-	call s:GetDiff(1, '')
-        let b:changes_view_enabled = 1
-        echo "Showing changes since last save"
+	try
+	    call changes#Init()
+	    call s:GetDiff(1, '')
+	    let b:changes_view_enabled = 1
+	    echo "Showing changes since last save"
+	catch
+	    " Make sure, the message is actually displayed!
+	    verbose call chagnes#WarningMsg()
+	    call changes#CleanUp()
+	endtry
     endif
 endfunction
 
@@ -1052,8 +1070,14 @@ fu! changes#ToggleHiStyle() "{{{1
     if s:changes_sign_hi_style > 2
 	let s:changes_sign_hi_style = 0
     endif
-    call changes#Init()
-    call s:GetDiff(1, '')
+    try
+	call changes#Init()
+	call s:GetDiff(1, '')
+    catch
+	" Make sure, the message is actually displayed!
+	verbose call chagnes#WarningMsg()
+	call changes#CleanUp()
+    endtry
 endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
