@@ -994,5 +994,23 @@ fu! changes#CurrentHunk() "{{{1
 	return "[ho]h$"
     endif
 endfu
+fu! changes#FoldDifferences(enable) "{{{1
+    if empty(a:enable)
+	let b:chg_folds = {'fen': &fen, 'fdm': &fdm, 'fde': &fde}
+	let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
+		\ get(get(b:, 'diffhl', []), 'ch' , []) +
+		\ get(get(b:, 'diffhl', []), 'del', []),
+		\ 's:MySortValues')
+	if exists('*uniq')
+	    let lines=uniq(g:lines)
+	endif
+	setl fen fdm=expr fde=index(g:lines,v:lnum)>-1?0:1
+    else
+	for items in items(get(b:, 'chg_folds', {}))
+	    exe "let &".items[0]."=".string(items[1])
+	endfor
+    endif
+endfu
+
 " Modeline "{{{1
 " vi:fdm=marker fdl=0

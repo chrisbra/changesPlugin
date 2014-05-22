@@ -112,6 +112,18 @@ If you issue any of these commands, a vertical split buffer will open,
 that contains the changes from either your VCS or from the unmodified buffer
 as it is saved on disk. See |copy-diffs| for how to merge changes between
 those two buffers.
+
+                                                 *:CF* *:ChangesFoldDiff*
+To temporarily fold aways all non-modified lines, you can use the :CF
+command >
+    :CF
+and >
+    :ChangesFoldDiff
+
+The non-bang versions of those commands will fold away all lines, that were
+not modified and the bang-versions (:CF!/:ChangesFoldDiff!) will reset
+the folding.
+
                                                 *ChangesPlugin-Maps* *[h* *]h*
 ChangesPlugin also sets up some mappings to move from one changed line to
 another. By default, those mappings are defined:
@@ -263,6 +275,8 @@ third line of this document.
         NF: include some nice looking icons for gvim
         BF: Code cleanup
         BF: resolve symlinks
+        NF: airline integration
+        NF: |:CF|
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on
