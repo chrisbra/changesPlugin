@@ -116,7 +116,7 @@ fu! s:UpdateView(...) "{{{1
 	    let b:changes_chg_tick = b:changedtick
 	catch
 	    " Make sure, the message is actually displayed!
-	    verbose call chagnes#WarningMsg()
+	    verbose call changes#WarningMsg()
 	    call changes#CleanUp()
 	endtry
     endif
@@ -227,9 +227,7 @@ fu! s:UnPlaceSigns(force) "{{{1
     if !exists("b:diffhl")
 	return
     endif
-    for sign in b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del']
-	exe "sign unplace ". s:sign_prefix.sign. " buffer=".bufnr('')
-    endfor
+    call s:UnPlaceSpecificSigns(b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del'])
 endfu
 
 fu! s:Cwd() "{{{1
@@ -641,6 +639,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		return
 	    endif
 
+	    let b:prev_diffhl = get(b:, 'diffhl', {'add': [], 'del': [], 'ch': []})
 	    let b:diffhl={'add': [], 'del': [], 'ch': []}
 	    if a:arg == 3
 		let s:temp = {'del': []}
@@ -665,7 +664,11 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		call add(s:msg, 'No differences found!')
 		let s:nodiff=1
 	    else
-		call s:PlaceSigns(b:diffhl)
+		if b:prev_diffhl !=? b:diffhl
+		    let b:diffhl_inv = s:CheckInvalidSigns()
+		    call s:UnPlaceSpecificSigns(b:diffhl_inv)
+		    call s:PlaceSigns(b:diffhl)
+		endif
 	    endif
 	    if a:arg != 3 || s:nodiff
 		let b:changes_view_enabled=1
@@ -705,6 +708,27 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	unlet! s:sign_definition
 	call changes#WarningMsg()
     endtry
+endfu
+
+fu! s:CheckInvalidSigns() "{{{1
+    let invalid=[]
+    if !exists("b:prev_diffhl")
+	return invalid
+    endif
+    for id in ['add', 'ch', 'del']
+	for line in b:prev_diffhl[id]
+	    if index(b:diffhl[id], line) == -1
+		call add(invalid, line)
+	    endif
+	endfor
+    endfor
+    return invalid
+endfu
+
+fu! s:UnPlaceSpecificSigns(list) "{{{1
+    for sign in a:list
+	exe "sign unplace ". s:sign_prefix.sign. " buffer=".bufnr('')
+    endfor
 endfu
 
 fu! s:CheckDifferenceDefinition(a) "{{{1
@@ -896,7 +920,8 @@ fu! changes#Init() "{{{1
     let s:placed_signs = s:PlacedSigns()
     call s:PlaceSignDummy(1)
     " Delete previously placed signs
-    call s:UnPlaceSigns(0)
+    " not necessary, if we are only selectively update signs
+    " call s:UnPlaceSigns(0)
     if exists("s:sign_definition")
 	let def = sort(s:DefinedSignsNotExists())
 	if len(def) < 3 || s:CheckDifferenceDefinition(def)
@@ -922,7 +947,7 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
 	endif
     catch
 	" Make sure, the message is actually displayed!
-	verbose call chagnes#WarningMsg()
+	verbose call changes#WarningMsg()
 	call changes#CleanUp()
     endtry
 endfu
@@ -977,7 +1002,7 @@ fu! changes#TCV() "{{{1
 	    echo "Showing changes since last save"
 	catch
 	    " Make sure, the message is actually displayed!
-	    verbose call chagnes#WarningMsg()
+	    verbose call changes#WarningMsg()
 	    call changes#CleanUp()
 	endtry
     endif
@@ -1084,7 +1109,7 @@ fu! changes#ToggleHiStyle() "{{{1
 	call s:GetDiff(1, '')
     catch
 	" Make sure, the message is actually displayed!
-	verbose call chagnes#WarningMsg()
+	verbose call changes#WarningMsg()
 	call changes#CleanUp()
     endtry
 endfu
