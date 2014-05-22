@@ -1,0 +1,10 @@
+
+- more ways to highlight changes:
+  - display only signs (currently only way)
+  - display signs + line highlighting
+  - display only line highlighting (make signs invisible using <char-0x0a> text
+  - Make a toggle function!
+
+- instead of every time unplacing and replacing all signs,
+  only add newly added signs and remove old unneccessary signs
+  -> should be faster.
