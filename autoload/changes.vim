@@ -659,8 +659,11 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    endif
 
 	    " Check for empty dict of signs
-	    if (!exists("b:diffhl") || 
-	    \ b:diffhl ==? {'add': [], 'del': [], 'ch': []})
+	    if !exists("b:diffhl") || 
+	    \ ((b:diffhl ==? {'add': [], 'del': [], 'ch': []}) &&
+	    \ (b:diffhl ==# b:prev_diffhl))
+		" Make sure, diff and previous diff are different,
+		" otherwise, we might forget to update the signs
 		call add(s:msg, 'No differences found!')
 		let s:nodiff=1
 	    else
