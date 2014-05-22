@@ -83,11 +83,6 @@ fu! s:CheckLines(arg) "{{{1
     " a:arg  1: check original buffer
     "        0: check diffed scratch buffer
     let line=1
-    " This should not be necessary, since b:diffhl for the scratch buffer
-    " should never be accessed. But just to be sure, we define it here
-"    if (!a:arg) && !exists("b:diffhl")
-"	let b:diffhl = {'del': []}
-"    endif
     while line <= line('$')
 	let id=diff_hlID(line,1)
 	if  (id == 0)
