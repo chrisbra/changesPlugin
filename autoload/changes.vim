@@ -195,6 +195,12 @@ fu! s:PlaceSigns(dict) "{{{1
 	    if index(b, item) > -1
 		continue
 	    endif
+	    if id == 'del' && prev_line+1 == item
+		" don't need to place more deleted signs on those new lines,
+		" skip
+		let prev_line = item
+		continue
+	    endif
 	    exe "sil sign place " s:sign_prefix . item . " line=" . item .
 		\ " name=" . (prev_line+1 == item ? "dummy".id : id) . " buffer=" . bufnr('')
 	    " remember line number, so that we don't place a second sign
@@ -429,6 +435,14 @@ fu! s:ParseDiffOutput(file) "{{{1
 	else
 	    let b:diffhl.ch += range(new_line, new_line + old_count - 1)
 	    let b:diffhl.add += range(new_line, new_line + new_count - 1)
+	endif
+    endfor
+
+    " remove duplicates..
+    for id in ['add', 'ch', 'del']
+	call sort(b:diffhl[id])
+	if exists('*uniq')
+	    call uniq(b:diffhl[id])
 	endif
     endfor
 endfu
