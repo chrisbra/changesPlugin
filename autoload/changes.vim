@@ -670,6 +670,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		if b:prev_diffhl !=? b:diffhl
 		    let b:diffhl_inv = s:CheckInvalidSigns()
 		    call s:UnPlaceSpecificSigns(b:diffhl_inv)
+		    " Make sure to only place new signs!
 		    call s:PlaceSigns(b:diffhl)
 		endif
 	    endif
