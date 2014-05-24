@@ -639,7 +639,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		return
 	    endif
 
-	    let b:prev_diffhl = get(b:, 'diffhl', {'add': [], 'del': [], 'ch': []})
+	    let s:prev_diffhl = get(b:, 'diffhl', {'add': [], 'del': [], 'ch': []})
 	    let b:diffhl={'add': [], 'del': [], 'ch': []}
 	    if a:arg == 3
 		let s:temp = {'del': []}
@@ -661,17 +661,19 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    " Check for empty dict of signs
 	    if !exists("b:diffhl") || 
 	    \ ((b:diffhl ==? {'add': [], 'del': [], 'ch': []}) &&
-	    \ (b:diffhl ==# b:prev_diffhl))
+	    \ (b:diffhl ==# s:prev_diffhl))
 		" Make sure, diff and previous diff are different,
 		" otherwise, we might forget to update the signs
 		call add(s:msg, 'No differences found!')
 		let s:nodiff=1
 	    else
-		if b:prev_diffhl !=? b:diffhl
-		    let b:diffhl_inv = s:CheckInvalidSigns()
-		    call s:UnPlaceSpecificSigns(b:diffhl_inv)
+		if s:prev_diffhl !=? b:diffhl
+		    let s:diffhl = s:CheckInvalidSigns()
+		    " diffhl_inv[0] - invalid lines, that need to be removed
+		    " diffhl_inv[1] - valid lines, that need to be added
+		    call s:UnPlaceSpecificSigns(s:diffhl[0])
 		    " Make sure to only place new signs!
-		    call s:PlaceSigns(b:diffhl)
+		    call s:PlaceSigns(s:diffhl[1])
 		endif
 	    endif
 	    if a:arg != 3 || s:nodiff
@@ -715,14 +717,19 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 endfu
 
 fu! s:CheckInvalidSigns() "{{{1
-    let invalid=[]
-    if !exists("b:prev_diffhl")
+    let invalid=[[],{'add':[], 'ch':[], 'del':[]}]
+    if !exists("s:prev_diffhl")
 	return invalid
     endif
     for id in ['add', 'ch', 'del']
-	for line in b:prev_diffhl[id]
+	for line in s:prev_diffhl[id]
 	    if index(b:diffhl[id], line) == -1
-		call add(invalid, line)
+		call add(invalid[0], line)
+	    endif
+	endfor
+	for line in b:diffhl[id]
+	    if index(s:prev_diffhl[id], line) == -1
+		call add(invalid[1][id], line)
 	    endif
 	endfor
     endfor
