@@ -1,7 +1,7 @@
 " Changes.vim - Using Signs for indicating changed lines
 " ---------------------------------------------------------------
 " Version:  0.14
-" Authors:  Christian Brabandt <cb@256bit.org>
+" Author:  Christian Brabandt <cb@256bit.org>
 " Last Change: Wed, 14 Aug 2013 22:10:39 +0200
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
@@ -174,10 +174,9 @@ fu! s:PlaceSigns(dict) "{{{1
     endif
     let b = copy(s:placed_signs[1])
     " signs by other plugins
-    let b = map(b, 'matchstr(v:val, ''line=\zs\d\+'')+0')
     let changes_signs=[]
     " Give changes a higher prio than adds
-    for id in ['ch', 'del', 'add']
+    for id in ['add', 'ch', 'del']
 	let prev_line = -1 
 	for item in a:dict[id]
 	    " One special case could occur:
@@ -201,7 +200,7 @@ fu! s:PlaceSigns(dict) "{{{1
 		let prev_line = item
 		continue
 	    endif
-	    exe "sil sign place " s:sign_prefix . item . " line=" . item .
+	    exe "sil sign place " s:sign_prefix.item  . " line=" . item .
 		\ " name=" . (prev_line+1 == item ? "dummy".id : id) . " buffer=" . bufnr('')
 	    " remember line number, so that we don't place a second sign
 	    " there!
@@ -511,7 +510,9 @@ fu! s:PlacedSigns() "{{{1
     " Signs for [NULL]: or  Signs for <buffername>:
     let b=b[1:]
     let c=filter(copy(b), 'v:val =~ "id=".s:sign_prefix')
+    let c=map(c, 'matchstr(v:val, ''line=\zs\d\+\ze'')+0')
     let d=filter(copy(b), 'v:val !~ "id=".s:sign_prefix')
+    let d=map(d, 'matchstr(v:val, ''line=\zs\d\+\ze'')+0')
     return [c,d]
 endfu
 
@@ -639,7 +640,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		return
 	    endif
 
-	    let s:prev_diffhl = get(b:, 'diffhl', {'add': [], 'del': [], 'ch': []})
 	    let b:diffhl={'add': [], 'del': [], 'ch': []}
 	    if a:arg == 3
 		let s:temp = {'del': []}
@@ -657,24 +657,25 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		" parse diff output
 		call s:MakeDiff_new(exists("a:1") ? a:1 : '')
 	    endif
+	    for i in ['add', 'ch', 'del']
+		call sort(b:diffhl[i], 's:MySortValues')
+	    endfor
 
 	    " Check for empty dict of signs
 	    if !exists("b:diffhl") || 
-	    \ ((b:diffhl ==? {'add': [], 'del': [], 'ch': []}) &&
-	    \ (b:diffhl ==# s:prev_diffhl))
+	    \ ((b:diffhl ==? {'add': [], 'del': [], 'ch': []})
+	    \ && empty(s:placed_signs[0]))
 		" Make sure, diff and previous diff are different,
 		" otherwise, we might forget to update the signs
 		call add(s:msg, 'No differences found!')
 		let s:nodiff=1
 	    else
-		if s:prev_diffhl !=? b:diffhl
-		    let s:diffhl = s:CheckInvalidSigns()
-		    " diffhl_inv[0] - invalid lines, that need to be removed
-		    " diffhl_inv[1] - valid lines, that need to be added
-		    call s:UnPlaceSpecificSigns(s:diffhl[0])
-		    " Make sure to only place new signs!
-		    call s:PlaceSigns(s:diffhl[1])
-		endif
+		let s:diffhl = s:CheckInvalidSigns()
+		" diffhl_inv[0] - invalid lines, that need to be removed
+		" diffhl_inv[1] - valid lines, that need to be added
+		call s:UnPlaceSpecificSigns(s:diffhl[0])
+		" Make sure to only place new signs!
+		call s:PlaceSigns(s:diffhl[1])
 	    endif
 	    if a:arg != 3 || s:nodiff
 		let b:changes_view_enabled=1
@@ -715,25 +716,49 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	call changes#WarningMsg()
     endtry
 endfu
+fu! s:AddAdjustment() "{{{1
+   " adds adjumstment for changed or added lines
+   try
+	if !exists("s:prev_diffhl") || !get(s:prev_diffhl, 'last', 0) ||
+	    \ (getpos("'[")[1] == 1 && getpos("']")[1] == line('$'))
+	    return
+	endif
+	let adjustment = getpos("']")[1] - getpos("'[")[1] + 1
+	let start = getpos("'[")[1]
+	for id in ['add', 'ch', 'del']
+	    for index in range(b:diffhl[id])
+		if b:diffhl[id][index] >= start
+		    if b:diffhl['last'] > line('$')
+			let b:diffhl[id][index] += adjustment
+		    else
+			" lines have been deleted
+			let b:diffhl[id][index] -= adjustment
+		    endif
+		endif
+	    endfor
+	endfor
+    finally
+	let b:diffhl['last'] = line('$')
+    endtry
+endfu
 
 fu! s:CheckInvalidSigns() "{{{1
-    let invalid=[[],{'add':[], 'ch':[], 'del':[]}]
-    if !exists("s:prev_diffhl")
-	return invalid
-    endif
+    let list=[[],{'add': [], 'del': [], 'ch': []}]
+    for line in s:placed_signs[0]
+	if (index(b:diffhl['add'], line) == -1 &&
+	    \ index(b:diffhl['ch'], line) == -1 &&
+	    \ index(b:diffhl['del'], line) == -1)
+	    call add(list[0], line)
+	endif
+    endfor
     for id in ['add', 'ch', 'del']
-	for line in s:prev_diffhl[id]
-	    if index(b:diffhl[id], line) == -1
-		call add(invalid[0], line)
-	    endif
-	endfor
 	for line in b:diffhl[id]
-	    if index(s:prev_diffhl[id], line) == -1
-		call add(invalid[1][id], line)
+	    if index(s:placed_signs[0], line) == -1
+		call add(list[1][id], line)
 	    endif
 	endfor
     endfor
-    return invalid
+    return list
 endfu
 
 fu! s:UnPlaceSpecificSigns(list) "{{{1
@@ -794,7 +819,6 @@ fu! s:InitSignDef() "{{{1
     endif
     return signs
 endfu
-
 fu! changes#GetStats() "{{{1
     return [len(get(get(b:, 'diffhl', []), 'add', [])),
 	    \ len(get(get(b:, 'diffhl', []), 'ch', [])),
