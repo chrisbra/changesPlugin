@@ -658,6 +658,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		call s:MakeDiff_new(exists("a:1") ? a:1 : '')
 	    endif
 	    call s:SortDiffHl()
+	    "foobar
 
 	    " Check for empty dict of signs
 	    if !exists("b:diffhl") || 
@@ -1123,7 +1124,7 @@ fu! changes#CurrentHunk() "{{{1
     endif
 endfu
 fu! changes#FoldDifferences(enable) "{{{1
-    if empty(a:enable)
+    if empty(a:enable) && &fde!=?'index(g:lines,v:lnum)>-1?0:1'
 	let b:chg_folds = {'fen': &fen, 'fdm': &fdm, 'fde': &fde}
 	let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
 		\ get(get(b:, 'diffhl', []), 'ch' , []) +
