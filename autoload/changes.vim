@@ -657,9 +657,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		" parse diff output
 		call s:MakeDiff_new(exists("a:1") ? a:1 : '')
 	    endif
-	    for i in ['add', 'ch', 'del']
-		call sort(b:diffhl[i], 's:MySortValues')
-	    endfor
+	    call s:SortDiffHl()
 
 	    " Check for empty dict of signs
 	    if !exists("b:diffhl") || 
@@ -715,6 +713,14 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	unlet! s:sign_definition
 	call changes#WarningMsg()
     endtry
+endfu
+fu! s:SortDiffHl() "{{{1
+    for i in ['add', 'ch', 'del']
+	call sort(b:diffhl[i], 's:MySortValues')
+	if exists("*uniq")
+	    call uniq(b:diffhl[i])
+	endif
+    endfor
 endfu
 fu! s:AddAdjustment() "{{{1
    " adds adjumstment for changed or added lines
