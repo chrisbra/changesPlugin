@@ -506,14 +506,24 @@ fu! s:PlacedSigns() "{{{1
     if empty(b)
 	return [[],[]]
     endif
+    let dict={}
+    let mlist=[]
     " Filter from the second item. The first one contains the buffer name:
     " Signs for [NULL]: or  Signs for <buffername>:
     let b=b[1:]
     let c=filter(copy(b), 'v:val =~ "id=".s:sign_prefix')
-    let c=map(c, 'matchstr(v:val, ''line=\zs\d\+\ze'')+0')
+    for item in c
+	let t = split(item)
+	let dict.line = split(t[0], '=')[1]
+	let dict.id   = split(t[1], '=')[1]
+	let dict.type = split(t[2], '=')[1]
+	call add(mlist, copy(dict))
+    endfor
+
+    "let c=map(c, 'matchstr(v:val, ''line=\zs\d\+\ze'')+0')
     let d=filter(copy(b), 'v:val !~ "id=".s:sign_prefix')
     let d=map(d, 'matchstr(v:val, ''line=\zs\d\+\ze'')+0')
-    return [c,d]
+    return [mlist,d]
 endfu
 
 fu! s:GuessVCSSystem() "{{{1
@@ -751,16 +761,16 @@ endfu
 
 fu! s:CheckInvalidSigns() "{{{1
     let list=[[],{'add': [], 'del': [], 'ch': []}]
-    for line in s:placed_signs[0]
-	if (index(b:diffhl['add'], line) == -1 &&
-	    \ index(b:diffhl['ch'], line) == -1 &&
-	    \ index(b:diffhl['del'], line) == -1)
-	    call add(list[0], line)
+    for item in s:placed_signs[0]
+	if (index(b:diffhl['add'], item.line+0) == -1 &&
+	    \ index(b:diffhl['ch'], item.line+0) == -1 &&
+	    \ index(b:diffhl['del'], item.line+0) == -1)
+	    call add(list[0], item.line)
 	endif
     endfor
     for id in ['add', 'ch', 'del']
 	for line in b:diffhl[id]
-	    if index(s:placed_signs[0], line) == -1
+	    if !s:DictHasKey(line)
 		call add(list[1][id], line)
 	    endif
 	endfor
@@ -768,6 +778,14 @@ fu! s:CheckInvalidSigns() "{{{1
     return list
 endfu
 
+fu! s:DictHasKey(line) "{{{1
+    for item in s:placed_signs[0]
+	if get(item, 'line', -1) ==? a:line
+	    return 1
+	endif
+    endfor
+    return 0
+endfu
 fu! s:UnPlaceSpecificSigns(list) "{{{1
     for sign in a:list
 	exe "sign unplace ". s:sign_prefix.sign. " buffer=".bufnr('')
