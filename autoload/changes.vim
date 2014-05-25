@@ -139,7 +139,7 @@ fu! s:PlaceSignDummy(place) "{{{1
 	    exe "sign place " s:sign_prefix.'0 line='.(line('$')+1). ' name=dummy buffer='. bufnr('')
 	endif
     else
-	exe "sign unplace " s:sign_prefix.'0'
+	exe "sil sign unplace " s:sign_prefix.'0'
     endif
 endfu
 
@@ -960,7 +960,10 @@ fu! changes#Init() "{{{1
 	let s:precheck=1
     endif
     let s:placed_signs = s:PlacedSigns()
-    call s:PlaceSignDummy(1)
+    if !empty(s:placed_signs[1])
+	" when there are signs from other plugins, don't need dummy sign
+	call s:PlaceSignDummy(1)
+    endif
     " Delete previously placed signs
     " not necessary, if we are only selectively update signs
     " call s:UnPlaceSigns(0)
