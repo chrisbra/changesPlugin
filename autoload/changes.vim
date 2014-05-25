@@ -762,10 +762,15 @@ endfu
 fu! s:CheckInvalidSigns() "{{{1
     let list=[[],{'add': [], 'del': [], 'ch': []}]
     for item in s:placed_signs[0]
+	if (item.type ==? '[Deleted]')
+	    " skip sign prefix '99'
+	    call add(list[0], (item.id[2:]+0))
+	    continue
+	endif
 	if (index(b:diffhl['add'], item.line+0) == -1 &&
 	    \ index(b:diffhl['ch'], item.line+0) == -1 &&
 	    \ index(b:diffhl['del'], item.line+0) == -1)
-	    call add(list[0], item.line)
+	    call add(list[0], item.id[2:])
 	endif
     endfor
     for id in ['add', 'ch', 'del']
