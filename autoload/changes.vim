@@ -22,9 +22,6 @@ delf <sid>GetSID "not needed anymore
 
 " Check preconditions
 fu! s:Check() "{{{1
-    " Check for the existence of unsilent
-    let s:echo_cmd='unsilent echo'
-
     if !has("diff")
 	call add(s:msg,"Diff support not available in your Vim version.")
 	throw 'changes:abort'
@@ -314,7 +311,9 @@ fu! s:MakeDiff_new(file) "{{{1
 	    throw "changes:abort"
 	endif
 	if getfsize(s:diff_out) == 0
-	    call add(s:msg,"No differences found!")
+	    if &vbs > 1
+		call add(s:msg,"No differences found!")
+	    endif
 	    return
 	endif
 	call s:ParseDiffOutput(s:diff_out)
@@ -687,7 +686,9 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    \ && empty(s:placed_signs[0]))
 		" Make sure, diff and previous diff are different,
 		" otherwise, we might forget to update the signs
-		call add(s:msg, 'No differences found!')
+		if &vbs > 1
+		    call add(s:msg, 'No differences found!')
+		endif
 		let s:nodiff=1
 	    elseif exists("s:changes_signs_undefined") && s:changes_signs_undefined
 		call s:PlaceSigns(b:diffhl)
@@ -710,12 +711,18 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	catch /^changes/
 	    let b:changes_view_enabled=0
 	    let s:ignore[bufnr('%')] = 1
+	catch
+	    call add(s:msg, "Error occured: ".v:exception)
+	    if &vbs > 1
+		call add(s:msg, "Trace: ".v:throwpoint)
+	    endif
 	finally
 	    if scratchbuf && a:arg < 3
 		exe "bw" scratchbuf
 	    endif
 	    if s:vcs && exists("b:changes_view_enabled") &&
-			\ b:changes_view_enabled
+			\ b:changes_view_enabled && &vbs > 1
+		" only add info here, when 'verbose' > 1
 		call add(s:msg,"Check against " .
 		    \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
 	    endif
@@ -735,7 +742,8 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	" make sure on next call, s:sign-definition will be recreated by
 	" DefinedSignsNotExists()
 	unlet! s:sign_definition
-	call changes#WarningMsg()
+	" Make sure, the message is actually displayed!
+	verbose call changes#WarningMsg()
     endtry
 endfu
 fu! s:SortDiffHl() "{{{1
@@ -877,12 +885,8 @@ fu! changes#WarningMsg() "{{{1
 	redraw!
 	let msg=["Changes.vim: " . s:msg[0]] + s:msg[1:]
 	echohl WarningMsg
-	" s:echo_cmd might not yet exist
-	if !exists("s:echo_cmd")
-	    let s:echo_cmd = 'echo'
-	endif
 	for mess in msg
-	    exe s:echo_cmd "mess"
+	    echomsg mess
 	endfor
 
 	echohl Normal
@@ -1024,8 +1028,6 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
 	let arg = exists("a:1") ? a:1 : ''
 	call s:GetDiff(a:arg, a:bang, arg)
     catch
-	" Make sure, the message is actually displayed!
-	verbose call changes#WarningMsg()
 	call changes#CleanUp()
     endtry
 endfu
