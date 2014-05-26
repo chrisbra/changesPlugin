@@ -61,20 +61,20 @@ fu! s:Check() "{{{1
     endif
     unlet! s:sign_definition
     call s:SetupSignTextHl()
-    call s:DefineSigns()
+    call s:DefineSigns(0)
 endfu
 
-fu! s:DefineSigns() "{{{1
+fu! s:DefineSigns(undef) "{{{1
     for key in keys(s:signs)
-	try
-	    " Try undefining first, so that refining will actually work!
-	    exe "sil! sign undefine " key
-	catch /^Vim\%((\a\+)\)\=:E155/	" sign does not exist
-	endtry
-	try
-	    exe "sign define" s:signs[key]
-	catch /^Vim\%((\a\+)\)\=:E155/	" sign does not exist
-	endtry
+	if a:undef
+	    let s:changes_signs_undefined=1
+	    try
+		" Try undefining first, so that refining will actually work!
+		exe "sil! sign undefine " key
+	    catch /^Vim\%((\a\+)\)\=:E155/	" sign does not exist
+	    endtry
+	endif
+	exe "sign define" s:signs[key]
     endfor
 endfu
 
@@ -131,7 +131,7 @@ fu! s:PlaceSignDummy(place) "{{{1
     endif
     if a:place
 	if empty(s:DefinedSignsNotExists())
-	    call s:DefineSigns()
+	    call s:DefineSigns(0)
 	endif
 	let b = copy(s:placed_signs[0])
 	if !empty(b)
@@ -170,7 +170,7 @@ endfu
 
 fu! s:PlaceSigns(dict) "{{{1
     if empty(s:DefinedSignsNotExists())
-	call s:DefineSigns()
+	call s:DefineSigns(0)
     endif
     let b = copy(s:placed_signs[1])
     " signs by other plugins
@@ -678,6 +678,8 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		" otherwise, we might forget to update the signs
 		call add(s:msg, 'No differences found!')
 		let s:nodiff=1
+	    elseif exists("s:changes_signs_undefined") && s:changes_signs_undefined
+		call s:PlaceSigns(b:diffhl)
 	    else
 		let s:diffhl = s:CheckInvalidSigns()
 		" diffhl_inv[0] - invalid lines, that need to be removed
@@ -994,10 +996,10 @@ fu! changes#Init() "{{{1
 	let def = sort(s:DefinedSignsNotExists())
 	if len(def) < 3 || s:CheckDifferenceDefinition(def)
 	    " Sign definition changed, redefine them
-	    call s:DefineSigns()
+	    call s:DefineSigns(1)
 	endif
     else
-	call s:DefineSigns()
+	call s:DefineSigns(0)
     endif
     call changes#AuCmd(s:autocmd)
 endfu
