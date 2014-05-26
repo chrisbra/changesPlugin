@@ -449,14 +449,6 @@ fu! s:ParseDiffOutput(file) "{{{1
 	    endif
 	endif
     endfor
-
-    " remove duplicates..
-    for id in ['add', 'ch', 'del']
-	call sort(b:diffhl[id])
-	if exists('*uniq')
-	    call uniq(b:diffhl[id])
-	endif
-    endfor
 endfu
 
 fu! s:ReturnGitRepPath() "{{{1
