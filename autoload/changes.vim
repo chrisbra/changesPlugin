@@ -1010,11 +1010,8 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
     endif
     try
 	call changes#Init()
-	if exists("a:1")
-	    call s:GetDiff(a:arg, a:bang, a:1)
-	else
-	    call s:GetDiff(a:arg, a:bang)
-	endif
+	let arg = exists("a:1") ? a:1 : ''
+	call s:GetDiff(a:arg, a:bang, arg)
     catch
 	" Make sure, the message is actually displayed!
 	verbose call changes#WarningMsg()
