@@ -431,7 +431,7 @@ fu! s:ParseDiffOutput(file) "{{{1
 	    let b:diffhl.ch += range(new_line, new_line + new_count - 1)
 	else
 	    let b:diffhl.ch += range(new_line, new_line + old_count - 1)
-	    let b:diffhl.add += range(new_line+1, new_line + new_count - 1)
+	    let b:diffhl.add += range(new_line+old_count, new_line + new_count - 1)
 	endif
     endfor
 
