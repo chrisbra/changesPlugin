@@ -189,7 +189,7 @@ fu! s:PlaceSigns(dict) "{{{1
 	    " Make sure, 'dummych' ==? 'ch'
 	    " or 'dummydel' ==? 'del'
 	    if prev_line+1 == item ||
-	    \ matchstr(s:PrevDictHasKey(item-1), '\(dummy\)?.*') ==? id
+	    \ matchstr(s:PrevDictHasKey(item-1), '\(dummy\)\?\zs.*') ==? id
 		if id=='del'
 		    " don't need to place more deleted signs on those lines,
 		    " skip
