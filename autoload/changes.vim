@@ -130,9 +130,6 @@ fu! s:PlaceSignDummy(place) "{{{1
 	return
     endif
     if a:place
-	if empty(s:DefinedSignsNotExists())
-	    call s:DefineSigns(0)
-	endif
 	let b = copy(s:placed_signs[0])
 	if !empty(b)
 	    " only place signs, if signs have been defined
@@ -169,9 +166,6 @@ fu! s:SetupSignTextHl() "{{{1
 endfu
 
 fu! s:PlaceSigns(dict) "{{{1
-    if empty(s:DefinedSignsNotExists())
-	call s:DefineSigns(0)
-    endif
     let b = copy(s:placed_signs[1])
     " signs by other plugins
     let changes_signs=[]
