@@ -235,8 +235,7 @@ endfu
 
 fu! s:PreviewDiff(file) "{{{1
     try
-	if !exists('g:changes_did_startup') ||
-	    \  !get(g:, 'changes_diff_preview', 0) || &diff
+	if !get(g:, 'changes_diff_preview', 0) || &diff
 	    return
 	endif
 	let cnt = readfile(a:file)
