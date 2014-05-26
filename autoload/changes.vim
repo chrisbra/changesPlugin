@@ -189,7 +189,7 @@ fu! s:PlaceSigns(dict) "{{{1
 		continue
 	    endif
 	    let name=id
-	    if (prev_line+1 == item || s:PrevDictHasKey(item-1))
+	    if (prev_line+1 == item || s:PrevDictHasKey(item-1)==id)
 		if id=='del'
 		    " don't need to place more deleted signs on those new lines,
 		    " skip
@@ -777,7 +777,7 @@ fu! s:CheckInvalidSigns() "{{{1
     endfor
     for id in ['add', 'ch', 'del']
 	for line in b:diffhl[id]
-	    if !s:PrevDictHasKey(line)
+	    if empty(s:PrevDictHasKey(line))
 		call add(list[1][id], line)
 	    endif
 	endfor
@@ -788,10 +788,10 @@ endfu
 fu! s:PrevDictHasKey(line) "{{{1
     for item in s:placed_signs[0]
 	if get(item, 'line', -1) ==? a:line
-	    return 1
+	    return item.type
 	endif
     endfor
-    return 0
+    return ''
 endfu
 fu! s:UnPlaceSpecificSigns(list) "{{{1
     for sign in a:list
