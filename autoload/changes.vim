@@ -188,14 +188,20 @@ fu! s:PlaceSigns(dict) "{{{1
 	    if index(b, item) > -1
 		continue
 	    endif
-	    if id == 'del' && prev_line+1 == item
-		" don't need to place more deleted signs on those new lines,
-		" skip
-		let prev_line = item
-		continue
+	    let name=id
+	    if (prev_line+1 == item || s:PrevDictHasKey(item-1))
+		if id=='del'
+		    " don't need to place more deleted signs on those new lines,
+		    " skip
+		    let prev_line = item
+		    continue
+		else
+		    let name='dummy'.id
+		endif
 	    endif
-	    exe "sil sign place " s:sign_prefix.item  . " line=" . item .
-		\ " name=" . (prev_line+1 == item ? "dummy".id : id) . " buffer=" . bufnr('')
+	    let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
+			\ s:sign_prefix.item, item, name, bufnr(''))
+	    exe cmd
 	    " remember line number, so that we don't place a second sign
 	    " there!
 	    call add(changes_signs, item)
@@ -771,7 +777,7 @@ fu! s:CheckInvalidSigns() "{{{1
     endfor
     for id in ['add', 'ch', 'del']
 	for line in b:diffhl[id]
-	    if !s:DictHasKey(line)
+	    if !s:PrevDictHasKey(line)
 		call add(list[1][id], line)
 	    endif
 	endfor
@@ -779,7 +785,7 @@ fu! s:CheckInvalidSigns() "{{{1
     return list
 endfu
 
-fu! s:DictHasKey(line) "{{{1
+fu! s:PrevDictHasKey(line) "{{{1
     for item in s:placed_signs[0]
 	if get(item, 'line', -1) ==? a:line
 	    return 1
