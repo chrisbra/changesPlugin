@@ -186,7 +186,8 @@ fu! s:PlaceSigns(dict) "{{{1
 		continue
 	    endif
 	    let name=id
-	    if (prev_line+1 == item || s:PrevDictHasKey(item-1)==id)
+	    " Make sure, 'dummych' ==? 'ch'
+	    if prev_line+1 == item || s:PrevDictHasKey(item-1)[-2:] ==? id
 		if id=='del'
 		    " don't need to place more deleted signs on those new lines,
 		    " skip
@@ -862,7 +863,7 @@ fu! s:InitSignDef() "{{{1
     let signs["dummydel"] = "dummydel text=\<Char-0xa0>\<Char-0xa0> texthl=".
 		\ (sign_hi<2 ? "ChangesSignTextDel" : "SignColumn")
     let signs["dummych"]  = "dummych text=\<Char-0xa0>\<Char-0xa0> texthl=".
-		\ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn")
+		\ (sign_hi<2 ? "ChangesSignTextCh" : "SignColumn")
 
     if sign_hi > 0
 	let signs['add'] .= ' linehl=DiffAdd'
