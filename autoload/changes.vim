@@ -187,9 +187,11 @@ fu! s:PlaceSigns(dict) "{{{1
 	    endif
 	    let name=id
 	    " Make sure, 'dummych' ==? 'ch'
-	    if prev_line+1 == item || s:PrevDictHasKey(item-1)[-2:] ==? id
+	    " or 'dummydel' ==? 'del'
+	    if prev_line+1 == item ||
+	    \ matchstr(s:PrevDictHasKey(item-1), '\(dummy\)?.*') ==? id
 		if id=='del'
-		    " don't need to place more deleted signs on those new lines,
+		    " don't need to place more deleted signs on those lines,
 		    " skip
 		    let prev_line = item
 		    continue
