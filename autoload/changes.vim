@@ -909,6 +909,7 @@ fu! changes#Init() "{{{1
     let s:msg      = []
     " Ignore buffer
     let s:ignore   = {}
+    let s:changes_signs_undefined=0
     let s:autocmd  = get(g:, 'changes_autocmd', 1)
     " Check against a file in a vcs system
     let s:vcs      = get(g:, 'changes_vcs_check', 0)
