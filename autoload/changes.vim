@@ -841,8 +841,6 @@ fu! s:InitSignDef() "{{{1
     let signs["dummy"]    = "dummy text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn"
     let signs["dummyadd"] = "dummyadd text=\<Char-0xa0>\<Char-0xa0> texthl=".
 		\ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn")
-    let signs["dummydel"] = "dummydel text=\<Char-0xa0>\<Char-0xa0> texthl=".
-		\ (sign_hi<2 ? "ChangesSignTextDel" : "SignColumn")
     let signs["dummych"]  = "dummych text=\<Char-0xa0>\<Char-0xa0> texthl=".
 		\ (sign_hi<2 ? "ChangesSignTextCh" : "SignColumn")
 
@@ -852,7 +850,6 @@ fu! s:InitSignDef() "{{{1
 	let signs['del'] .= ' linehl=DiffDelete'
 	let signs['dummyadd'] .= ' linehl=DiffAdd'
 	let signs['dummych'] .= ' linehl=DiffChange'
-	let signs['dummydel'] .= ' linehl=DiffDelete'
     endif
     return signs
 endfu
