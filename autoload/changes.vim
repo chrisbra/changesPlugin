@@ -176,8 +176,7 @@ fu! s:PlaceSigns(dict) "{{{1
 	    let name=id
 	    " Make sure, 'dummych' ==? 'ch'
 	    " or 'dummydel' ==? 'del'
-	    if prev_line+1 == item ||
-	    \ matchstr(s:PrevDictHasKey(item-1), '\(dummy\)\?\zs.*') ==? id
+	    if prev_line+1 == item || s:SignType(s:PrevDictHasKey(item-1)) ==? id
 		if id=='del'
 		    " don't need to place more deleted signs on those lines,
 		    " skip
@@ -766,18 +765,27 @@ fu! s:AddAdjustment() "{{{1
     endtry
 endfu
 
+fu! s:SignType(string) "{{{1
+    " returns type but skips dummy type
+    return matchstr(a:string, '\(dummy\)\?\zs.*$')
+endfu
+
 fu! s:CheckInvalidSigns() "{{{1
     let list=[[],{'add': [], 'del': [], 'ch': []}]
+    let ind=0
     for item in s:placed_signs[0]
 	if (item.type ==? '[Deleted]')
 	    " skip sign prefix '99'
 	    call add(list[0], (item.id[2:]+0))
 	    continue
 	endif
-	if (index(b:diffhl['add'], item.line+0) == -1 &&
-	    \ index(b:diffhl['ch'], item.line+0) == -1 &&
-	    \ index(b:diffhl['del'], item.line+0) == -1)
+	if index(b:diffhl[s:SignType(item.type)], item.line+0) == -1
 	    call add(list[0], item.id[2:])
+	    " remove item from the placed sign list, so that we
+	    " don't erroneously place a dummy sign later on
+	    call remove(s:placed_signs[0], ind)
+	else
+	    let ind+=1
 	endif
     endfor
     for id in ['add', 'ch', 'del']
