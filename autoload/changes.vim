@@ -705,6 +705,8 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	endif
 	" Make sure, the message is actually displayed!
 	verbose call changes#WarningMsg()
+	" restore change marks
+	call s:SaveRestoreChangeMarks(0)
     endtry
 endfu
 fu! s:SortDiffHl() "{{{1
@@ -837,6 +839,15 @@ fu! s:InitSignDef() "{{{1
     endif
     return signs
 endfu
+fu! s:SaveRestoreChangeMarks(save) "{{{1
+    if a:save
+	let s:_change_mark = [getpos("'["), getpos("']")]
+    else
+	for i in [0,1]
+	    call setpos("'".(i?']':'['), s:_change_mark[i])
+	endfor
+    endif
+endfu
 fu! changes#GetStats() "{{{1
     return [len(get(get(b:, 'diffhl', []), 'add', [])),
 	    \ len(get(get(b:, 'diffhl', []), 'ch', [])),
@@ -888,6 +899,8 @@ endfu
 fu! changes#Init() "{{{1
     " Message queue, that will be displayed.
     let s:msg      = []
+    " save change marks
+    call s:SaveRestoreChangeMarks(1)
     " Ignore buffer
     let s:ignore   = {}
     let s:changes_signs_undefined=0
