@@ -898,11 +898,11 @@ fu! changes#Output() "{{{1
     let add = '+'
     let ch  = '*'
     let del = '-'
-    let sign_def = s:DefinedSignsNotExists()
+    let sign_def = s:signs
     if !empty(sign_def)
-	let add = matchstr(sign_def[0], 'text=\zs..')
-	let ch  = matchstr(sign_def[1], 'text=\zs..')
-	let del = matchstr(sign_def[2], 'text=\zs..')
+	let add = matchstr(sign_def['add'], 'text=\zs..')
+	let ch  = matchstr(sign_def['ch'], 'text=\zs..')
+	let del = matchstr(sign_def['del'], 'text=\zs..')
     endif
     echohl Title
     echo "Differences will be highlighted like this:"
@@ -984,6 +984,7 @@ fu! changes#Init() "{{{1
 	let s:diff_in_old = s:diff_out.'old'
     endif
     let s:nodiff=0
+    let s:old_signs = get(s:, 'signs', {})
     let s:signs=s:InitSignDef()
 
     " Only check the first time this file is loaded
@@ -1006,14 +1007,9 @@ fu! changes#Init() "{{{1
     " Delete previously placed signs
     " not necessary, if we are only selectively update signs
     " call s:UnPlaceSigns(0)
-    if exists("s:sign_definition")
-	let def = sort(s:DefinedSignsNotExists())
-	if len(def) < 3 || s:CheckDifferenceDefinition(def)
-	    " Sign definition changed, redefine them
-	    call s:DefineSigns(1)
-	endif
-    else
-	call s:DefineSigns(0)
+    if s:old_signs !=? s:signs
+	" Sign definition changed, redefine them
+	call s:DefineSigns(1)
     endif
     call changes#AuCmd(s:autocmd)
 endfu
