@@ -56,7 +56,6 @@ fu! s:Check() "{{{1
 	" signs
 	set linespace=-1
     endif
-    unlet! s:sign_definition
     call s:SetupSignTextHl()
     call s:DefineSigns(0)
 endfu
@@ -137,17 +136,6 @@ fu! s:PlaceSignDummy(place) "{{{1
     endif
 endfu
 
-fu! s:DefinedSignsNotExists() "{{{1
-    if !exists("s:sign_definition")
-	redir => a|exe "sil sign list"|redir end
-	let s:sign_definition = split(a, "\n")
-    endif
-    let s:sign_definition = filter(s:sign_definition, 'v:val !~# "dummy"')
-    let pat = '^sign \(add\|del\|ch\)'
-    let b = filter(copy(s:sign_definition), 'v:val =~ pat')
-    let b = map(b, 'substitute(v:val, ''^\w\+\s\+'', "", "")')
-    return b
-endfu
 
 fu! s:SetupSignTextHl() "{{{1
     if !hlID('ChangesSignTextAdd') || empty(synIDattr(hlID('ChangesSignTextAdd'), 'fg'))
@@ -738,9 +726,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	if exists("_wsv")
 	    call winrestview(_wsv)
 	endif
-	" make sure on next call, s:sign-definition will be recreated by
-	" DefinedSignsNotExists()
-	unlet! s:sign_definition
 	" Make sure, the message is actually displayed!
 	verbose call changes#WarningMsg()
     endtry
