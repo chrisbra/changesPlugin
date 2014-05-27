@@ -615,7 +615,9 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	if (exists("s:ignore") && get(s:ignore, bufnr('%'), 0) &&
 	    \ empty(a:bang)) || !empty(&l:bt) ||
 	    \ line2byte(line('$')) == -1
-	    call add(s:msg, 'Buffer is ignored, use ! to force command')
+	    if &vbs>0
+		call add(s:msg, 'Buffer is ignored, use ! to force command')
+	    endif
 	    " ignore error messages
 	    if get(s:ignore, bufnr('%'), 0)
 		call remove(s:ignore, bufnr('%'))
