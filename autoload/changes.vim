@@ -425,15 +425,17 @@ fu! s:ParseDiffOutput(file) "{{{1
 	" @@ -3,4 +3,2 @@
 	elseif old_count >= new_count
 	    let b:diffhl.ch += range(new_line, new_line + new_count - 1)
-	    let b:diffhl.del+= range(new_count+new_line, old_line + old_count - 1)
+	    if new_line + new_count < old_line+old_count
+		let b:diffhl.del+= range(new_count + new_line, old_line + old_count - 1)
+	    endif
 
 	" Lines changed
 	" 3 added, 2 changed
 	" @@ -4,2 +4,5 @@
 	else " old_count < new_count
 	    let b:diffhl.ch += range(old_line, new_line + old_count - 1)
-	    if new_line + new_count -1 > new_line + old_count
-		let b:diffhl.add += range(new_line+old_count, new_line + new_count - 1)
+	    if old_line+old_count < new_line + new_count
+		let b:diffhl.add += range(old_line + old_count, new_line + new_count - 1)
 	    endif
 	endif
     endfor
