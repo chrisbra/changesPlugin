@@ -319,7 +319,7 @@ fu! s:MakeDiff_new(file) "{{{1
     endtry
 endfu
 
-fu! s:ChangeDir()
+fu! s:ChangeDir() "{{{1
     let _pwd = s:Cwd()
     exe "lcd " fnameescape(fnamemodify(expand("%"), ':h'))
     return _pwd
@@ -425,9 +425,7 @@ fu! s:ParseDiffOutput(file) "{{{1
 	" @@ -3,4 +3,2 @@
 	elseif old_count >= new_count
 	    let b:diffhl.ch += range(new_line, new_line + new_count - 1)
-	    if old_count - new_count - 1 > new_line
-		let b:diffhl.del+= range(new_line, old_count - new_count -1)
-	    endif
+	    let b:diffhl.del+= range(new_count+new_line, old_line + old_count - 1)
 
 	" Lines changed
 	" 3 added, 2 changed
