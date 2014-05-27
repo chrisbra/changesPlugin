@@ -558,30 +558,6 @@ fu! s:GuessVCSSystem() "{{{1
     endif
 endfu
 
-fu! s:CheckDeletedLines() "{{{1
-    " If there are consecutive deleted lines,
-    " we keep only the first of the deleted lines
-    let i=0
-    for item in b:diffhl['del']
-	if item > line('$')
-	    let b:diffhl['del'][i]=line('$')
-	    return
-	endif
-	if i==0
-	    let i+=1
-	    let last_line = item
-	    continue
-	endif
-	if last_line ==? (item-1)
-	    call remove(b:diffhl['del'], i)
-	    let last_line=item
-	    continue
-	endif
-	let last_line=item
-	let i+=1
-    endfor
-endfu
-
 fu! s:Is(os) "{{{1
     if (a:os == "win")
         return has("win32") || has("win16") || has("win64")
