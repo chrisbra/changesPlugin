@@ -721,33 +721,6 @@ fu! s:SortDiffHl() "{{{1
 	endif
     endfor
 endfu
-" TODO: delete function
-fu! s:AddAdjustment() "{{{1
-   " adds adjumstment for changed or added lines
-   try
-	if !exists("s:prev_diffhl") || !get(s:prev_diffhl, 'last', 0) ||
-	    \ (getpos("'[")[1] == 1 && getpos("']")[1] == line('$'))
-	    return
-	endif
-	let adjustment = getpos("']")[1] - getpos("'[")[1] + 1
-	let start = getpos("'[")[1]
-	for id in ['add', 'ch', 'del']
-	    for index in range(b:diffhl[id])
-		if b:diffhl[id][index] >= start
-		    if b:diffhl['last'] > line('$')
-			let b:diffhl[id][index] += adjustment
-		    else
-			" lines have been deleted
-			let b:diffhl[id][index] -= adjustment
-		    endif
-		endif
-	    endfor
-	endfor
-    finally
-	let b:diffhl['last'] = line('$')
-    endtry
-endfu
-
 fu! s:SignType(string) "{{{1
     " returns type but skips dummy type
     return matchstr(a:string, '\(dummy\)\?\zs.*$')
@@ -793,13 +766,6 @@ fu! s:UnPlaceSpecificSigns(list) "{{{1
     for sign in a:list
 	exe "sign unplace ". s:sign_prefix.sign. " buffer=".bufnr('')
     endfor
-endfu
-
-" TODO: delete function
-fu! s:CheckDifferenceDefinition(a) "{{{1
-    return   sort(split(a:a[0])) !=? sort(split(s:signs.add))
-	\ || sort(split(a:a[1])) !=? sort(split(s:signs.ch))
-	\ || sort(split(a:a[2])) !=? sort(split(s:signs.del))
 endfu
 
 fu! s:InitSignDef() "{{{1
@@ -1052,10 +1018,6 @@ endfu
 fu! changes#TCV() "{{{1
     if  exists("b:changes_view_enabled") && b:changes_view_enabled
 	call s:UnPlaceSigns(1)
-	" TODO: delete
-	if exists("b:ofdc")
-	    let &fdc=b:ofdc
-	endif
         let b:changes_view_enabled = 0
         echo "Hiding changes since last save"
     else
