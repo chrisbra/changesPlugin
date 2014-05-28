@@ -825,6 +825,13 @@ endfu
 fu! s:HighlightTextChanges() "{{{1
     " use the '[ and '] marks (if they are valid)
     " and highlight changes
+    let seq_last=undotree()['seq_last']
+    let seq_cur =undotree()['seq_cur']
+    if seq_last > seq_cur && exists("b:changes_linehi_diff_matches")
+	" change was undo
+	" remove last highlighting (this is just a guess!
+	sil call matchdelete(remove(b:changes_linehi_diff_matches, -1))
+    endif
     if get(g:, 'changes_linehi_diff', 0) &&
     \  (getpos("'[")[1] !=? 1 ||
     \  getpos("']")[1] !=? line('$')) &&
@@ -842,7 +849,7 @@ fu! s:GenerateHiPattern(startl, endl) "{{{1
     " endl   - End Position   [line, col]
     " Easy way: match within a line
     if a:startl[0] == a:endl[0]
-	return '\%'.a:startl[0]. 'l\%>'.a:startl[1].'c.*\%<'.a:endl[1].'c'
+	return '\%'.a:startl[0]. 'l\%>'.(a:startl[1]-1).'c.*\%<'.a:endl[1].'c'
     else
 	" Need to generate concat 3 patterns:
 	"  1) from startline, startcolumn till end of line
@@ -851,7 +858,7 @@ fu! s:GenerateHiPattern(startl, endl) "{{{1
 	"
 	" example: Start at line 1 col. 6 until line 3 column 12:
 	" \%(\%1l\%>6v.*\)\|\(\%>1l\%<3l.*\)\|\(\%3l.*\%<12v\)
-    return  '\%(\%'.  a:startl[0]. 'l\%>'.  a:startl[1]. 'c.*\)\|'.
+    return  '\%(\%'.  a:startl[0]. 'l\%>'. (a:startl[1]-1). 'c.*\)\|'.
 	    \	'\%(\%>'. a:startl[0]. 'l\%<'. a:endl[0]. 'l.*\)\|'.
 	    \   '\%(\%'.  a:endl[0]. 'l.*\%<'. a:endl[1]. 'c\)'
     endif
