@@ -109,8 +109,10 @@ fu! s:UpdateView(...) "{{{1
 	try
 	    call changes#Init()
 	    call s:GetDiff(1, '')
+	    call s:HighlightTextChanges()
 	    let b:changes_chg_tick = b:changedtick
 	catch
+	    call add(s:msg, v:exception)
 	    " Make sure, the message is actually displayed!
 	    verbose call changes#WarningMsg()
 	    call changes#CleanUp()
@@ -820,6 +822,49 @@ fu! s:SaveRestoreChangeMarks(save) "{{{1
 	endfor
     endif
 endfu
+fu! s:HighlightTextChanges() "{{{1
+    " use the '[ and '] marks (if they are valid)
+    " and highlight changes
+    if get(g:, 'changes_linehi_diff', 0) &&
+    \  (getpos("'[")[1] !=? 1 ||
+    \  getpos("']")[1] !=? line('$')) &&
+    \  getpos("']") !=? getpos("'[")
+    " ignore those marks, if they are
+    " - not set (e.g. they are [0,0,0,0]
+    " - or '[ and '] are the same (happens when deleting lines)
+    " - or they do not match the complete buffer
+	call s:AddMatches(
+	\ s:GenerateHiPattern(getpos("'[")[1:2], getpos("']")[1:2]))
+    endif
+endfu
+fu! s:GenerateHiPattern(startl, endl) "{{{1
+    " startl - Start Position [line, col]
+    " endl   - End Position   [line, col]
+    " Easy way: match within a line
+    if a:startl[0] == a:endl[0]
+	return '\%'.a:startl[0]. 'l\%>'.a:startl[1].'c.*\%<'.a:endl[1].'c'
+    else
+	" Need to generate concat 3 patterns:
+	"  1) from startline, startcolumn till end of line
+	"  2) all lines between startline and end line
+	"  3) from start of endline until end column
+	"
+	" example: Start at line 1 col. 6 until line 3 column 12:
+	" \%(\%1l\%>6v.*\)\|\(\%>1l\%<3l.*\)\|\(\%3l.*\%<12v\)
+    return  '\%(\%'.  a:startl[0]. 'l\%>'.  a:startl[1]. 'c.*\)\|'.
+	    \	'\%(\%>'. a:startl[0]. 'l\%<'. a:endl[0]. 'l.*\)\|'.
+	    \   '\%(\%'.  a:endl[0]. 'l.*\%<'. a:endl[1]. 'c\)'
+    endif
+endfu 
+fu! s:AddMatches(pattern) "{{{1
+    if  !empty(a:pattern)
+	if !exists("b:changes_linehi_diff_matches")
+		let b:changes_linehi_diff_matches = []
+	endif
+	call add(b:changes_linehi_diff_matches,
+		    \matchadd('CursorLine', a:pattern))
+    endif
+endfu
 fu! changes#GetStats() "{{{1
     return [len(get(get(b:, 'diffhl', []), 'add', [])),
 	    \ len(get(get(b:, 'diffhl', []), 'ch', [])),
@@ -985,9 +1030,6 @@ fu! changes#CleanUp() "{{{1
     " only delete signs, that have been set by this plugin
     call s:UnPlaceSigns(1)
     let s:ignore[bufnr('%')] = 1
-    if !exists("s:signs") || !exists("s:autocmd")
-	return
-    endif
     for key in keys(s:signs)
 	exe "sil! sign undefine " key
     endfor
@@ -995,7 +1037,12 @@ fu! changes#CleanUp() "{{{1
 	call changes#AuCmd(0)
     endif
     let b:changes_view_enabled = 0
-    unlet! b:diffhl
+    if exists("b:changes_linehi_diff_matches")
+	for val in b:changes_linehi_diff_matches
+	    call matchdelete(val)
+	endfor
+    endif
+    unlet! b:diffhl s:signs s:old_signs b:changes_linehi_diff_matches
 endfu
 fu! changes#AuCmd(arg) "{{{1
     if a:arg
