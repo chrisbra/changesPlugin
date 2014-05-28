@@ -827,7 +827,8 @@ fu! s:HighlightTextChanges() "{{{1
     " and highlight changes
     let seq_last=undotree()['seq_last']
     let seq_cur =undotree()['seq_cur']
-    if seq_last > seq_cur && exists("b:changes_linehi_diff_matches")
+    if seq_last > seq_cur && exists("b:changes_linehi_diff_matches") &&
+		\ len(b:changes_linehi_diff_matches) > 0
 	" change was undo
 	" remove last highlighting (this is just a guess!
 	sil call matchdelete(remove(b:changes_linehi_diff_matches, -1))
