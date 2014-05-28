@@ -236,7 +236,11 @@ fu! s:PreviewDiff(file) "{{{1
 	let bufnr = bufnr('')
 	let cur = exists("b:current_line") ? b:current_line : 0
 	if cur
-	    exe printf(':noa sil! pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
+	    let _ar=&g:ar
+	    " Avoid W11 message (:h W11)
+	    set ar
+	    exe printf(':noa noswap sil pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
+	    let &g:ar=_ar
 	    call setbufvar(a:file, "&ft", "diff")
 	    call setbufvar(a:file, '&bt', 'nofile')
 	    exe "noa" bufwinnr(bufnr)."wincmd w"
@@ -717,6 +721,7 @@ fu! s:SortDiffHl() "{{{1
 	endif
     endfor
 endfu
+" TODO: delete function
 fu! s:AddAdjustment() "{{{1
    " adds adjumstment for changed or added lines
    try
@@ -790,6 +795,7 @@ fu! s:UnPlaceSpecificSigns(list) "{{{1
     endfor
 endfu
 
+" TODO: delete function
 fu! s:CheckDifferenceDefinition(a) "{{{1
     return   sort(split(a:a[0])) !=? sort(split(s:signs.add))
 	\ || sort(split(a:a[1])) !=? sort(split(s:signs.ch))
@@ -1046,6 +1052,7 @@ endfu
 fu! changes#TCV() "{{{1
     if  exists("b:changes_view_enabled") && b:changes_view_enabled
 	call s:UnPlaceSigns(1)
+	" TODO: delete
 	if exists("b:ofdc")
 	    let &fdc=b:ofdc
 	endif
