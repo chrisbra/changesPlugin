@@ -22,18 +22,21 @@ delf <sid>GetSID "not needed anymore
 
 " Check preconditions
 fu! s:Check() "{{{1
+    if !exists("s:msg")
+	let s:msg=[]
+    endif
     if !has("diff")
-	call add(s:msg,"Diff support not available in your Vim version.")
+	call s:StoreMessage("Diff support not available in your Vim version.")
 	throw 'changes:abort'
     endif
 
     if  !has("signs")
-	call add(s:msg,"Sign Support support not available in your Vim.")
+	call s:StoreMessage("Sign Support support not available in your Vim.")
 	throw 'changes:abort'
     endif
 
     if !executable("diff") || executable("diff") == -1
-	call add(s:msg,"No diff executable found")
+	call s:StoreMessage("No diff executable found")
 	throw 'changes:abort'
     endif
     if !get(g:, 'changes_respect_SignColumn', 0)
@@ -117,7 +120,7 @@ fu! s:UpdateView(...) "{{{1
 	    call s:HighlightTextChanges()
 	    let b:changes_chg_tick = b:changedtick
 	catch
-	    call add(s:msg, v:exception)
+	    call s:StoreMessage(s:msg, v:exception)
 	    " Make sure, the message is actually displayed!
 	    verbose call changes#WarningMsg()
 	    call changes#CleanUp()
@@ -227,6 +230,16 @@ fu! s:Cwd() "{{{1
     return escape(getcwd(), ' ')
 endfu
 
+fu! s:StoreMessage(msg, ...) "{{{1
+    if !exists("a:1")
+	let level=0
+    else
+	let level=a:1
+    endif
+    if &vbs>level
+	call add(s:msg, a:msg)
+    endif
+endfu
 fu! s:PreviewDiff(file) "{{{1
     try
 	if !get(g:, 'changes_diff_preview', 0) || &diff
@@ -278,9 +291,7 @@ fu! s:MakeDiff_new(file) "{{{1
 	    let cp = (!s:Is('unix') ? 'copy ' : 'cp ')
 	    let output = system(cp. shellescape(file). " ". s:diff_in_old)
 	    if v:shell_error
-		if &bvs
-		    call add(s:msg, output[:-2])
-		endif
+		call s:StoreMessage(output[:-2])
 		throw "changes:abort"
 	    endif
 	else
@@ -302,9 +313,7 @@ fu! s:MakeDiff_new(file) "{{{1
 			\ s:diff_in_old)
 	    let output = system(cmd)
 	    if v:shell_error
-		if &vbs
-		    call add(s:msg, output[:-2])
-		endif
+		call s:StoreMessage(output[:-2])
 		throw "changes:abort"
 	    endif
 	endif
@@ -313,15 +322,11 @@ fu! s:MakeDiff_new(file) "{{{1
 	let output = system(cmd)
 	if v:shell_error >= 2 || v:shell_error < 0
 	    " diff returns 2 on errors
-	    if &vbs
-		call add(s:msg, output[:-2])
-	    endif
+	    call s:StoreMessage(output[:-2])
 	    throw "changes:abort"
 	endif
 	if getfsize(s:diff_out) == 0
-	    if &vbs > 1
-		call add(s:msg,"No differences found!")
-	    endif
+	    call s:StoreMessage("No differences found!",1)
 	    return
 	endif
 	call s:ParseDiffOutput(s:diff_out)
@@ -371,20 +376,20 @@ fu! s:MakeDiff(...) "{{{1
 	    endif
 	    let output = system((vcs==?'rcs'?'':vcs) . ' '. s:vcs_cat[vcs] .  expand("#") . '>'.  s:diff_out)
 	    if v:shell_error
-		call add(s:msg, output[:-2])
+		call s:StoreMessage(output[:-2])
 		throw "changes:abort"
 	    endif
 	    let fsize=getfsize(s:diff_out)
 	    if fsize == 0
 		call delete(s:diff_out)
-		call add(s:msg,"Couldn't get VCS output, aborting")
+		call s:StoreMessage("Couldn't get VCS output, aborting")
 		"call s:MoveToPrevWindow()
 		exe "noa" bufwinnr(bnr) "wincmd w"
 		throw "changes:abort"
 	    endif
 	    exe ':silent :r' s:diff_out
         catch /^changes: No git Repository found/
-	    call add(s:msg,"Unable to find git Top level repository.")
+	    call s:StoreMessage("Unable to find git Top level repository.")
 	    echo v:errmsg
 	    exe "noa" bufwinnr(bnr) "wincmd w"
 	    throw "changes:abort"
@@ -610,9 +615,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	if (exists("s:ignore") && get(s:ignore, bufnr('%'), 0) &&
 	    \ empty(a:bang)) || !empty(&l:bt) ||
 	    \ line2byte(line('$')) == -1
-	    if &vbs>0
-		call add(s:msg, 'Buffer is ignored, use ! to force command')
-	    endif
+	    call s:StoreMessage('Buffer is ignored, use ! to force command')
 	    return
 	elseif !empty(a:bang) && get(s:ignore, bufnr('%'), 0)
 	    " remove buffer from ignore list
@@ -628,16 +631,15 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 
 	try
 	    if !filereadable(bufname(''))
-		call add(s:msg,"You've opened a new file so viewing changes ".
+		call s:StoreMessage("You've opened a new file so viewing changes ".
 		    \ "is disabled until the file is saved ")
 		return
 	    endif
 
 	    " Does not make sense to check an empty buffer
 	    if empty(bufname(''))
-		call add(s:msg,"The buffer does not contain a name. Aborted!")
+		call s:StoreMessage("The buffer does not contain a name. Aborted!")
 		" don't ignore buffer, it could get a name later...
-		" let s:ignore[bufnr('%')] = 1
 		return
 	    endif
 
@@ -667,9 +669,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    \ && empty(s:placed_signs[0]))
 		" Make sure, diff and previous diff are different,
 		" otherwise, we might forget to update the signs
-		if &vbs > 1
-		    call add(s:msg, 'No differences found!')
-		endif
+		call s:StoreMessage('No differences found!',1)
 		let s:nodiff=1
 	    elseif exists("s:changes_signs_undefined") && s:changes_signs_undefined
 		call s:PlaceSigns(b:diffhl)
@@ -693,19 +693,17 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    let b:changes_view_enabled=0
 	    let s:ignore[bufnr('%')] = 1
 	catch
-	    call add(s:msg, "Error occured: ".v:exception)
-	    if &vbs > 1
-		call add(s:msg, "Trace: ".v:throwpoint)
-	    endif
+	    call s:StoreMessage("Error occured: ".v:exception)
+	    call s:StoreMessage("Trace: ". v:throwpoint,1)
 	finally
 	    if scratchbuf && a:arg < 3
 		exe "bw" scratchbuf
 	    endif
 	    if s:vcs && exists("b:changes_view_enabled") &&
-			\ b:changes_view_enabled && &vbs > 1
+			\ b:changes_view_enabled
 		" only add info here, when 'verbose' > 1
-		call add(s:msg,"Check against " .
-		    \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
+		call s:StoreMessage("Check against ".
+		    \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type, 1)
 	    endif
 	    " remove dummy sign
 	    call s:PlaceSignDummy(0)
@@ -987,16 +985,16 @@ fu! changes#Init() "{{{1
     " Settings for Version Control
     if s:vcs && !empty(b:vcs_type)
 	if get(s:vcs_cat, b:vcs_type, 'NONE') == 'NONE'
-	    call add(s:msg,"Don't know VCS " . b:vcs_type)
-	    call add(s:msg,"VCS check will be disabled for now.")
+	    call s:StoreMessage("Don't know VCS " . b:vcs_type)
+	    call s:StoreMessage("VCS check will be disabled for now.")
 	    let s:vcs=0
 	    " Probably file not in a repository/working dir
 	    throw 'changes:NoVCS'
 	endif
 	if !executable(b:vcs_type)
-	    call add(s:msg,'Guessing VCS: '. b:vcs_type)
-	    call add(s:msg,"Executable " . b:vcs_type . " not found! Aborting.")
-	    call add(s:msg,'You might want to set the g:changes_vcs_system variable to override!')
+	    call s:StoreMessage("Guessing VCS: ". b:vcs_type)
+	    call s:StoreMessage("Executable " . b:vcs_type . " not found! Aborting.")
+	    call s:StoreMessage("You might want to set the g:changes_vcs_system variable to override!")
 	    throw "changes:abort"
 	endif
     endif
@@ -1015,7 +1013,7 @@ fu! changes#Init() "{{{1
 	try
 	    call s:Check()
 	catch
-	    call add(s:msg,"changes plugin will not be working!")
+	    call s:StoreMessage("changes plugin will not be working!")
 	    " Rethrow exception
 	    throw changes:abort
 	endtry
