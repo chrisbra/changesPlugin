@@ -224,7 +224,7 @@ endfu
 
 fu! s:PreviewDiff(file) "{{{1
     try
-	if !get(g:, 'changes_diff_preview', 0) || &diff
+	if !get(g:, 'changes_diff_preview', 0) || &diff || getfsize(a:file) == 0
 	    return
 	endif
 
