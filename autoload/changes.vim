@@ -104,6 +104,11 @@ fu! s:UpdateView(...) "{{{1
     if !exists("b:changes_chg_tick")
 	let b:changes_chg_tick = 0
     endif
+    if exists("s:ignore")
+	if get(s:ignore, bufnr('%'), 0) && !force
+	    return
+	endif
+    endif
     " Only update, if there have been changes to the buffer
     if  b:changes_chg_tick != b:changedtick || force
 	try
