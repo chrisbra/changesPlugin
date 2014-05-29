@@ -602,11 +602,10 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    if &vbs>0
 		call add(s:msg, 'Buffer is ignored, use ! to force command')
 	    endif
-	    " ignore error messages
-	    if get(s:ignore, bufnr('%'), 0)
-		call remove(s:ignore, bufnr('%'))
-	    endif
 	    return
+	elseif !empty(a:bang) && get(s:ignore, bufnr('%'), 0)
+	    " remove buffer from ignore list
+	    call remove(s:ignore, bufnr('%'))
 	endif
 
 	" Save some settings
