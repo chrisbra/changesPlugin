@@ -827,11 +827,16 @@ fu! s:HighlightTextChanges() "{{{1
     " and highlight changes
     let seq_last=undotree()['seq_last']
     let seq_cur =undotree()['seq_cur']
-    if seq_last > seq_cur && exists("b:changes_linehi_diff_matches") &&
-		\ len(b:changes_linehi_diff_matches) > 0
+    if seq_last > seq_cur && exists("b:changes_linehi_diff_match") &&
+		\ len(b:changes_linehi_diff_match) > 0
 	" change was undo
-	" remove last highlighting (this is just a guess!
-	sil call matchdelete(remove(b:changes_linehi_diff_matches, -1))
+	" remove last highlighting (this is just a guess!)
+	for [change, val] in items(b:changes_linehi_diff_match)
+	    if change > seq_cur
+		sil call matchdelete(val)
+		unlet! b:changes_linehi_diff_match[change]
+	    endif
+	endfor
     endif
     if get(g:, 'changes_linehi_diff', 0) &&
     \  (getpos("'[")[1] !=? 1 ||
@@ -866,11 +871,10 @@ fu! s:GenerateHiPattern(startl, endl) "{{{1
 endfu 
 fu! s:AddMatches(pattern) "{{{1
     if  !empty(a:pattern)
-	if !exists("b:changes_linehi_diff_matches")
-		let b:changes_linehi_diff_matches = []
+	if !exists("b:changes_linehi_diff_match")
+		let b:changes_linehi_diff_match = {}
 	endif
-	call add(b:changes_linehi_diff_matches,
-		    \matchadd('CursorLine', a:pattern))
+	let b:changes_linehi_diff_match[changenr()] = matchadd('CursorLine', a:pattern)
     endif
 endfu
 fu! changes#GetStats() "{{{1
@@ -1045,12 +1049,12 @@ fu! changes#CleanUp() "{{{1
 	call changes#AuCmd(0)
     endif
     let b:changes_view_enabled = 0
-    if exists("b:changes_linehi_diff_matches")
-	for val in b:changes_linehi_diff_matches
+    if exists("b:changes_linehi_diff_match")
+	for val in values(b:changes_linehi_diff_match)
 	    call matchdelete(val)
 	endfor
     endif
-    unlet! b:diffhl s:signs s:old_signs b:changes_linehi_diff_matches
+    unlet! b:diffhl s:signs s:old_signs b:changes_linehi_diff_match
 endfu
 fu! changes#AuCmd(arg) "{{{1
     if a:arg
