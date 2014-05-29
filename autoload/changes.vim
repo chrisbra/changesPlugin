@@ -661,7 +661,6 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		call s:MakeDiff_new(exists("a:1") ? a:1 : '')
 	    endif
 	    call s:SortDiffHl()
-	    "foobar
 
 	    " Check for empty dict of signs
 	    if !exists("b:diffhl") || 
