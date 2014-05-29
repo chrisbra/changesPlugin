@@ -227,26 +227,24 @@ fu! s:PreviewDiff(file) "{{{1
 	if !get(g:, 'changes_diff_preview', 0) || &diff
 	    return
 	endif
-	let cnt = readfile(a:file)
-	let fname=fnamemodify(expand('%'), ':p:.')
-	if len(cnt) > 2
-	    let cnt[0] = substitute(cnt[0], s:diff_in_old, fname, '')
-	    let cnt[1] = substitute(cnt[1], s:diff_in_cur, fname." (cur)", '')
-	    call writefile(cnt, a:file)
-	endif
 
 	let bufnr = bufnr('')
 	let cur = exists("b:current_line") ? b:current_line : 0
 	let _ar=&g:ar
 	" Avoid W11 message (:h W11)
 	set ar
-	exe printf(':noa noswap sil pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
-	let &g:ar=_ar
-	noa wincmd P
-	" execute commands in preview window
-	setl nofoldenable syntax=diff bt=nofile ft=diff
-	noa g/^[+-]\{3\}/d_
-	noa wincmd p
+	try
+	    exe printf(':noa noswap sil pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
+	    let &g:ar=_ar
+	    noa wincmd P
+	    " execute commands in preview window
+	    setl nofoldenable syntax=diff bt=nofile ft=diff
+	    noa g/^[+-]\{3\}/d_
+	catch
+	finally
+	    " Be sure, to stay in the original window
+	    noa wincmd p
+	endtry
 	if get(g:, 'neocomplcache_enable_auto_close_preview', 0)
 	    " Neocomplache closes preview window, GRR!
 	    " don't close preview window
