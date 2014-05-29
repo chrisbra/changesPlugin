@@ -227,7 +227,8 @@ fu! s:PreviewDiff(file) "{{{1
 	if !get(g:, 'changes_diff_preview', 0) || &diff
 	    return
 	endif
-	if getfsize(a:file) == 0
+	if getfsize(a:file) <= 0
+	    " getfsize() returns -1 on error (e.g. file does not exists!)
 	    if bufwinnr(a:file) > 0
 		sil! pclose
 	    endif
