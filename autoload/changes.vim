@@ -257,12 +257,12 @@ fu! s:PreviewDiff(file) "{{{1
 	" Avoid W11 message (:h W11)
 	set ar
 	try
-	    exe printf(':noa noswap sil pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
+	    exe printf(':noa keepp noswap sil pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
 	    let &g:ar=_ar
 	    noa wincmd P
 	    " execute commands in preview window
 	    setl nofoldenable syntax=diff bt=nofile ft=diff
-	    noa g/^[+-]\{3\}/d_
+	    sil keepp noa g/^[+-]\{3\}/d_
 	catch
 	finally
 	    " Be sure, to stay in the original window
