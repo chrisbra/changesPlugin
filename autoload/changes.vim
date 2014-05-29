@@ -224,11 +224,15 @@ endfu
 
 fu! s:PreviewDiff(file) "{{{1
     try
-	if !get(g:, 'changes_diff_preview', 0) || &diff || getfsize(a:file) == 0
+	if !get(g:, 'changes_diff_preview', 0) || &diff
 	    return
 	endif
-
-	let bufnr = bufnr('')
+	if getfsize(a:file) == 0
+	    if bufwinnr(a:file) > 0
+		sil! pclose
+	    endif
+	    return
+	endif
 	let cur = exists("b:current_line") ? b:current_line : 0
 	let _ar=&g:ar
 	" Avoid W11 message (:h W11)
