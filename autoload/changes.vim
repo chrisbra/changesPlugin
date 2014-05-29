@@ -278,7 +278,9 @@ fu! s:MakeDiff_new(file) "{{{1
 	    let cp = (!s:Is('unix') ? 'copy ' : 'cp ')
 	    let output = system(cp. shellescape(file). " ". s:diff_in_old)
 	    if v:shell_error
-		call add(s:msg, output[:-2])
+		if &bvs
+		    call add(s:msg, output[:-2])
+		endif
 		throw "changes:abort"
 	    endif
 	else
@@ -300,7 +302,9 @@ fu! s:MakeDiff_new(file) "{{{1
 			\ s:diff_in_old)
 	    let output = system(cmd)
 	    if v:shell_error
-		call add(s:msg, output[:-2])
+		if &vbs
+		    call add(s:msg, output[:-2])
+		endif
 		throw "changes:abort"
 	    endif
 	endif
@@ -309,7 +313,9 @@ fu! s:MakeDiff_new(file) "{{{1
 	let output = system(cmd)
 	if v:shell_error >= 2 || v:shell_error < 0
 	    " diff returns 2 on errors
-	    call add(s:msg, output[:-2])
+	    if &vbs
+		call add(s:msg, output[:-2])
+	    endif
 	    throw "changes:abort"
 	endif
 	if getfsize(s:diff_out) == 0
