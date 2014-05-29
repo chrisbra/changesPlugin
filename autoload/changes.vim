@@ -237,22 +237,20 @@ fu! s:PreviewDiff(file) "{{{1
 
 	let bufnr = bufnr('')
 	let cur = exists("b:current_line") ? b:current_line : 0
-	if cur
-	    let _ar=&g:ar
-	    " Avoid W11 message (:h W11)
-	    set ar
-	    exe printf(':noa noswap sil pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
-	    let &g:ar=_ar
-	    call setbufvar(a:file, "&ft", "diff")
-	    call setbufvar(a:file, '&bt', 'nofile')
-	    exe "noa" bufwinnr(bufnr)."wincmd w"
-	    if get(g:, 'neocomplcache_enable_auto_close_preview', 0)
-		" Neocomplache closes preview window, GRR!
-		" don't close preview window
-		let g:neocomplcache_enable_auto_close_preview = 0
-	    endif
-	else
-	    sil! pclose
+	let _ar=&g:ar
+	" Avoid W11 message (:h W11)
+	set ar
+	exe printf(':noa noswap sil pedit +/@@\ -%d.*\\n\\zs %s', cur, a:file)
+	let &g:ar=_ar
+	noa wincmd P
+	" execute commands in preview window
+	setl nofoldenable syntax=diff bt=nofile ft=diff
+	noa g/^[+-]\{3\}/d_
+	noa wincmd p
+	if get(g:, 'neocomplcache_enable_auto_close_preview', 0)
+	    " Neocomplache closes preview window, GRR!
+	    " don't close preview window
+	    let g:neocomplcache_enable_auto_close_preview = 0
 	endif
     catch
     endtry
