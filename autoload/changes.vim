@@ -845,6 +845,7 @@ fu! s:HighlightTextChanges() "{{{1
 		unlet! b:changes_linehi_diff_match[change]
 	    endif
 	endfor
+	return
     endif
     if get(g:, 'changes_linehi_diff', 0) &&
     \  (getpos("'[")[1] !=? 1 ||
