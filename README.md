@@ -12,13 +12,11 @@ buffer with it's saved state (or possibly against a state in a VCS repository).
 In order to highlight the indicator signs at the first column, its using
 signs.
 
-Note, that a '-' indicates, that at least one line was deleted between that
-particular line and the following line.
-
-Signs are updated whenever Insertmode is leaved or a change happened to the buffer.
-
 See also the following screencast, that shows several features available:
 ![screencast of the plugin](screencast.gif "Screencast")
+
+Note, that a '-' indicates, that at least one line was deleted between that
+particular line and the following line.
 
 Features:
 * Shows signs for added, modified, and deleted lines.
@@ -46,24 +44,25 @@ Once installed, take a look at the help at `:h ChangesPlugin`
 
 Here is a short overview of the functionality provided by the plugin:
 #### Ex commands:
-    `:EC`	 - Active the plugin (displays indicators of changes for the current buffer
-    `:DC`	 - Disable the plugin
-    `:TCV`	 - Toggles the plugin
-    `:CC`	 - Show a small help window
-    `:CL`	 - Opens the Quickfix window with all changes for the current buffer
-    `:CD`	 - Opens a diff view for the current buffer
-    `:CF`	 - Folds away all non-changed lines
-    `:CT`	 - Toggles how the highlighting is displayed
+    :EC  - Active the plugin (displays indicators of changes for the current buffer
+    :DC  - Disable the plugin
+    :TCV - Toggles the plugin
+    :CC  - Show a small help window
+    :CL  - Opens the Quickfix window with all changes for the current buffer
+    :CD  - Opens a diff view for the current buffer
+    :CF  - Folds away all non-changed lines
+    :CT  - Toggles how the highlighting is displayed
 #### Mappings
-    ]h		 - Moves forward to the next changed line
-    [h		 - Moves backwards to the previous changed line
-    ah		 - Selects the current hunk (TextObject)
+    ]h   - Moves forward to the next changed line
+    [h   - Moves backwards to the previous changed line
+    ah   - Selects the current hunk (TextObject)
 
 ### Configuration
 
 `g:changes_autocmd` (default: 1) - update automatically the signs using InsertLeave and TextChanged autocommands.
 
 `g:changes_vcs_check` (default: 0)
+
 `g:changes_vcs_system` (default: '') - Check against a version in a repository (e.g. git/mercurial) and specify VCS to use (if not specified, will try to autodetect).
 
 `g:changes_diff_preview` (default: 0) - Display diff in the preview window
