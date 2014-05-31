@@ -29,6 +29,7 @@ Features:
 * Built-in integration with [vim-airline](https://github.com/bling/vim-airline/).
 * good documentation
 * quick response
+* Nice icons for gvim
 
 ### Installation
 Use the plugin manager of your choice. For example with [pathogen](https://github.com/tpope/vim-pathogen) use:
