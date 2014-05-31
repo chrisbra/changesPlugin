@@ -228,7 +228,7 @@ are displayed.
 g:changes_respect_SignColumn (default 0)
 ----------------------------------------
 
-    If set, will reset the highlighting color of the Sign Column to that of
+    If set, will not reset the highlighting color of the Sign Column to that of
     the Normal Highlighting group.
 
 g:changes_sign_text_utf8 (default 1)
@@ -255,11 +255,19 @@ highlighting. For example, you can place the following lines in your
     hi ChangesSignTextAdd ctermbg=yellow ctermfg=black guibg=green
     hi ChangesSignTextDel ctermbg=white  ctermfg=black guibg=red
     hi ChangesSignTextCh  ctermbg=black  ctermfg=white guibg=blue
-<
 
+g:changes_linehi_diff (default: 0)
+----------------------------------
+
+    If set, will use Cursorline highlighting to overlay within a line the
+    changes. Use |:DC| and |:EC| to reset all highlighting. Note, will only
+    highlight changes, that have happened within the current editing session
+    (does not attempt to parse the VCS diff to try to figure the differences
+    out). Note: Currently very experimental!
+<
                                                         *ChangesPlugin-errors*
 By default the plugin will not display error messages. If you want to see
-them, set the 'verbose' option to 1.
+them, set the 'verbose' option to 1 (or even 2).
 
 ==============================================================================
 4. ChangesPlugin Feedback                           *ChangesPlugin-feedback*
@@ -292,6 +300,10 @@ third line of this document.
         NF: |:CT|
         BF: only draw at most one deleted sign, if a range of several
             consecutive lines have been deleted
+        NF: only place newly changed lines (instead of always removing all
+            previous signs and adding them again)
+        NF: if g:changes_linehi_diff is set, tries to highlight changes within
+            a line by overlaying |CursorColumn| highlighting over that parts.
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on
