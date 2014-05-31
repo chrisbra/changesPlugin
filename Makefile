@@ -29,9 +29,6 @@ uninstall:
 undo:
 	for i in */*.orig; do mv -f "$$i" "$${i%.*}"; done
 
-README:
-	cp -f $(DOC) README
-
 archive: $(PLUGIN).zip
 
 $(PLUGIN).zip:
