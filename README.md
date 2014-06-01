@@ -31,6 +31,9 @@ Features:
 * quick response
 * Nice icons for gvim
 
+#### Why another git-gutter/vim-signify clone?
+To be fair, there were a lot of other vim plugins, that offered the same functionality as those two. They just didn't get the same attention as those two. ChangesPlugin was one of those plugins.
+
 ### Installation
 Use the plugin manager of your choice. For example with [pathogen](https://github.com/tpope/vim-pathogen) use:
 ```
