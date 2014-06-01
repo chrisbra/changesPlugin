@@ -447,7 +447,7 @@ fu! s:ParseDiffOutput(file) "{{{1
 	" @@ -3,4 +3,2 @@
 	elseif old_count >= new_count
 	    let b:diffhl.ch += range(new_line, new_line + new_count - 1)
-	    if new_line + new_count < old_line+old_count
+	    if new_line + new_count <= old_line+old_count
 		let b:diffhl.del+= range(new_count + new_line, old_line + old_count - 1)
 	    endif
 
@@ -456,7 +456,7 @@ fu! s:ParseDiffOutput(file) "{{{1
 	" @@ -4,2 +4,5 @@
 	else " old_count < new_count
 	    let b:diffhl.ch += range(new_line, new_line + old_count - 1)
-	    if new_line + old_count < new_line+new_count-1
+	    if new_line + old_count <= new_line+new_count-1
 		let b:diffhl.add += range(new_line + old_count, new_line + new_count - 1)
 	    endif
 	endif
