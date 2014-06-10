@@ -53,7 +53,7 @@ fu! s:Check() "{{{1
     let s:ids["ch"]    = hlID("DiffChange")
     let s:ids["ch2"]   = hlID("DiffText")
 
-    if has("gui_running")
+    if has("gui_running") && get(g:, 'changes_adjust_linespace', 0)
 	" slightly adjust the linespacing, so that the gui signs are drawn 
 	" without an ugly horizontal black bar between the icon signs and text
 	" signs
