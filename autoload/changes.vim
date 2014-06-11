@@ -113,6 +113,16 @@ fu! s:UpdateView(...) "{{{1
 	endif
     endif
     " Only update, if there have been changes to the buffer
+    if line("'[") == line("']") && !empty(b:diffhl) &&
+	\ index(b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del'], line("'[")) > -1
+	" there already is a sign on the current line, so
+	" skip an expensive call to create diff (might happen with many
+	" rx commands on the same line and triggered TextChanged autocomands)
+	" and should make Vim more responsive (at the cost of being a little
+	" bit more unprecise.)
+	let b:changes_chg_tick = b:changedtick
+    endif
+	
     if  b:changes_chg_tick != b:changedtick || force
 	try
 	    call changes#Init()
