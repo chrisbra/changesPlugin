@@ -551,7 +551,7 @@ fu! s:PlacedSigns() "{{{1
 
     "let c=map(c, 'matchstr(v:val, ''line=\zs\d\+\ze'')+0')
     let d=filter(copy(b), 'v:val !~ "id=".s:sign_prefix')
-    let d=map(d, 'matchstr(v:val, ''line=\zs\d\+\ze'')+0')
+    let d=map(d, 'matchstr(v:val, ''^\s*\w\+=\zs\d\+\ze'')+0')
     return [mlist,d]
 endfu
 
