@@ -113,7 +113,7 @@ fu! s:UpdateView(...) "{{{1
 	endif
     endif
     " Only update, if there have been changes to the buffer
-    if line("'[") == line("']") && !empty(b:diffhl) &&
+    if exists("b:diffhl") && line("'[") == line("']") && !empty(b:diffhl) &&
 	\ index(b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del'], line("'[")) > -1
 	" there already is a sign on the current line, so
 	" skip an expensive call to create diff (might happen with many
