@@ -107,20 +107,28 @@ fu! s:UpdateView(...) "{{{1
     if !exists("b:changes_chg_tick")
 	let b:changes_chg_tick = 0
     endif
+    let b:changes_last_line = get(b:, 'changes_last_line', line('$'))
     if exists("s:ignore")
 	if get(s:ignore, bufnr('%'), 0) && !force
 	    return
 	endif
     endif
     " Only update, if there have been changes to the buffer
-    if exists("b:diffhl") && line("'[") == line("']") && !empty(b:diffhl) &&
-	\ index(b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del'], line("'[")) > -1
+    if exists("b:diffhl") &&
+	\ line("'[") == line("']") &&
+	\ !empty(b:diffhl) &&
+	\ index(b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del'], line("'[")) > -1 &&
+	\ b:changes_last_line == line('$')
 	" there already is a sign on the current line, so
 	" skip an expensive call to create diff (might happen with many
 	" rx commands on the same line and triggered TextChanged autocomands)
 	" and should make Vim more responsive (at the cost of being a little
 	" bit more unprecise.)
 	let b:changes_chg_tick = b:changedtick
+    endif
+    if &buftype==?"help" || &ro
+	" Skip Vim help files and readonly files
+	return
     endif
 	
     if  b:changes_chg_tick != b:changedtick || force
@@ -129,6 +137,7 @@ fu! s:UpdateView(...) "{{{1
 	    call s:GetDiff(1, '')
 	    call s:HighlightTextChanges()
 	    let b:changes_chg_tick = b:changedtick
+	    let b:changes_last_line = line('$')
 	catch
 	    call s:StoreMessage(s:msg, v:exception)
 	    " Make sure, the message is actually displayed!
