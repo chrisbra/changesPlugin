@@ -1079,7 +1079,8 @@ fu! changes#CleanUp() "{{{1
     let b:changes_view_enabled = 0
     if exists("b:changes_linehi_diff_match")
 	for val in values(b:changes_linehi_diff_match)
-	    call matchdelete(val)
+	    " ignore possible errors
+	    sil! call matchdelete(val)
 	endfor
     endif
     unlet! b:diffhl s:signs s:old_signs b:changes_linehi_diff_match
