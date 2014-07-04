@@ -686,11 +686,14 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		call s:StoreMessage('No differences found!',1)
 		let s:nodiff=1
 	    elseif exists("s:changes_signs_undefined") && s:changes_signs_undefined
+		let s:diffhl = s:CheckInvalidSigns()
+		" remove invalid signs
+		call s:UnPlaceSpecificSigns(s:diffhl[0])
 		call s:PlaceSigns(b:diffhl)
 	    else
 		let s:diffhl = s:CheckInvalidSigns()
-		" diffhl_inv[0] - invalid lines, that need to be removed
-		" diffhl_inv[1] - valid lines, that need to be added
+		" diffhl[0] - invalid lines, that need to be removed
+		" diffhl[1] - valid lines, that need to be added
 		call s:UnPlaceSpecificSigns(s:diffhl[0])
 		" Make sure to only place new signs!
 		call s:PlaceSigns(s:diffhl[1])
@@ -1042,6 +1045,8 @@ fu! changes#Init() "{{{1
     if s:old_signs !=? s:signs
 	" Sign definition changed, redefine them
 	call s:DefineSigns(1)
+	" need to parse placed signs again...
+	let s:placed_signs = s:PlacedSigns()
     endif
     call changes#AuCmd(s:autocmd)
 endfu
