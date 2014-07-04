@@ -1070,7 +1070,7 @@ fu! changes#CleanUp() "{{{1
     " only delete signs, that have been set by this plugin
     call s:UnPlaceSigns(1)
     let s:ignore[bufnr('%')] = 1
-    for key in keys(s:signs)
+    for key in keys(get(s:, 'signs', {}))
 	exe "sil! sign undefine " key
     endfor
     if s:autocmd
