@@ -43,6 +43,7 @@ fu! s:Check() "{{{1
 	" Make the Sign column not standout
 	hi! link SignColumn Normal
     endif
+    let s:numeric_sort = v:version > 704 || v:version == 704 && has("patch341")
 
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
@@ -1126,7 +1127,11 @@ fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     let lines = get(dict, "add", []) +
 	    \   get(dict, "del", []) +
 	    \   get(dict, "ch",  [])
-    let lines = sort(lines, 's:MySortValues')
+    if s:numeric_sort
+	let lines = sort(lines, 'n') " sort numerical
+    else
+	let lines = sort(lines, 's:MySortValues')
+    endif
     if exists('*uniq')
 	" remove duplicates
 	let lines = uniq(lines)
@@ -1143,7 +1148,11 @@ fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     let lines = s:RemoveConsecutiveLines(1, copy(lines)) +
 	      \ s:RemoveConsecutiveLines(0, copy(lines))
     " sort again...
-    let lines = sort(lines, 's:MySortValues')
+    if s:numeric_sort
+	let lines = sort(lines, 'n') " sort numerical
+    else
+	let lines = sort(lines, 's:MySortValues')
+    endif
 
     if empty(lines)
 	echomsg   "There are no ". (a:fwd ? "next" : "previous").
@@ -1190,10 +1199,16 @@ endfu
 fu! changes#FoldDifferences(enable) "{{{1
     if empty(a:enable) && &fde!=?'index(g:lines,v:lnum)>-1?0:1'
 	let b:chg_folds = {'fen': &fen, 'fdm': &fdm, 'fde': &fde}
-	let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
+	if s:numeric_sort
+	    let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
+		\ get(get(b:, 'diffhl', []), 'ch' , []) +
+		\ get(get(b:, 'diffhl', []), 'del', []), 'n')
+	else
+	    let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
 		\ get(get(b:, 'diffhl', []), 'ch' , []) +
 		\ get(get(b:, 'diffhl', []), 'del', []),
 		\ 's:MySortValues')
+	endif
 	if exists('*uniq')
 	    let lines=uniq(g:lines)
 	endif
