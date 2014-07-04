@@ -901,7 +901,7 @@ fu! s:AddMatches(pattern) "{{{1
 endfu
 fu! changes#GetStats() "{{{1
     return [  len(get(get(b:, 'diffhl', []), 'add', [])),
-	    \ len(get(get(b:, 'diffhl', []), 'ch',  [)),
+	    \ len(get(get(b:, 'diffhl', []), 'ch',  [])),
 	    \ len(get(get(b:, 'diffhl', []), 'del', []))]
 endfu
 
@@ -1062,7 +1062,7 @@ endfu
 
 fu! changes#CleanUp() "{{{1
     " only delete signs, that have been set by this plugin
-    call s:UnPlaceSigns(1)
+    call s:UnPlaceSigns(0)
     let s:ignore[bufnr('%')] = 1
     for key in keys(get(s:, 'signs', {}))
 	exe "sil! sign undefine " key
