@@ -53,12 +53,6 @@ fu! s:Check() "{{{1
     let s:ids["ch"]    = hlID("DiffChange")
     let s:ids["ch2"]   = hlID("DiffText")
 
-    if has("gui_running") && get(g:, 'changes_adjust_linespace', 0)
-	" slightly adjust the linespacing, so that the gui signs are drawn 
-	" without an ugly horizontal black bar between the icon signs and text
-	" signs
-	set linespace=-1
-    endif
     call s:SetupSignTextHl()
     call s:DefineSigns(0)
 endfu
@@ -906,8 +900,8 @@ fu! s:AddMatches(pattern) "{{{1
     endif
 endfu
 fu! changes#GetStats() "{{{1
-    return [len(get(get(b:, 'diffhl', []), 'add', [])),
-	    \ len(get(get(b:, 'diffhl', []), 'ch', [])),
+    return [  len(get(get(b:, 'diffhl', []), 'add', [])),
+	    \ len(get(get(b:, 'diffhl', []), 'ch',  [)),
 	    \ len(get(get(b:, 'diffhl', []), 'del', []))]
 endfu
 

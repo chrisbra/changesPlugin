@@ -265,13 +265,6 @@ g:changes_linehi_diff (default: 0)
     (does not attempt to parse the VCS diff to try to figure the differences
     out). Note: Currently very experimental!
 
-g:changes_adjust_linespace (default: 0)
-----------------------------------
-
-    If set, will adjust the 'linespace' seting in the gui version of Vim.
-    Has the benefit, of having nice colored bars, without intervening lines.
-    Might have unexpected consequences when redrawing characters, so disabled
-    by default and is very experimental.
                                                         *ChangesPlugin-errors*
 By default the plugin will not display error messages. If you want to see
 them, set the 'verbose' option to 1 (or even 2).
