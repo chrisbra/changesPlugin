@@ -41,6 +41,7 @@ fu! s:Check() "{{{1
     endif
     if !get(g:, 'changes_respect_SignColumn', 0)
 	" Make the Sign column not standout
+	hi! clear SignColumn
 	hi! link SignColumn Normal
     endif
     let s:numeric_sort = v:version > 704 || v:version == 704 && has("patch341")
