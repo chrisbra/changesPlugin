@@ -1,3 +1,5 @@
+- better update of highlighting (if lines change, add offset to highlighting pattern)
+- Make highlighting use its own highlight group (which might be linked to whatever group)
 
 
 " Should work now:
