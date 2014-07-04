@@ -236,7 +236,8 @@ fu! s:UnPlaceSigns(force) "{{{1
     if !exists("b:diffhl")
 	return
     endif
-    call s:UnPlaceSpecificSigns(b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del'])
+    let s:placed_signs = s:PlacedSigns()
+    call s:UnPlaceSpecificSigns(s:placed_signs[0])
 endfu
 
 fu! s:Cwd() "{{{1
@@ -755,11 +756,11 @@ fu! s:CheckInvalidSigns() "{{{1
     for item in s:placed_signs[0]
 	if (item.type ==? '[Deleted]')
 	    " skip sign prefix '99'
-	    call add(list[0], (item.id[2:]+0))
+	    call add(list[0], item)
 	    continue
 	endif
 	if index(b:diffhl[s:SignType(item.type)], item.line+0) == -1
-	    call add(list[0], item.id[2:])
+	    call add(list[0], item)
 	    " remove item from the placed sign list, so that we
 	    " don't erroneously place a dummy sign later on
 	    call remove(s:placed_signs[0], ind)
@@ -785,9 +786,9 @@ fu! s:PrevDictHasKey(line) "{{{1
     endfor
     return ''
 endfu
-fu! s:UnPlaceSpecificSigns(list) "{{{1
-    for sign in a:list
-	exe "sign unplace ". s:sign_prefix.sign. " buffer=".bufnr('')
+fu! s:UnPlaceSpecificSigns(dict) "{{{1
+    for sign in a:dict
+	exe "sign unplace ". sign.id. " buffer=".bufnr('')
     endfor
 endfu
 
@@ -1037,9 +1038,6 @@ fu! changes#Init() "{{{1
 	" when there are signs from other plugins, don't need dummy sign
 	call s:PlaceSignDummy(1)
     endif
-    " Delete previously placed signs
-    " not necessary, if we are only selectively update signs
-    " call s:UnPlaceSigns(0)
     if s:old_signs !=? s:signs
 	" Sign definition changed, redefine them
 	call s:DefineSigns(1)
@@ -1099,7 +1097,7 @@ fu! changes#AuCmd(arg) "{{{1
 endfu
 fu! changes#TCV() "{{{1
     if  exists("b:changes_view_enabled") && b:changes_view_enabled
-	call s:UnPlaceSigns(1)
+	call s:UnPlaceSigns(0)
         let b:changes_view_enabled = 0
         echo "Hiding changes since last save"
     else
