@@ -311,6 +311,7 @@ third line of this document.
         BF: Make use of patch 7.4.341
         BF: When undefining signs and starting the gui, make sure no
            '[Deleted]' signs are left over
+        BF: Clear SignColumn before linking it to Normal group
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on
