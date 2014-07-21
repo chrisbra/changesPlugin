@@ -1008,13 +1008,13 @@ fu! changes#Init() "{{{1
 	    call s:StoreMessage("VCS check will be disabled for now.")
 	    let s:vcs=0
 	    " Probably file not in a repository/working dir
-	    throw 'changes:NoVCS'
 	endif
 	if !executable(b:vcs_type)
 	    call s:StoreMessage("Guessing VCS: ". b:vcs_type)
 	    call s:StoreMessage("Executable " . b:vcs_type . " not found! Aborting.")
 	    call s:StoreMessage("You might want to set the g:changes_vcs_system variable to override!")
-	    throw "changes:abort"
+	    let s:vcs=0
+	    " Probably file not in a repository/working dir
 	endif
     endif
     if !exists("s:diff_out")
@@ -1061,6 +1061,7 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
 	let arg = exists("a:1") ? a:1 : ''
 	call s:GetDiff(a:arg, a:bang, arg)
     catch
+	call changes#WarningMsg()
 	call changes#CleanUp()
     endtry
 endfu
