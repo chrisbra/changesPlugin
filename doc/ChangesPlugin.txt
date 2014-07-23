@@ -314,6 +314,7 @@ third line of this document.
         BF: Clear SignColumn before linking it to Normal group
         BF: Make sure a warning message is shown for |:EC|
         BF: Catch |E255| when defining signs
+        BF: prevent recursively calling |FocusGained| autocommand on windows
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on

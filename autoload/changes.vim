@@ -1097,7 +1097,14 @@ fu! changes#AuCmd(arg) "{{{1
 	    augroup Changes
 		autocmd!
 		au TextChanged,InsertLeave,FilterReadPost * :call s:UpdateView()
-		au FocusGained,BufWinEnter * :call s:UpdateView(1)
+		if s:Is('unix')
+		    au FocusGained,BufWinEnter * :call s:UpdateView(1)
+		else
+		    " FocusGained does not work well on Windows
+		    " because calling background processess triggers
+		    " FocusGAined autocommands recursively
+		    au BufWinEnter * :call s:UpdateView(1)
+		endif
 		" make sure, hightlighting groups are not cleared
 		au GUIEnter * :try|call s:Check() |catch|endtry
 	    augroup END
