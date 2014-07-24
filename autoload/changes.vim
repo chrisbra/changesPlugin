@@ -341,6 +341,9 @@ fu! s:MakeDiff_new(file) "{{{1
 	endif
 	let cmd = printf("diff -a -U0 -N %s %s > %s", 
 	    \ s:diff_in_old, s:diff_in_cur, s:diff_out)
+	if s:Is('win') && &shell =~? 'cmd.exe$'
+	    let cmd = '( '. cmd. ' )'
+	endif
 	let output = system(cmd)
 	if v:shell_error >= 2 || v:shell_error < 0
 	    " diff returns 2 on errors
