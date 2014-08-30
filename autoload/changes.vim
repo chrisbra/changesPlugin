@@ -149,20 +149,20 @@ fu! s:UpdateView(...) "{{{1
     endif
 endfu
 
-fu! s:PlaceSignDummy(place) "{{{1
+fu! s:PlaceSignDummy(doplace) "{{{1
     " could be called, without init calling first, so thta s:sign_prefix might
     " not be defined yet. In that case, there can't be a dummy being defined
     " yet!
     if !exists("s:sign_prefix")
 	return
     endif
-    if a:place
+    if a:doplace
 	let b = copy(s:placed_signs[0])
-	if !empty(b)
+	if !empty(b) || get(g:, 'changes_fixed_sign_column', 0)
 	    " only place signs, if signs have been defined
 	    exe "sign place " s:sign_prefix.'0 line='.(line('$')+1). ' name=dummy buffer='. bufnr('')
 	endif
-    else
+    elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
 	exe "sil sign unplace " s:sign_prefix.'0'
     endif
 endfu
@@ -770,7 +770,8 @@ fu! s:CheckInvalidSigns() "{{{1
 	    call add(list[0], item)
 	    continue
 	endif
-	if index(b:diffhl[s:SignType(item.type)], item.line+0) == -1
+	let type=s:SignType(item.type)
+	if !empty(type) && index(b:diffhl[type], item.line+0) == -1
 	    call add(list[0], item)
 	    " remove item from the placed sign list, so that we
 	    " don't erroneously place a dummy sign later on
@@ -1045,7 +1046,7 @@ fu! changes#Init() "{{{1
 	let s:precheck=1
     endif
     let s:placed_signs = s:PlacedSigns()
-    if !empty(s:placed_signs[1])
+    if !empty(s:placed_signs[1]) || get(g:, 'changes_fixed_sign_column', 0)
 	" when there are signs from other plugins, don't need dummy sign
 	call s:PlaceSignDummy(1)
     endif
@@ -1107,6 +1108,9 @@ fu! changes#AuCmd(arg) "{{{1
 		endif
 		" make sure, hightlighting groups are not cleared
 		au GUIEnter * :try|call s:Check() |catch|endtry
+		if get(g:, 'changes_fixed_sign_column', 0)
+		    au VimEnter * :call s:UpdateView(1)
+		endif
 	    augroup END
 	endif
     else

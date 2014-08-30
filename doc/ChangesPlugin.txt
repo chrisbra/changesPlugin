@@ -265,6 +265,16 @@ g:changes_linehi_diff (default: 0)
     (does not attempt to parse the VCS diff to try to figure the differences
     out). Note: Currently very experimental!
 
+                                                        *ChangesPlugin-Signcol*
+g:changes_fixed_sign_column (default: 0)
+----------------------------------------
+
+When set, ChangesPlugin always tries to have the sign column visible, so that
+modifying the buffer won't make it "shift" because of a sudden disappearing or
+appearing SignColumn (|hl-SignColumn|) To enable, set in your |.vimrc| >
+
+    let g:changes_fixed_sign_column=1
+<
                                                         *ChangesPlugin-errors*
 By default the plugin will not display error messages. If you want to see
 them, set the 'verbose' option to 1 (or even 2).
@@ -315,6 +325,7 @@ third line of this document.
         BF: Make sure a warning message is shown for |:EC|
         BF: Catch |E255| when defining signs
         BF: prevent recursively calling |FocusGained| autocommand on windows
+        NF: |ChangesPlugin-Signcol|
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on
