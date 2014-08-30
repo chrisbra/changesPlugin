@@ -341,6 +341,9 @@ fu! s:MakeDiff_new(file) "{{{1
 	endif
 	let cmd = printf("diff -a -U0 -N %s %s > %s", 
 	    \ s:diff_in_old, s:diff_in_cur, s:diff_out)
+	if s:Is('win') && &shell =~? 'cmd.exe$'
+	    let cmd = '( '. cmd. ' )'
+	endif
 	let output = system(cmd)
 	if v:shell_error >= 2 || v:shell_error < 0
 	    " diff returns 2 on errors
@@ -1098,19 +1101,18 @@ fu! changes#AuCmd(arg) "{{{1
 	    augroup Changes
 		autocmd!
 		au TextChanged,InsertLeave,FilterReadPost * :call s:UpdateView()
+		" make sure, hightlighting groups are not cleared
+		au GUIEnter * :try|call s:Check() |catch|endtry
 		if s:Is('unix')
-		    au FocusGained,BufWinEnter * :call s:UpdateView(1)
-		else
 		    " FocusGained does not work well on Windows
 		    " because calling background processess triggers
 		    " FocusGAined autocommands recursively
-		    au BufWinEnter * :call s:UpdateView(1)
-		endif
-		" make sure, hightlighting groups are not cleared
-		au GUIEnter * :try|call s:Check() |catch|endtry
+		    au FocusGained * :call s:UpdateView(1)
+		end
 		if get(g:, 'changes_fixed_sign_column', 0)
 		    au VimEnter * :call s:UpdateView(1)
 		endif
+		au BufWinEnter * :call s:UpdateView(1)
 	    augroup END
 	endif
     else
