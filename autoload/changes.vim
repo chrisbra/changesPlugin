@@ -804,15 +804,15 @@ fu! s:InitSignDef() "{{{1
 	let add = printf("%s texthl=%s %s",
 		\ (get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+'), 
 		\ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn"),
-		\ (has("gui_running") ? 'icon='.s:i_path.'add1.bmp' : ''))
+		\ (s:MakeSignIcon() ? 'icon='.s:i_path.'add1.bmp' : ''))
 	let del = printf("%s texthl=%s %s",
 		\ (get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-'),
 		\ (sign_hi<2 ? "ChangesSignTextDel" : "SignColumn"),
-		\ (has("gui_running") ? 'icon='.s:i_path.'delete1.bmp' : ''))
+		\ (s:MakeSignIcon() ? 'icon='.s:i_path.'delete1.bmp' : ''))
 	let ch  = printf("%s texthl=%s  %s",
 		\ (get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*'),
 		\ (sign_hi<2 ? "ChangesSignTextCh" : "SignColumn"),
-		\ (has("gui_running") ? 'icon='.s:i_path.'warning1.bmp' : ''))
+		\ (s:MakeSignIcon() ? 'icon='.s:i_path.'warning1.bmp' : ''))
     endif
 
     let signs["add"] = "add text=".add
@@ -835,6 +835,12 @@ fu! s:InitSignDef() "{{{1
     endif
     return signs
 endfu
+
+fu! s:MakeSignIcon()
+    " Windows seems to have problems with the gui
+    return has("gui_running") && !s:Is("win")
+endfu
+
 fu! s:SaveRestoreChangeMarks(save) "{{{1
     if a:save
 	let s:_change_mark = [getpos("'["), getpos("']")]
