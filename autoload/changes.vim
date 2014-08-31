@@ -63,6 +63,10 @@ fu! s:DefineSigns(undef) "{{{1
     for key in keys(s:signs)
 	if a:undef
 	    let s:changes_signs_undefined=1
+	    if exists("s:changes_sign_dummy_placed") && s:changes_sign_dummy_placed && key ==# 'dummy'
+		" If a dummy sign is placed, do not undefine it
+		continue
+	    endif
 	    try
 		" Try undefining first, so that refining will actually work!
 		exe "sil! sign undefine " key
@@ -70,7 +74,7 @@ fu! s:DefineSigns(undef) "{{{1
 	    endtry
 	endif
 	try
-	    exe "sign define" s:signs[key]
+	    exe "sil! sign define" s:signs[key]
 	catch /^Vim\%((\a\+)\)\=:E255/	" Can't read icons
 	    exe "sil! sign undefine " key
 	    let s:signs[key] = substitute(s:signs[key], 'icon=.*$', '', '')
@@ -148,25 +152,6 @@ fu! s:UpdateView(...) "{{{1
 	endtry
     endif
 endfu
-
-fu! s:PlaceSignDummy(doplace) "{{{1
-    " could be called, without init calling first, so thta s:sign_prefix might
-    " not be defined yet. In that case, there can't be a dummy being defined
-    " yet!
-    if !exists("s:sign_prefix")
-	return
-    endif
-    if a:doplace
-	let b = copy(s:placed_signs[0])
-	if !empty(b) || get(g:, 'changes_fixed_sign_column', 0)
-	    " only place signs, if signs have been defined
-	    exe "sign place " s:sign_prefix.'0 line='.(line('$')+1). ' name=dummy buffer='. bufnr('')
-	endif
-    elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
-	exe "sil sign unplace " s:sign_prefix.'0'
-    endif
-endfu
-
 
 fu! s:SetupSignTextHl() "{{{1
     if !hlID('ChangesSignTextAdd') || empty(synIDattr(hlID('ChangesSignTextAdd'), 'fg'))
@@ -733,7 +718,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		    \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type, 1)
 	    endif
 	    " remove dummy sign
-	    call s:PlaceSignDummy(0)
+	    call changes#PlaceSignDummy(0)
 	    " redraw (there seems to be some junk left)
 	    redr!
 	    if isfolded == -1 && foldclosed('.') != -1
@@ -915,6 +900,26 @@ fu! s:AddMatches(pattern) "{{{1
 	let b:changes_linehi_diff_match[changenr()] = matchadd('CursorLine', a:pattern)
     endif
 endfu
+fu! changes#PlaceSignDummy(doplace) "{{{1
+    " could be called, without init calling first, so thta s:sign_prefix might
+    " not be defined yet. In that case, there can't be a dummy being defined
+    " yet!
+    if !exists("s:sign_prefix")
+	return
+    endif
+    if a:doplace
+	let b = copy(s:placed_signs[0])
+	if !empty(b) || get(g:, 'changes_fixed_sign_column', 0)
+	    " only place signs, if signs have been defined
+	    exe "sign place " s:sign_prefix.'0 line='.(line('$')+1). ' name=dummy buffer='. bufnr('')
+	    let s:changes_sign_dummy_placed = 1
+	endif
+    elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
+	exe "sil sign unplace " s:sign_prefix.'0'
+    endif
+endfu
+
+
 fu! changes#GetStats() "{{{1
     return [  len(get(get(b:, 'diffhl', []), 'add', [])),
 	    \ len(get(get(b:, 'diffhl', []), 'ch',  [])),
@@ -1051,7 +1056,7 @@ fu! changes#Init() "{{{1
     let s:placed_signs = s:PlacedSigns()
     if !empty(s:placed_signs[1]) || get(g:, 'changes_fixed_sign_column', 0)
 	" when there are signs from other plugins, don't need dummy sign
-	call s:PlaceSignDummy(1)
+	call changes#PlaceSignDummy(1)
     endif
     if s:old_signs !=? s:signs
 	" Sign definition changed, redefine them
@@ -1081,6 +1086,9 @@ fu! changes#CleanUp() "{{{1
     call s:UnPlaceSigns(0)
     let s:ignore[bufnr('%')] = 1
     for key in keys(get(s:, 'signs', {}))
+	if key ==# 'dummy'
+	    break
+	endif
 	exe "sil! sign undefine " key
     endfor
     if s:autocmd
@@ -1109,9 +1117,6 @@ fu! changes#AuCmd(arg) "{{{1
 		    " FocusGAined autocommands recursively
 		    au FocusGained * :call s:UpdateView(1)
 		end
-		if get(g:, 'changes_fixed_sign_column', 0)
-		    au VimEnter * :call s:UpdateView(1)
-		endif
 		au BufWinEnter * :call s:UpdateView(1)
 	    augroup END
 	endif
