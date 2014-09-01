@@ -907,16 +907,15 @@ fu! s:AddMatches(pattern) "{{{1
     endif
 endfu
 fu! changes#PlaceSignDummy(doplace) "{{{1
-    " could be called, without init calling first, so thta s:sign_prefix might
-    " not be defined yet. In that case, there can't be a dummy being defined
-    " yet!
     if !exists("s:sign_prefix")
 	return
     endif
     if a:doplace
 	let b = copy(s:placed_signs[0])
-	if !empty(b) || get(g:, 'changes_fixed_sign_column', 0)
+	if !exists("s:changes_sign_dummy_placed") &&
+	    \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
 	    " only place signs, if signs have been defined
+	    " and there isn't one placed yet
 	    exe "sign place " s:sign_prefix.'0 line='.(line('$')+1). ' name=dummy buffer='. bufnr('')
 	    let s:changes_sign_dummy_placed = 1
 	endif
