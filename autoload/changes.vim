@@ -117,7 +117,7 @@ fu! s:UpdateView(...) "{{{1
     if exists("s:ignore")
 	if get(g:, 'gitgutter_enabled', 0) &&
 		    \ exists('*GitGutterGetHunkSummary') &&
-		    \ exists("b:vcs_type') &&
+		    \ exists("b:vcs_type") &&
 		    \ b:vcs_type == 'git'
 	    " Gitgutter plugin is available, stop here
 	    let s:ignore[bufnr('%')] = 1
