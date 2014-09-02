@@ -326,6 +326,10 @@ third line of this document.
         BF: Catch |E255| when defining signs
         BF: prevent recursively calling |FocusGained| autocommand on windows
         NF: |ChangesPlugin-Signcol|
+        BF: if vim-gitgutter is installed and the current buffer is handled by
+            vim-gitgutter, let gitgutter handle the current buffer (issue
+            https://github.com/chrisbra/changesPlugin/issues/12, reported by
+            Gray-Wind, thanks!)
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on
