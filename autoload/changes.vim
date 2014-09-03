@@ -134,6 +134,7 @@ fu! s:UpdateView(...) "{{{1
     endif
     " Only update, if there have been changes to the buffer
     if exists("b:diffhl") &&
+	\ get(g:, 'changes_fast', 1) &&
 	\ line("'[") == line("']") &&
 	\ !empty(b:diffhl) &&
 	\ index(b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del'], line("'[")) > -1 &&
@@ -143,6 +144,7 @@ fu! s:UpdateView(...) "{{{1
 	" rx commands on the same line and triggered TextChanged autocomands)
 	" and should make Vim more responsive (at the cost of being a little
 	" bit more unprecise.)
+	" If you don't like this, set the g:changes_fast variable to zero
 	let b:changes_chg_tick = b:changedtick
     endif
     if &buftype==?"help" || &ro
