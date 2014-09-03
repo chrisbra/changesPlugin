@@ -63,7 +63,7 @@ fu! s:DefineSigns(undef) "{{{1
     for key in keys(s:signs)
 	if a:undef
 	    let s:changes_signs_undefined=1
-	    if exists("s:changes_sign_dummy_placed") && s:changes_sign_dummy_placed && key ==# 'dummy'
+	    if exists("w:changes_sign_dummy_placed") && w:changes_sign_dummy_placed && key ==# 'dummy'
 		" If a dummy sign is placed, do not undefine it
 		continue
 	    endif
@@ -112,6 +112,11 @@ fu! s:UpdateView(...) "{{{1
     let force = exists("a:1") && a:1
     if !exists("b:changes_chg_tick")
 	let b:changes_chg_tick = 0
+    endif
+    if get(g:, 'changes_fixed_sign_column', 0)
+	" Make sure, the sign column is presetn
+	call changes#Init()
+	call changes#PlaceSignDummy(1)
     endif
     let b:changes_last_line = get(b:, 'changes_last_line', line('$'))
     if exists("s:ignore")
@@ -920,12 +925,12 @@ fu! changes#PlaceSignDummy(doplace) "{{{1
     endif
     if a:doplace
 	let b = copy(s:placed_signs[0])
-	if !exists("s:changes_sign_dummy_placed") &&
+	if !exists("w:changes_sign_dummy_placed") &&
 	    \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
 	    " only place signs, if signs have been defined
 	    " and there isn't one placed yet
 	    exe "sign place " s:sign_prefix.'0 line='.(line('$')+1). ' name=dummy buffer='. bufnr('')
-	    let s:changes_sign_dummy_placed = 1
+	    let w:changes_sign_dummy_placed = 1
 	endif
     elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
 	exe "sil sign unplace " s:sign_prefix.'0'
