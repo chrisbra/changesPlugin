@@ -382,7 +382,7 @@ fu! s:MakeDiff(...) "{{{1
     set bt=nofile
     let scratchbuf = bufnr('')
     if !s:vcs
-	exe ":silent :r " (exists("a:1") && !empty(a:1) ? a:1 : '#')
+	exe ":silent :noa :r " (exists("a:1") && !empty(a:1) ? a:1 : '#')
 	let &l:ft=ft
     else
 	let vcs=getbufvar(bnr, 'vcs_type')
@@ -412,7 +412,7 @@ fu! s:MakeDiff(...) "{{{1
 		exe "noa" bufwinnr(bnr) "wincmd w"
 		throw "changes:abort"
 	    endif
-	    exe ':silent :r' s:diff_out
+	    exe ':silent :noa :r' s:diff_out
         catch /^changes: No git Repository found/
 	    call s:StoreMessage("Unable to find git Top level repository.")
 	    echo v:errmsg
