@@ -121,9 +121,7 @@ fu! s:UpdateView(...) "{{{1
     let b:changes_last_line = get(b:, 'changes_last_line', line('$'))
     if exists("s:ignore")
 	if get(g:, 'gitgutter_enabled', 0) &&
-		    \ exists('*GitGutterGetHunkSummary') &&
-		    \ exists("b:vcs_type") &&
-		    \ b:vcs_type == 'git'
+		    \ exists('b:gitgutter_gitgutter_signs')
 	    " Gitgutter plugin is available, stop here
 	    let s:ignore[bufnr('%')] = 1
 	    let force = 0
