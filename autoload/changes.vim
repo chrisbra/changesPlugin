@@ -541,7 +541,10 @@ fu! s:ShowDifferentLines() "{{{1
 endfun
 
 fu! s:PlacedSigns() "{{{1
-    if !exists("s:sign_prefix")
+    if !exists("s:sign_prefix") ||
+	\ empty(bufname(''))
+	" empty(bufname): unnamed buffer, can't get diff of it,
+	" anyhow, so stop expansive call here
 	return [[],[]]
     endif
     redir => a| exe "silent sign place buffer=".bufnr('')|redir end
