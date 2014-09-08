@@ -111,6 +111,7 @@ endfu
 fu! s:UpdateView(...) "{{{1
     " if a:1 is given, force update!
     let force = exists("a:1") && a:1
+    let did_source_init = 0
     if !exists("b:changes_chg_tick")
 	let b:changes_chg_tick = 0
     endif
@@ -118,6 +119,11 @@ fu! s:UpdateView(...) "{{{1
 	" Make sure, the sign column is presetn
 	" will call PlaceSignDummy
 	call changes#Init()
+	let did_source_init = 1
+    endif
+    if empty(bufname(''))
+	" Can't get a diff out of an unnamed buffer
+	return
     endif
     let b:changes_last_line = get(b:, 'changes_last_line', line('$'))
     if exists("s:ignore")
@@ -153,7 +159,9 @@ fu! s:UpdateView(...) "{{{1
 	
     if  b:changes_chg_tick != b:changedtick || force
 	try
-	    call changes#Init()
+	    if !did_source_init
+		call changes#Init()
+	    endif
 	    call s:GetDiff(1, '')
 	    call s:HighlightTextChanges()
 	    let b:changes_chg_tick = b:changedtick
