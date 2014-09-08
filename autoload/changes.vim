@@ -18,6 +18,7 @@ fu! <sid>GetSID()
 endfu
 
 let s:sid    = <sid>GetSID()
+let s:maxlnum = printf("%.f", pow(2,31)-1)
 delf <sid>GetSID "not needed anymore
 
 " Check preconditions
@@ -929,7 +930,7 @@ fu! changes#PlaceSignDummy(doplace) "{{{1
 	    \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
 	    " only place signs, if signs have been defined
 	    " and there isn't one placed yet
-	    exe "sign place " s:sign_prefix.'0 line='.(line('$')+1). ' name=dummy buffer='. bufnr('')
+	    exe "sign place " s:sign_prefix.'0 line='.(s:maxlnum). ' name=dummy buffer='. bufnr('')
 	    let b:changes_sign_dummy_placed = 1
 	endif
     elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
