@@ -305,6 +305,12 @@ fu! s:PreviewDiff(file) "{{{1
     catch
     endtry
 endfu
+fu! s:ChangeDir() "{{{1
+    let _pwd = s:Cwd()
+    exe "lcd " fnameescape(fnamemodify(expand("%"), ':h'))
+    return _pwd
+endfu
+
 fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
@@ -371,12 +377,6 @@ fu! s:MakeDiff_new(file) "{{{1
 	endif
 	exe 'lcd' _pwd
     endtry
-endfu
-
-fu! s:ChangeDir() "{{{1
-    let _pwd = s:Cwd()
-    exe "lcd " fnameescape(fnamemodify(expand("%"), ':h'))
-    return _pwd
 endfu
 
 fu! s:MakeDiff(...) "{{{1
