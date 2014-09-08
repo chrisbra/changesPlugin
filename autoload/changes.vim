@@ -1087,15 +1087,15 @@ fu! changes#Init() "{{{1
 	let s:precheck=1
     endif
     let s:placed_signs = s:PlacedSigns()
-    if !empty(s:placed_signs[1]) || get(g:, 'changes_fixed_sign_column', 0)
-	" when there are signs from other plugins, don't need dummy sign
-	call changes#PlaceSignDummy(1)
-    endif
     if s:old_signs !=? s:signs
 	" Sign definition changed, redefine them
 	call s:DefineSigns(1)
 	" need to parse placed signs again...
 	let s:placed_signs = s:PlacedSigns()
+    endif
+    if !empty(s:placed_signs[1]) || get(g:, 'changes_fixed_sign_column', 0)
+	" when there are signs from other plugins, don't need dummy sign
+	call changes#PlaceSignDummy(1)
     endif
     call changes#AuCmd(s:autocmd)
 endfu
