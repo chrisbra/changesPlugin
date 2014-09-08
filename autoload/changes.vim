@@ -116,8 +116,8 @@ fu! s:UpdateView(...) "{{{1
     endif
     if get(g:, 'changes_fixed_sign_column', 0)
 	" Make sure, the sign column is presetn
+	" will call PlaceSignDummy
 	call changes#Init()
-	call changes#PlaceSignDummy(1)
     endif
     let b:changes_last_line = get(b:, 'changes_last_line', line('$'))
     if exists("s:ignore")

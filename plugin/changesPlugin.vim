@@ -45,7 +45,6 @@ endif
 if get(g:, 'changes_fixed_sign_column', 0)
     " Make sure, a dummy sign is placed
     exe ":call changes#Init()"
-    exe ":call changes#PlaceSignDummy(1)"
 endif
 
 " Mappings:  "{{{1
