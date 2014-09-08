@@ -549,24 +549,27 @@ fu! s:PlacedSigns() "{{{1
     if empty(b)
 	return [[],[]]
     endif
-    let dict={}
-    let mlist=[]
+    let dict  = {}
+    let own   = []
+    let other = []
     " Filter from the second item. The first one contains the buffer name:
     " Signs for [NULL]: or  Signs for <buffername>:
     let b=b[1:]
     let c=filter(copy(b), 'v:val =~ "id=".s:sign_prefix')
-    for item in c
-	let t = split(item)
-	let dict.line = split(t[0], '=')[1]
-	let dict.id   = split(t[1], '=')[1]
-	let dict.type = split(t[2], '=')[1]
-	call add(mlist, copy(dict))
+    for item in b
+	if item =~ "id=".s:sign_prefix
+	    " Signs placed by this plugin
+	    let t = split(item)
+	    let dict.line = split(t[0], '=')[1]
+	    let dict.id   = split(t[1], '=')[1]
+	    let dict.type = split(t[2], '=')[1]
+	    call add(own, copy(dict))
+	else
+	    call add(other, matchstr(item, '^\s*\w\+=\zs\d\+\ze')+0)
+	endif
     endfor
 
-    "let c=map(c, 'matchstr(v:val, ''line=\zs\d\+\ze'')+0')
-    let d=filter(copy(b), 'v:val !~ "id=".s:sign_prefix')
-    let d=map(d, 'matchstr(v:val, ''^\s*\w\+=\zs\d\+\ze'')+0')
-    return [mlist,d]
+    return [own, other]
 endfu
 
 fu! s:GuessVCSSystem() "{{{1
