@@ -715,8 +715,8 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		call s:PlaceSigns(b:diffhl)
 	    else
 		let s:diffhl = s:CheckInvalidSigns()
-		" diffhl[0] - invalid lines, that need to be removed
-		" diffhl[1] - valid lines, that need to be added
+		" diffhl[0] - invalid signs, that need to be removed
+		" diffhl[1] - valid signs, that need to be added
 		call s:UnPlaceSpecificSigns(s:diffhl[0])
 		" Make sure to only place new signs!
 		call s:PlaceSigns(s:diffhl[1])
@@ -785,6 +785,9 @@ fu! s:CheckInvalidSigns() "{{{1
     let list=[[],{'add': [], 'del': [], 'ch': []}]
     let ind=0
     for item in s:placed_signs[0]
+	if (item.type ==? 'dummy')
+	    continue
+	endif
 	if (item.type ==? '[Deleted]')
 	    " skip sign prefix '99'
 	    call add(list[0], item)
