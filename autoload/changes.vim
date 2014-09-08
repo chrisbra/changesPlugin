@@ -766,7 +766,11 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 endfu
 fu! s:SortDiffHl() "{{{1
     for i in ['add', 'ch', 'del']
-	call sort(b:diffhl[i], 's:MySortValues')
+	if s:numeric_sort
+	    call sort(b:diffhl[i], 'n')
+	else
+	    call sort(b:diffhl[i], 's:MySortValues')
+	endif
 	if exists("*uniq")
 	    call uniq(b:diffhl[i])
 	endif
@@ -1274,7 +1278,7 @@ fu! changes#FoldDifferences(enable) "{{{1
 		\ 's:MySortValues')
 	endif
 	if exists('*uniq')
-	    let lines=uniq(g:lines)
+	    let g:lines=uniq(g:lines)
 	endif
 	setl fen fdm=expr fde=index(g:lines,v:lnum)>-1?0:1
     else
