@@ -285,7 +285,6 @@ feature, set in your |.vimrc| >
 
     let g:changes_fast=0
 <
-
                                                         *ChangesPlugin-errors*
 By default the plugin will not display error messages. If you want to see
 them, set the 'verbose' option to 1 (or even 2).
@@ -343,6 +342,8 @@ third line of this document.
             Gray-Wind, thanks!)
         NF: g:changes_fast variable (to enable more correct at the cost of
             being possibly slower placement of signs).
+        BF: when updating signs, make sure that the first line of a
+            consecutive number has the correcty type
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on

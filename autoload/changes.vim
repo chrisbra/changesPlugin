@@ -804,9 +804,21 @@ fu! s:CheckInvalidSigns() "{{{1
 	endif
     endfor
     for id in ['add', 'ch', 'del']
-	for line in b:diffhl[id]
-	    if empty(s:PrevDictHasKey(line))
+	for line in sort(b:diffhl[id], (s:numeric_sort ? 'n' : 's:MySortValues'))
+	    let type = s:PrevDictHasKey(line)
+	    let prev = index(b:diffhl[id], (line-1))
+	    if empty(type)
 		call add(list[1][id], line)
+	    elseif prev > -1 && index(list[1][id], (line-1)) > -1
+		" if a new line is inserted above an already existing line
+		" with sign type 'add' make sure, that the already existing
+		" sign type 'add' will be set to 'dummyadd' so that the '+'
+		" sign appears at the correct line
+		call add(list[1][id], line)
+		let previtem = filter(copy(s:placed_signs[0]), 'v:val.line == (line-1)')
+		if !empty(previtem)
+		    call add(list[0], previtem[0])
+		endif
 	    endif
 	endfor
     endfor
