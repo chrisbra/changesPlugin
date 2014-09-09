@@ -1082,20 +1082,6 @@ fu! changes#Init() "{{{1
 	let s:vcs_cat.mercurial  = s:vcs_cat.hg
 	let s:vcs_cat.subversion = s:vcs_cat.svn
     endif
-"    if !exists("s:vcs_diff")
-"	let s:vcs_diff  = {'git': 'diff -a -U0 --no-ext-diff -- ', 
-"			 \'bzr': 'diff --using diff --diff-options=-U0 -- ', 
-"			 \'cvs': '-q diff -U0 -- ',
-"			 \'darcs': 'diff --no-pause-for-gui --diff-command="diff -U0 %1 %2" -- ',
-"			 \'fossil': 'fossil diff --unified -- ',
-"			 \'rcs': 'rcsdiff -U0 ',
-"			 \'svn': 'diff -x -u --ignore-eol-style -- ',
-"			 \'svk': 'diff -x -u --ignore-eol-style -- ',
-"			 \'hg': 'diff -U0 --nodates -- '}
-"	" Define aliases...
-"	let s:vcs_diff.subversion = s:vcs_diff.svn
-"	let s:vcs_diff.mercurial  = s:vcs_diff.hg
-"    endif
 
     " Settings for Version Control
     if s:vcs && !empty(b:vcs_type)
