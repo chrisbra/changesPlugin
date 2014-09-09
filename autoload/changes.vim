@@ -545,11 +545,6 @@ fu! s:ShowDifferentLines() "{{{1
     endif
 endfun
 
-fu! s:GetPlacedSigns() "{{{1
-    redir => a| exe "silent sign place buffer=".bufnr('')|redir end
-    return split(a,"\n")[1:]
-endfu
-
 fu! s:GetSignId() "{{{1
     let signs = s:GetPlacedSigns()
     if empty(signs)
@@ -559,10 +554,19 @@ fu! s:GetSignId() "{{{1
     let list=[]
     for val in signs[1:]
 	" get 'id' value of signs
-	let id = split(item, '=\d\+\zs')[1]
+	let id = split(val, '=\d\+\zs')[1]
 	call add(list, (split(id, '=')[1] + 0))
     endfor
     return max(list)
+endfu
+
+fu! s:GetPlacedSigns() "{{{1
+    if exists("s:all_signs")
+	return s:all_signs
+    endif
+    redir => a| exe "silent sign place buffer=".bufnr('')|redir end
+    let s:all_signs = split(a,"\n")[1:]
+    return s:all_signs
 endfu
 
 fu! s:PlacedSigns() "{{{1
@@ -595,6 +599,8 @@ fu! s:PlacedSigns() "{{{1
 	endif
     endfor
 
+    " Make sure s:GetPlacedSigns() reruns correctly
+    unlet! s:all_signs
     return [own, other]
 endfu
 
@@ -898,7 +904,7 @@ fu! s:InitSignDef() "{{{1
     return signs
 endfu
 
-fu! s:MakeSignIcon()
+fu! s:MakeSignIcon() "{{{1
     " Windows seems to have problems with the gui
     return has("gui_running") && !s:Is("win")
 endfu
@@ -1113,6 +1119,8 @@ fu! changes#Init() "{{{1
 	let s:diff_in_old = s:diff_out.'old'
     endif
     let s:nodiff=0
+    " Make sure, we are fetching all placed signs again
+    unlet! s:all_signs
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
     if !exists("b:sign_prefix")
