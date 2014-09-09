@@ -974,7 +974,7 @@ fu! s:SignId() "{{{1
 	let b:changes_sign_id = 0
     endif
     let b:changes_sign_id += 1
-    return b:changes_sign_id
+    return printf("%02d", b:changes_sign_id)
 endfu
 
 fu! changes#PlaceSignDummy(doplace) "{{{1
@@ -987,7 +987,7 @@ fu! changes#PlaceSignDummy(doplace) "{{{1
 	    \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
 	    " only place signs, if signs have been defined
 	    " and there isn't one placed yet
-	    exe "sign place " b:sign_prefix.'0 line='.(s:maxlnum). ' name=dummy buffer='. bufnr('')
+	    exe "sign place " b:sign_prefix.'00 line='.(s:maxlnum). ' name=dummy buffer='. bufnr('')
 	    let b:changes_sign_dummy_placed = 1
 	endif
     elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
