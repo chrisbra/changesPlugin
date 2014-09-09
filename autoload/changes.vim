@@ -49,7 +49,7 @@ fu! s:Check() "{{{1
 
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
-    let s:sign_prefix = 99
+    let s:sign_prefix = s:GetSignId() + 10
     let s:ids={}
     let s:ids["add"]   = hlID("DiffAdd")
     let s:ids["del"]   = hlID("DiffDelete")
@@ -548,15 +548,33 @@ fu! s:ShowDifferentLines() "{{{1
     endif
 endfun
 
+fu! s:GetPlacedSigns() "{{{1
+    redir => a| exe "silent sign place buffer=".bufnr('')|redir end
+    return split(a,"\n")[1:]
+endfu
+
+fu! s:GetSignId() "{{{1
+    let signs = s:GetPlacedSigns()
+    if empty(signs)
+	" No signs placed yet...
+	return 10
+    endif
+    let list=[]
+    for val in signs[1:]
+	" get 'id' value
+	let id = split(item, '=\d\+\zs')[1]
+	call add(list, (split(id, '=')[1] + 0))
+    endfor
+    return max(list)
+endfu
+
 fu! s:PlacedSigns() "{{{1
-    if !exists("s:sign_prefix") ||
-	\ empty(bufname(''))
+    if empty(bufname(''))
 	" empty(bufname): unnamed buffer, can't get diff of it,
 	" anyhow, so stop expansive call here
 	return [[],[]]
     endif
-    redir => a| exe "silent sign place buffer=".bufnr('')|redir end
-    let b=split(a,"\n")[1:]
+    let b = s:GetPlacedSigns()
     if empty(b)
 	return [[],[]]
     endif
