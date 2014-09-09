@@ -21,10 +21,10 @@ clean:
 dist-clean: clean
 
 install:
-	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c':so %' -c':q!' $(PLUGIN)-$(VERSION).vmb
+	vim -N -i NONE -u NONE -c 'ru! plugin/vimballPlugin.vim' -c':so %' -c':q!' $(PLUGIN)-$(VERSION).vmb
 
 uninstall:
-	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c':RmVimball' -c':q!' $(PLUGIN)-$(VERSION).vmb
+	vim -N -i NONE -u NONE -c 'ru! plugin/vimballPlugin.vim' -c':RmVimball' -c':q!' $(PLUGIN)-$(VERSION).vmb
 
 undo:
 	for i in */*.orig; do mv -f "$$i" "$${i%.*}"; done
@@ -41,7 +41,7 @@ $(PLUGIN).zip:
 
 $(PLUGIN).vmb:
 	rm -f $(PLUGIN)-$(VERSION).vmb
-	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c ':call append("0", [ "$(SCRIPT)", "$(AUTOL)", "$(DOC)"])' -c '$$d' -c ":%MkVimball $(PLUGIN)-$(VERSION)  ." -c':q!'
+	vim -N -i NONE -u NONE -c 'ru! plugin/vimballPlugin.vim' -c ':call append("0", [ "$(SCRIPT)", "$(AUTOL)", "$(DOC)"])' -c '$$d' -c ":%MkVimball $(PLUGIN)-$(VERSION)  ." -c':q!'
 	ln -f $(PLUGIN)-$(VERSION).vmb $(PLUGIN).vmb
      
 release: version all
