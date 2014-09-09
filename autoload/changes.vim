@@ -47,11 +47,6 @@ fu! s:Check() "{{{1
     endif
     let s:numeric_sort = v:version > 704 || v:version == 704 && has("patch341")
 
-    " This variable is a prefix for all placed signs.
-    " This is needed, to not mess with signs placed by the user
-    if !exists("b:sign_prefix")
-	let b:sign_prefix = s:GetSignId() + 10
-    endif
     let s:ids={}
     let s:ids["add"]   = hlID("DiffAdd")
     let s:ids["del"]   = hlID("DiffDelete")
@@ -1118,6 +1113,11 @@ fu! changes#Init() "{{{1
 	let s:diff_in_old = s:diff_out.'old'
     endif
     let s:nodiff=0
+    " This variable is a prefix for all placed signs.
+    " This is needed, to not mess with signs placed by the user
+    if !exists("b:sign_prefix")
+	let b:sign_prefix = s:GetSignId() + 10
+    endif
     let s:old_signs = get(s:, 'signs', {})
     let s:signs=s:InitSignDef()
 
