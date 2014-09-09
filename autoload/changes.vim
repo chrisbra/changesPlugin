@@ -49,7 +49,9 @@ fu! s:Check() "{{{1
 
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
-    let s:sign_prefix = s:GetSignId() + 10
+    if !exists("b:sign_prefix")
+	let b:sign_prefix = s:GetSignId() + 10
+    endif
     let s:ids={}
     let s:ids["add"]   = hlID("DiffAdd")
     let s:ids["del"]   = hlID("DiffDelete")
@@ -225,7 +227,7 @@ fu! s:PlaceSigns(dict) "{{{1
 		endif
 	    endif
 	    let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
-			\ s:sign_prefix.s:SignId(), item, name, bufnr(''))
+			\ b:sign_prefix.s:SignId(), item, name, bufnr(''))
 	    exe cmd
 	    " remember line number, so that we don't place a second sign
 	    " there!
@@ -240,7 +242,7 @@ fu! s:MySortValues(i1, i2) "{{{1
 endfu
 
 fu! s:UnPlaceSigns(force) "{{{1
-    if !exists("s:sign_prefix")
+    if !exists("b:sign_prefix")
 	return
     endif
     if a:force
@@ -561,7 +563,7 @@ fu! s:GetSignId() "{{{1
     endif
     let list=[]
     for val in signs[1:]
-	" get 'id' value
+	" get 'id' value of signs
 	let id = split(item, '=\d\+\zs')[1]
 	call add(list, (split(id, '=')[1] + 0))
     endfor
@@ -584,9 +586,9 @@ fu! s:PlacedSigns() "{{{1
     " Filter from the second item. The first one contains the buffer name:
     " Signs for [NULL]: or  Signs for <buffername>:
     let b=b[1:]
-    let c=filter(copy(b), 'v:val =~ "id=".s:sign_prefix')
+    let c=filter(copy(b), 'v:val =~ "id=".b:sign_prefix')
     for item in b
-	if item =~ "id=".s:sign_prefix
+	if item =~ "id=".b:sign_prefix
 	    " Signs placed by this plugin
 	    let t = split(item)
 	    let dict.line = split(t[0], '=')[1]
@@ -981,7 +983,7 @@ fu! s:SignId() "{{{1
 endfu
 
 fu! changes#PlaceSignDummy(doplace) "{{{1
-    if !exists("s:sign_prefix")
+    if !exists("b:sign_prefix")
 	return
     endif
     if a:doplace
@@ -990,11 +992,11 @@ fu! changes#PlaceSignDummy(doplace) "{{{1
 	    \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
 	    " only place signs, if signs have been defined
 	    " and there isn't one placed yet
-	    exe "sign place " s:sign_prefix.'0 line='.(s:maxlnum). ' name=dummy buffer='. bufnr('')
+	    exe "sign place " b:sign_prefix.'0 line='.(s:maxlnum). ' name=dummy buffer='. bufnr('')
 	    let b:changes_sign_dummy_placed = 1
 	endif
     elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
-	exe "sil sign unplace " s:sign_prefix.'0'
+	exe "sil sign unplace " b:sign_prefix.'0'
     endif
 endfu
 
