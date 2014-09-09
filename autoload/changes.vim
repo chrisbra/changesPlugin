@@ -225,7 +225,7 @@ fu! s:PlaceSigns(dict) "{{{1
 		endif
 	    endif
 	    let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
-			\ s:sign_prefix.item, item, name, bufnr(''))
+			\ s:sign_prefix.s:SignId(), item, name, bufnr(''))
 	    exe cmd
 	    " remember line number, so that we don't place a second sign
 	    " there!
@@ -953,6 +953,15 @@ fu! s:AddMatches(pattern) "{{{1
 	let b:changes_linehi_diff_match[changenr()] = matchadd('CursorLine', a:pattern)
     endif
 endfu
+
+fu! s:SignId() "{{{1
+    if !exists("b:changes_sign_id")
+	let b:changes_sign_id = 0
+    endif
+    let b:changes_sign_id += 1
+    return b:changes_sign_id
+endfu
+
 fu! changes#PlaceSignDummy(doplace) "{{{1
     if !exists("s:sign_prefix")
 	return
@@ -970,7 +979,6 @@ fu! changes#PlaceSignDummy(doplace) "{{{1
 	exe "sil sign unplace " s:sign_prefix.'0'
     endif
 endfu
-
 
 fu! changes#GetStats() "{{{1
     return [  len(get(get(b:, 'diffhl', []), 'add', [])),
@@ -1153,7 +1161,7 @@ fu! changes#CleanUp() "{{{1
 	    sil! call matchdelete(val)
 	endfor
     endif
-    unlet! b:diffhl s:signs s:old_signs b:changes_linehi_diff_match
+    unlet! b:diffhl s:signs s:old_signs b:changes_linehi_diff_match b:changes_sign_id
 endfu
 fu! changes#AuCmd(arg) "{{{1
     if a:arg
