@@ -1142,7 +1142,7 @@ fu! changes#Init() "{{{1
 	let s:precheck=1
     endif
     let s:placed_signs = s:PlacedSigns()
-    if s:old_signs !=? s:signs
+    if s:old_signs !=? s:signs && !empty(s:old_signs)
 	" Sign definition changed, redefine them
 	call s:DefineSigns(1)
 	" need to parse placed signs again...
