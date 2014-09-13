@@ -1139,6 +1139,10 @@ fu! changes#Init() "{{{1
 	call changes#PlaceSignDummy(1)
     endif
     call changes#AuCmd(s:autocmd)
+    " map <cr> to update sign column, if g:changes_fast == 0
+    if !hasmapto('<cr>', 'i') && !get(g:, 'changes_fast', 1)
+	inoremap <expr> <cr> changes#MapCR()
+    endif
 endfu
 
 fu! changes#EnableChanges(arg, bang, ...) "{{{1
@@ -1338,6 +1342,13 @@ fu! changes#ToggleHiStyle() "{{{1
 	verbose call changes#WarningMsg()
 	call changes#CleanUp()
     endtry
+endfu
+fu! changes#MapCR() "{{{1
+    if !( pumvisible() ||
+	\ (exists("*wildmenumode") && wildmenumode()))
+	call s:UpdateView()
+    endif
+    return "\<cr>"
 endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0

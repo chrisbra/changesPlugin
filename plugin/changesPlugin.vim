@@ -63,6 +63,12 @@ endif
 if !hasmapto("ah", 'o')
     omap <silent> ah :norm Vah<cr>
 endif
+
+" In Insert mode, when <cr> is pressed, update the signs immediately
+"
+if !get(g:, 'changes_fast', 1)
+    inoremap <expr> <cr> changes#MapCR()
+endif
     
 " =====================================================================
 " Restoration And Modelines: {{{1
