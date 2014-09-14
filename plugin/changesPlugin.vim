@@ -16,9 +16,15 @@ let g:loaded_changes       = 1
 let s:keepcpo              = &cpo
 set cpo&vim
 
-" ------------------------------------------------------------------------------
-" Public Interface: {{{1
+" ---------------------------------------------------------------------
+" Public Functions: {{{1
+fu! ChangesMap(char) "{{{2
+    if a:char == '<cr>'
+	imap <silent><script> <cr> <cr><c-r>=changes#MapCR()<cr>
+    endif
+endfu
 
+" Public Interface: {{{1
 " Define the Shortcuts:
 com! -nargs=? -complete=file -bang EC	 EnableChanges<bang> <args>
 com! DC	 DisableChanges
@@ -46,7 +52,7 @@ if get(g:, 'changes_fixed_sign_column', 0)
     " Make sure, a dummy sign is placed
     exe ":call changes#Init()"
 endif
-
+" =====================================================================
 " Mappings:  "{{{1
 if !hasmapto("[h")
     map <expr> <silent> [h changes#MoveToNextChange(0, v:count1)
@@ -67,10 +73,9 @@ endif
 " In Insert mode, when <cr> is pressed, update the signs immediately
 "
 if !get(g:, 'changes_fast', 1)
-    inoremap <expr> <cr> changes#MapCR()
+    call ChangesMap('<cr>')
 endif
-    
-" =====================================================================
+
 " Restoration And Modelines: {{{1
 " vim: fdm=marker
 let &cpo= s:keepcpo

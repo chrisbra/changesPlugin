@@ -1141,7 +1141,7 @@ fu! changes#Init() "{{{1
     call changes#AuCmd(s:autocmd)
     " map <cr> to update sign column, if g:changes_fast == 0
     if !hasmapto('<cr>', 'i') && !get(g:, 'changes_fast', 1)
-	inoremap <expr> <cr> changes#MapCR()
+	call ChangesMap('<cr>')
     endif
 endfu
 
