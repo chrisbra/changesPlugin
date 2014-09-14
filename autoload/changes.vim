@@ -1348,7 +1348,7 @@ fu! changes#MapCR() "{{{1
 	\ (exists("*wildmenumode") && wildmenumode()))
 	call s:UpdateView()
     endif
-    return "\<cr>"
+    return ''
 endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
