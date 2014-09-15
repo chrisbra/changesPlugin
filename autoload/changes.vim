@@ -1069,7 +1069,7 @@ fu! changes#Init() "{{{1
 	let s:vcs=0
     endif
     if !exists("s:vcs_cat")
-	let s:vcs_cat  = {'git': 'show HEAD:', 
+	let s:vcs_cat  = {'git': 'show :',
 			 \'bzr': 'cat ', 
 			 \'cvs': '-q update -p ',
 			 \'darcs': '--show-contents ',
