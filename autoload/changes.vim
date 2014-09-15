@@ -810,6 +810,13 @@ fu! s:CheckInvalidSigns() "{{{1
 	    " remove item from the placed sign list, so that we
 	    " don't erroneously place a dummy sign later on
 	    call remove(s:placed_signs[0], ind)
+	elseif (s:PrevDictHasKey(item.line) !~? 'dummy' &&
+	      \ empty(s:PrevDictHasKey((item.line-1)))) &&
+	      \ index(b:diffhl[type], item.line+0) > -1
+	    call add(list[0], item)
+	    " line is of type dummy, but will probably needs to
+	    " be of non-type dummy
+	    call remove(s:placed_signs[0], ind)
 	else
 	    let ind+=1
 	endif
