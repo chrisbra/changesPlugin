@@ -354,7 +354,7 @@ fu! s:MakeDiff_new(file) "{{{1
 	    throw "changes:abort"
 	endif
 	if getfsize(s:diff_out) == 0
-	    call s:StoreMessage("No differences found!",1)
+	    call s:StoreMessage("No differences found!")
 	    return
 	endif
 	call s:ParseDiffOutput(s:diff_out)
