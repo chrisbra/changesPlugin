@@ -257,9 +257,7 @@ fu! s:Cwd() "{{{1
 endfu
 
 fu! s:StoreMessage(msg) "{{{1
-    if &vbs
-	call add(s:msg, a:msg)
-    endif
+    call add(s:msg, a:msg)
 endfu
 fu! s:PreviewDiff(file) "{{{1
     try
@@ -745,11 +743,9 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	catch /^changes/
 	    let b:changes_view_enabled=0
 	    let s:ignore[bufnr('%')] = 1
-	    throw "changes:abort" " rethrow
 	catch
 	    call s:StoreMessage("Error occured: ".v:exception)
 	    call s:StoreMessage("Trace: ". v:throwpoint)
-	    throw "changes:abort" " rethrow
 	finally
 	    if scratchbuf && a:arg < 3
 		exe "bw" scratchbuf
@@ -774,7 +770,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    call winrestview(_wsv)
 	endif
 	" Make sure, the message is actually displayed!
-	verbose call changes#WarningMsg()
+	call changes#WarningMsg()
 	" restore change marks
 	call s:SaveRestoreChangeMarks(0)
     endtry
@@ -850,6 +846,9 @@ fu! s:PrevDictHasKey(line) "{{{1
 endfu
 fu! s:UnPlaceSpecificSigns(dict) "{{{1
     for sign in a:dict
+	if sign.type ==# 'dummy'
+	    continue
+	endif
 	exe "sign unplace ". sign.id. " buffer=".bufnr('')
     endfor
 endfu
@@ -1008,7 +1007,7 @@ fu! changes#WarningMsg() "{{{1
     endif
     if !empty(s:msg)
 	redraw!
-	let msg=["Changes.vim: " . s:msg[0]] + s:msg[1:]
+	let msg=["Changes.vim: " . s:msg[0]] + (len(s:msg) > 1 ? s:msg[1:] : [])
 	echohl WarningMsg
 	for mess in msg
 	    echomsg mess
@@ -1153,9 +1152,9 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
     try
 	call changes#Init()
 	let arg = exists("a:1") ? a:1 : ''
-	call s:GetDiff(a:arg, a:bang, arg)
+	verbose call s:GetDiff(a:arg, a:bang, arg)
     catch
-	verbose call changes#WarningMsg()
+	call changes#WarningMsg()
 	call changes#CleanUp()
     endtry
 endfu
@@ -1166,7 +1165,7 @@ fu! changes#CleanUp() "{{{1
     let s:ignore[bufnr('%')] = 1
     for key in keys(get(s:, 'signs', {}))
 	if key ==# 'dummy'
-	    break
+	    continue
 	endif
 	exe "sil! sign undefine " key
     endfor
