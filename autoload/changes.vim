@@ -1195,6 +1195,9 @@ fu! changes#AuCmd(arg) "{{{1
 		    " FocusGAined autocommands recursively
 		    au FocusGained * :call s:UpdateView(1)
 		end
+		if !get(g:, 'changes_fast', 1)
+		    au InsertEnter,InsertLeave * :call s:UpdateView(1)
+		endif
 		au BufWinEnter * :call s:UpdateView(1)
 	    augroup END
 	endif

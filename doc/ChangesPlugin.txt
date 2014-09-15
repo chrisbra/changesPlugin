@@ -185,15 +185,13 @@ Currently, ChangesPlugin supports these VCS Systems:
     - bzr
     - darcs
     - fossil
-    - svk
     - RCS
 
-To enable this feature, you need to set the variable g:changes_vcs_check to
-1. ChangesPlugin will then try to auto-detect, which of the above supported
-VCS-Systems is in use. That means, if it can't detect neither of git, cvs,
-svn, bzr or hg it will assume you are using svk. This may fail obviously, so
-you can always force ChangesPlugin to use any of the above by setting the
-g:changes_vcs_system Variable.
+To enable this feature, you need to set the variable g:changes_vcs_check to 1.
+ChangesPlugin will then try to auto-detect, which of the above supported
+VCS-Systems is in use. This may fail obviously, so you can always force
+ChangesPlugin to use any of the above by setting the g:changes_vcs_system
+Variable.
 
 To enable this feature, you need to set the g:changes_vcs_check variable to 1.
 The following example enables this feature and ensures, EnablePlugin is using
@@ -277,11 +275,19 @@ appearing SignColumn (|hl-SignColumn|) To enable, set in your |.vimrc| >
 <
 g:changes_fast (default: 1)
 --------------------------
-If set (which is by default), skip creating diffs when just small changes
-(within the same line) occured to the buffer (This makes pressing e.g. 'rx'
-several times in the same line a lot more responsive, at the cost of being a
-little bit more imprecise when placing the signs.) If you want to disable this
-feature, set in your |.vimrc| >
+If set (which it is by default), skip creating diffs at a couple occasions.
+
+Currently the following features are disabled, when g:changes_fast is set:
+    - update within a row for small changes (e.g. hitting 'rx' repeatedly in
+      the same row)
+    - InsertEnter/InsertLeave autocommands to update signs
+    - When inserting a new line in the buffer, update signs
+
+While those features are disabled, this also means Vim is more responsive,
+since it does not need to diff the buffer that often (at the cost of being
+slightly more imprecise).
+
+If you want to enable those settings, set in your |.vimrc| >
 
     let g:changes_fast=0
 <
@@ -344,6 +350,8 @@ third line of this document.
             being possibly slower placement of signs).
         BF: when updating signs, make sure that the first line of a
             consecutive number has the correcty type
+        NF: In insert mode, when <CR> is pressed, update the signs immediately
+        NF: InsertEnter/Leave autocommands to update signs
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on
