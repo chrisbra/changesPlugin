@@ -46,6 +46,12 @@ fu! s:Check() "{{{1
 	hi! link SignColumn Normal
     endif
     let s:numeric_sort = v:version > 704 || v:version == 704 && has("patch341")
+    if !s:numeric_sort
+	fu! s:MySortValues(i1, i2) "{{{2
+	    return (a:i1+0) == (a:i2+0) ? 0 : (a:i1+0) > (a:i2+0) ? 1 : -1
+	endfu
+    endif
+
 
     let s:ids={}
     let s:ids["add"]   = hlID("DiffAdd")
@@ -233,10 +239,6 @@ fu! s:PlaceSigns(dict) "{{{1
 	    let prev_line = item
 	endfor
     endfor
-endfu
-
-fu! s:MySortValues(i1, i2) "{{{1
-    return (a:i1+0) == (a:i2+0) ? 0 : (a:i1+0) > (a:i2+0) ? 1 : -1
 endfu
 
 fu! s:UnPlaceSigns(force) "{{{1
@@ -780,11 +782,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 endfu
 fu! s:SortDiffHl() "{{{1
     for i in ['add', 'ch', 'del']
-	if s:numeric_sort
-	    call sort(b:diffhl[i], 'n')
-	else
-	    call sort(b:diffhl[i], 's:MySortValues')
-	endif
+	call sort(b:diffhl[i], (s:numeric_sort ? 'n' : 's:MySortValues'))
 	if exists("*uniq")
 	    call uniq(b:diffhl[i])
 	endif
@@ -1265,11 +1263,7 @@ fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     let lines = get(dict, "add", []) +
 	    \   get(dict, "del", []) +
 	    \   get(dict, "ch",  [])
-    if s:numeric_sort
-	let lines = sort(lines, 'n') " sort numerical
-    else
-	let lines = sort(lines, 's:MySortValues')
-    endif
+    let lines = sort(lines, (s:numeric_sort ? 'n' : 's:MySortValues'))
     if exists('*uniq')
 	" remove duplicates
 	let lines = uniq(lines)
@@ -1286,11 +1280,7 @@ fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     let lines = s:RemoveConsecutiveLines(1, copy(lines)) +
 	      \ s:RemoveConsecutiveLines(0, copy(lines))
     " sort again...
-    if s:numeric_sort
-	let lines = sort(lines, 'n') " sort numerical
-    else
-	let lines = sort(lines, 's:MySortValues')
-    endif
+    let lines = sort(lines, (s:numeric_sort ? 'n' : 's:MySortValues'))
 
     if empty(lines)
 	echomsg   "There are no ". (a:fwd ? "next" : "previous").
@@ -1337,16 +1327,9 @@ endfu
 fu! changes#FoldDifferences(enable) "{{{1
     if empty(a:enable) && &fde!=?'index(g:lines,v:lnum)>-1?0:1'
 	let b:chg_folds = {'fen': &fen, 'fdm': &fdm, 'fde': &fde}
-	if s:numeric_sort
-	    let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
-		\ get(get(b:, 'diffhl', []), 'ch' , []) +
-		\ get(get(b:, 'diffhl', []), 'del', []), 'n')
-	else
-	    let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
-		\ get(get(b:, 'diffhl', []), 'ch' , []) +
-		\ get(get(b:, 'diffhl', []), 'del', []),
-		\ 's:MySortValues')
-	endif
+	let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
+	    \ get(get(b:, 'diffhl', []), 'ch' , []) +
+	    \ get(get(b:, 'diffhl', []), 'del', []), (s:numeric_sort ? 'n', 's:MySortValues'))
 	if exists('*uniq')
 	    let g:lines=uniq(g:lines)
 	endif
