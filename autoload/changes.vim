@@ -185,10 +185,10 @@ fu! s:SetupSignTextHl() "{{{1
     endif
 endfu
 
-fu! s:HasSign(line) "{{{1
-    let list =filter(copy(s:placed_signs[0]), 'v:val.line == a:line')
-    return (empty(list) ? '' : list[0].type)
-endfu
+"fu! s:HasSign(line) "{{{1
+"    let list =filter(copy(s:placed_signs[0]), 'v:val.line == a:line')
+"    return (empty(list) ? '' : list[0].type)
+"endfu
 
 fu! s:PlaceSigns(dict) "{{{1
     " signs by other plugins
@@ -221,7 +221,7 @@ fu! s:PlaceSigns(dict) "{{{1
 		    let name='dummy'.id
 		endif
 	    endif
-	    if s:HasSign(item) ==? name
+	    if s:PrevDictHasKey(item) ==? name
 		" There is already a Changes sign placed
 		continue
 	    endif
@@ -798,6 +798,8 @@ fu! s:SignType(string) "{{{1
 endfu
 
 fu! s:CheckInvalidSigns() "{{{1
+    " list[0]: signs to remove
+    " list[1]: signs to add
     let list=[[],{'add': [], 'del': [], 'ch': []}]
     let ind=0
     let last=0
@@ -830,8 +832,8 @@ fu! s:CheckInvalidSigns() "{{{1
 "	    call remove(s:placed_signs[0], ind)
 	else
 	    let ind+=1
+	    let last = item.line
 	endif
-	let last = item.line
     endfor
     for id in ['add', 'ch', 'del']
 	for line in sort(b:diffhl[id], (s:numeric_sort ? 'n' : 's:MySortValues'))
@@ -846,7 +848,7 @@ fu! s:CheckInvalidSigns() "{{{1
 		" sign appears at the correct line
 		call add(list[1][id], line)
 		let previtem = filter(copy(s:placed_signs[0]), 'v:val.line == (line-1)')
-		if !empty(previtem)
+		if !empty(previtem) && previtem[0].type !~? 'dummy'
 		    call add(list[0], previtem[0])
 		endif
 	    endif
@@ -1379,8 +1381,8 @@ fu! changes#InsertSignOnEnter() "{{{1
     call changes#Init()
     let prev = line('.')-1
     let line = line('.')
-    let name=s:HasSign(line)
-    let prevname = s:HasSign(prev)
+    let name=s:PrevDictHasKey(line)
+    let prevname = s:PrevDictHasKey(prev)
     if empty(name)
 	" no sign yet on current line, add one.
 	let name = (!empty(prevname) ? 'dummyadd' : 'add')
