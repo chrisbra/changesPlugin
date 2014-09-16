@@ -226,9 +226,7 @@ fu! s:PlaceSigns(dict) "{{{1
 		continue
 	    endif
 	    let sid=b:sign_prefix.s:SignId()
-	    let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
-			\ sid, item, name, bufnr(''))
-	    exe cmd
+	    call s:PlaceSpecificSign(sid, item, name)
 	    " remember line number, so that we don't place a second sign
 	    " there!
 	    call add(s:placed_signs[0], {'id': sid, 'line':item, 'type': name})
@@ -875,6 +873,11 @@ fu! s:UnPlaceSpecificSigns(dict) "{{{1
 	exe "sign unplace ". sign.id. " buffer=".bufnr('')
     endfor
 endfu
+fu! s:PlaceSpecificSign(id, line, type) "{{{1
+    let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
+		\ a:id, a:line, a:type, bufnr(''))
+    exe cmd
+endfu
 
 fu! s:InitSignDef() "{{{1
     let signs={}
@@ -1389,15 +1392,12 @@ fu! changes#InsertSignOnEnter() "{{{1
     if empty(name)
 	" no sign yet on current line, add one.
 	let name = (!empty(prevname) ? 'dummyadd' : 'add')
-	let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
-			\ b:sign_prefix.s:SignId(), line, name, bufnr(''))
-	exe cmd
+	call s:PlaceSpecificSign(b:sign_prefix.s:SignId(), line, name)
     endif
     if s:PrevDictHasKey(next) ==? 'add'
 	let item = filter(copy(s:placed_signs[0]), 'v:val.line ==? next')
 	call s:UnPlaceSpecificSigns(item)
-	exe  printf(":sil sign place %d line=%d name=dummyadd buffer=%d",
-		    \ item[0].id, next, bufnr(''))
+	call s:PlaceSpecificSign(item[0].id, next, 'dummyadd')
     endif
     let b:changes_last_line = line('$')
 endfu
