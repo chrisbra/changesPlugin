@@ -588,9 +588,9 @@ fu! s:PlacedSigns() "{{{1
 endfu
 fu! s:GuessVCSSystem() "{{{1
     " Check global config variable
-    for var in [ 'b:', 'g:']
-	let vcs=matchstr(get(var, changes_vcs_system, ''), '\c\(git\)\|\(hg\)\|\(bzr\)\|\(cvs\)\|\(svn\)'.
-		    \ '\|\(subversion\)\|\(mercurial\)\|\(rcs\)\|\(fossil\)\|\(darcs\)')
+    for var in [ b:, g:]
+	let pat='\c\vgit|hg|bzr\|cvs|svn|subversion|mercurial|rcs|fossil|darcs'
+	let vcs=matchstr(get(var, 'changes_vcs_system', ''), pat)
 	if vcs
 	    return vcs
 	endif
