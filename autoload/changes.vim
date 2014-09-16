@@ -1010,7 +1010,7 @@ fu! changes#PlaceSignDummy(doplace) "{{{1
 	    \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
 	    " only place signs, if signs have been defined
 	    " and there isn't one placed yet
-	    exe "sign place " b:sign_prefix.'00 line='.(s:maxlnum). ' name=dummy buffer='. bufnr('')
+	    call s:PlaceSpecificSign(b:sign_prefix.'00', s:maxlnum, 'dummy')
 	    let b:changes_sign_dummy_placed = 1
 	endif
     elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
