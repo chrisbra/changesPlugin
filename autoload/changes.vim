@@ -1381,8 +1381,9 @@ fu! changes#InsertSignOnEnter() "{{{1
     " simply check, if the current line has a sign
     " and if not, add one
     call changes#Init()
-    let prev = line('.')-1
     let line = line('.')
+    let prev = line - 1
+    let next = line + 1
     let name=s:PrevDictHasKey(line)
     let prevname = s:PrevDictHasKey(prev)
     if empty(name)
@@ -1390,6 +1391,14 @@ fu! changes#InsertSignOnEnter() "{{{1
 	let name = (!empty(prevname) ? 'dummyadd' : 'add')
 	let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
 			\ b:sign_prefix.s:SignId(), line, name, bufnr(''))
+	exe cmd
+    endif
+    if s:PrevDictHasKey(next) ==? 'add'
+	let item = filter(copy(s:placed_signs[0]), 'v:val.line ==? next')
+	let cmd  =  printf(":sil sign unplace %d buffer=%d", item[0].id, bufnr(''))
+	exe cmd
+	let cmd  =  printf(":sil sign place %d line=%d name=dummyadd buffer=%d",
+		    \ item[0].id, next, bufnr(''))
 	exe cmd
     endif
     let b:changes_last_line = line('$')
