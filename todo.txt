@@ -1,3 +1,9 @@
+- In insert mode, when enter is pressed (a new line is inserted, update the sign column)
+- Other VCS types: perforce, accurev, fossil [ find project.fossil upwards ]
+- remove svk (seems to be dead, not even available on the internet
+- Make FocusGained autocommand work in Windows (
+  temporarily set ei=FocusGained when getting the system output
+  and later reset eventignore)
 - add timing statistics for debug mode
 - better update of highlighting (if lines change, add offset to highlighting pattern)
 - Make highlighting use its own highlight group (which might be linked to whatever group)
