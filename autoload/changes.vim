@@ -810,7 +810,7 @@ fu! s:CheckInvalidSigns() "{{{1
 	    endif
 	    call remove(s:placed_signs[0], ind)
 	else
-	    if item.type =~? 'dummy' && s:SignType(last.type) != type
+	    if item.type =~? 'dummy' && s:SignType(get(last, 'type', item.type)) != type
 		call add(list[0], item)
 		if index(b:diffhl[type], item.line+0) > -1
 		    call add(list[1][type],  item.line)
@@ -825,7 +825,7 @@ fu! s:CheckInvalidSigns() "{{{1
 	for line in sort(b:diffhl[id], (s:numeric_sort ? 'n' : 's:MySortValues'))
 	    let type = s:PrevDictHasKey(line)
 	    let prev = index(b:diffhl[id], (line-1))
-	    if empty(type)
+	    if empty(type) && index(list[1][id], line) == -1
 		call add(list[1][id], line)
 	    elseif prev > -1 && (
 		\ index(list[1][id],  (line-1)) > -1 ||
