@@ -939,7 +939,8 @@ fu! s:InitSignDef() "{{{1
     let signs["del"] = "del text=".del
 
     " Add some more dummy signs
-    let signs["dummy"]    = "dummy text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn"
+    "let signs["dummy"]    = "dummy text=\<Char-0xa0>\<Char-0xa0> texthl=SignColumn"
+    let signs["dummy"]    = "dummy"
     let signs["dummyadd"] = "dummyadd text=\<Char-0xa0>\<Char-0xa0> texthl=".
 		\ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn")
     let signs["dummych"]  = "dummych text=\<Char-0xa0>\<Char-0xa0> texthl=".
