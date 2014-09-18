@@ -1058,7 +1058,15 @@ fu! changes#Init() "{{{1
     " Check against a file in a vcs system
     let s:vcs      = get(g:, 'changes_vcs_check', 0)
     if !exists("b:vcs_type")
-	let b:vcs_type = (exists("g:changes_vcs_system")? g:changes_vcs_system : s:GuessVCSSystem())
+	if exists("g:changes_vcs_system")
+	    let b:vcs_type = g:changes_vcs_system
+	endif
+	if exists("b:changes_vcs_system")
+	    let b:vcs_type = b:changes_vcs_system
+	endif
+	if !exists("b:vcs_type")
+	    let b:vcs_type = s:GuessVCSSystem()
+	endif
     endif
     if s:vcs && empty(b:vcs_type)
 	" disable VCS checking...

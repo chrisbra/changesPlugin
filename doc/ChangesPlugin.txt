@@ -203,6 +203,10 @@ git as VCS, so these lines have been entered in the |.vimrc| >
 Note, that depending on the VCS System you use, this might slow down
 ChangesPlugin significantly. Especially CVS seems to be very slow.
 
+To only specify a specific VCS for a certain buffer, set the buffer-local
+variable `b:changes_vcs_system` in that particular buffer. That overrides the
+global variable `g:changes_vcs_system`.
+
 Note also, that setting g:changes_vcs_system is setting a global variable (see
 |g:-var|) and therefore would set the VCS for every buffer opened in vim (thus
 you could use changesPlugin only with one single VCS). However, guessing the
