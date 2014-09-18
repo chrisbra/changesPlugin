@@ -607,7 +607,7 @@ endfu
 fu! s:GuessVCSSystem() "{{{1
     " Check global config variable
     if exists("g:changes_vcs_system")
-	let vcs=matchstr(g:changes_vcs_system, '\c\(git\)\|\(hg\)\|\(bzr\)\|\(svk\)\|\(cvs\)\|\(svn\)'.
+	let vcs=matchstr(g:changes_vcs_system, '\c\(git\)\|\(hg\)\|\(bzr\)\|\(cvs\)\|\(svn\)'.
 		    \ '\|\(subversion\)\|\(mercurial\)\|\(rcs\)\|\(fossil\)\|\(darcs\)')
 	if vcs
 	    return vcs
@@ -632,9 +632,6 @@ fu! s:GuessVCSSystem() "{{{1
 	return 'darcs'
     elseif !empty(finddir('RCS', path.';'))
 	return 'rcs'
-    " Is this correct for svk?
-    elseif !empty(finddir('.svn',path.';'))
-	return 'svk'
     else
 	return ''
     endif
@@ -1075,7 +1072,6 @@ fu! changes#Init() "{{{1
 			 \'fossil': 'finfo -p ',
 			 \'rcs': 'co -p ',
 			 \'svn': 'cat ',
-			 \'svk': 'cat ',
 			 \'hg': 'cat '}
 
 	" Define aliases...
