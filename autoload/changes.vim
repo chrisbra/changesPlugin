@@ -304,6 +304,61 @@ fu! s:ChangeDir() "{{{1
     exe "lcd " fnameescape(fnamemodify(expand("%"), ':h'))
     return _pwd
 endfu
+fu! GetDiffOutput(line) "{{{1
+    try
+	call changes#Init()
+	if get(b:, 'vcs_type', '') == 'git' && changes#GetStats() !=? [0,0,0]
+	    let cur = a:line
+	    let _pwd = s:ChangeDir()
+	    let _wsv = winsaveview()
+	    noa write
+	    let git_rep_p = s:ReturnGitRepPath()
+	    exe "lcd" git_rep_p
+	    let diff = split(system("git diff -U0 --no-ext-diff --no-color ".
+			\ expand('%')), "\n")
+	    let file=''
+	    let found=0
+	    let hunk=[]
+	    let index = match(diff, '^+++')
+	    let header=diff[0:index]
+	    for line in diff[index + 1 : ]
+		if line =~? '^@@.*@@'
+		    let temp = split(line)[2]
+		    let lines = split(temp, ',')
+		    call map(lines, 'matchstr(v:val, ''\d\+'')+0')
+		    if (len(lines) == 2 &&
+			    \ cur >= lines[0] && cur < lines[0]+lines[1]) ||
+			\ (len(lines) == 1 && cur == lines[0])
+			" this is the hunk the cursor is on
+			let found=1
+		    endif
+		endif
+		if found
+		    call add(hunk, line)
+		endif
+	    endfor
+	    if empty(hunk)
+		return
+	    endif
+	    " Add filename to hunk
+	    let hunk = header + hunk
+	    let output=system('git apply --cached --unidiff-zero - ', s:Output(hunk))
+	    call s:GetDiff(1, '')
+	endif
+    finally
+	exe "lcd " _pwd
+	call winrestview(_wsv)
+    endtry
+endfu
+fu! s:Output(list) "{{{1
+    let eol="\n"
+    if &ff ==? 'dos'
+	let eol = "\r\n"
+    elseif &ff ==? 'mac'
+	let eol = "\n\r"
+    endif
+    return join(a:list, eol)
+endfu
 fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
