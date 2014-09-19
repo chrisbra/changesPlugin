@@ -71,11 +71,9 @@ endif
 
 if !hasmapto('<Plug>(ChangesStageHunk)')
     nmap <unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
+    nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunk
+    nnoremap <sid>ChangesStageHunk :<c-u>call changes#StageHunk(line('.'))<cr>
 endif
-if !hasmapto('StageHunk')
-    nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>StageHunk
-endif
-nnoremap <sid>StageHunk :<c-u>call changes#StageHunk(line('.'))<cr>
 
 " In Insert mode, when <cr> is pressed, update the signs immediately
 if !get(g:, 'changes_fast', 1)
@@ -86,6 +84,5 @@ endif
 " vim: fdm=marker
 let &cpo= s:keepcpo
 unlet s:keepcpo
-
 " Modeline
 " vi:fdm=marker fdl=0
