@@ -308,52 +308,6 @@ fu! s:ChangeDir() "{{{1
     exe "lcd " fnameescape(fnamemodify(expand("%"), ':h'))
     return _pwd
 endfu
-fu! GetDiffOutput(line) "{{{1
-    try
-	call changes#Init()
-	if get(b:, 'vcs_type', '') == 'git' && changes#GetStats() !=? [0,0,0]
-	    let cur = a:line
-	    let _pwd = s:ChangeDir()
-	    let _wsv = winsaveview()
-	    noa write
-	    let git_rep_p = s:ReturnGitRepPath()
-	    exe "lcd" git_rep_p
-	    let diff = split(system("git diff -U0 --no-ext-diff --no-color ".
-			\ expand('%')), "\n")
-	    let file=''
-	    let found=0
-	    let hunk=[]
-	    let index = match(diff, '^+++')
-	    let header=diff[0:index]
-	    for line in diff[index + 1 : ]
-		if line =~? '^@@.*@@'
-		    let temp = split(line)[2]
-		    let lines = split(temp, ',')
-		    call map(lines, 'matchstr(v:val, ''\d\+'')+0')
-		    if (len(lines) == 2 &&
-			    \ cur >= lines[0] && cur < lines[0]+lines[1]) ||
-			\ (len(lines) == 1 && cur == lines[0])
-			" this is the hunk the cursor is on
-			let found=1
-		    endif
-		endif
-		if found
-		    call add(hunk, line)
-		endif
-	    endfor
-	    if empty(hunk)
-		return
-	    endif
-	    " Add filename to hunk
-	    let hunk = header + hunk
-	    let output=system('git apply --cached --unidiff-zero - ', s:Output(hunk))
-	    call s:GetDiff(1, '')
-	endif
-    finally
-	exe "lcd " _pwd
-	call winrestview(_wsv)
-    endtry
-endfu
 fu! s:Output(list) "{{{1
     let eol="\n"
     if &ff ==? 'dos'
@@ -361,7 +315,7 @@ fu! s:Output(list) "{{{1
     elseif &ff ==? 'mac'
 	let eol = "\n\r"
     endif
-    return join(a:list, eol)
+    return join(a:list, eol).eol
 endfu
 fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
@@ -1411,6 +1365,70 @@ fu! changes#InsertSignOnEnter() "{{{1
 	call s:PlaceSpecificSign(item[0].id, next, 'dummyadd')
     endif
     let b:changes_last_line = line('$')
+endfu
+fu! changes#StageHunk(line) "{{{1
+    try
+	let cur = a:line
+	let _pwd = s:ChangeDir()
+	let _wsv = winsaveview()
+	call changes#Init()
+	if get(b:, 'vcs_type', '') !=? 'git'
+	    call s:StoreMessage("Sorry, staging Hunks is only supported for git!")
+	    return
+	elseif changes#GetStats() ==? [0,0,0]
+	    call s:StoreMessage('No changes detected, nothing to do!')
+	    return
+	endif
+	if get(b:, 'vcs_type', '') == 'git' && changes#GetStats() !=? [0,0,0]
+	    noa write
+	    let git_rep_p = s:ReturnGitRepPath()
+	    exe "lcd" git_rep_p
+	    let diff = split(system("git diff -U0 --no-ext-diff --no-color ".
+			\ expand('%')), "\n")
+	    let file=''
+	    let found=0
+	    let hunk=[]
+	    let index = match(diff, '^+++')
+	    let header=diff[0:index]
+	    for line in diff[index + 1 : ]
+		if line =~? '^@@.*@@'
+		    if found
+			break
+		    endif
+		    let temp = split(line)[2]
+		    let lines = split(temp, ',')
+		    call map(lines, 'matchstr(v:val, ''\d\+'')+0')
+		    if (len(lines) == 2 &&
+			    \ cur >= lines[0] && cur < lines[0]+lines[1]) ||
+			\ (len(lines) == 1 && cur == lines[0])
+			" this is the hunk the cursor is on
+			let found=1
+		    endif
+		endif
+		if found
+		    call add(hunk, line)
+		endif
+	    endfor
+	    if empty(hunk)
+		call s:StoreMessage('Cursor not on a diff hunk, aborting!')
+		return
+	    endif
+	    " Add filename to hunk
+	    let hunk = header + hunk
+	    let output=system('git apply --cached --unidiff-zero - ', s:Output(hunk))
+	    if v:shell_error
+		call s:StoreMessage(output)
+	    endif
+	    call s:GetDiff(1, '')
+	endif
+    catch
+	call s:StoreMessage("Exception occured")
+	call s:StoreMessage(string(v:exception))
+    finally
+	exe "lcd " _pwd
+	call changes#WarningMsg()
+	call winrestview(_wsv)
+    endtry
 endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
