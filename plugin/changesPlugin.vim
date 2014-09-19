@@ -44,13 +44,12 @@ com! ChangesDiffMode		call changes#EnableChanges(3, '')
 com! ChangesStyleToggle		call changes#ToggleHiStyle()
 com! -bang ChangesFoldDifferences call changes#FoldDifferences(<q-bang>)
 
-if get(g:, 'changes_autocmd', 1)
-    exe ":call changes#AuCmd(1)"
-endif
-
-if get(g:, 'changes_fixed_sign_column', 0)
-    " Make sure, a dummy sign is placed
-    exe ":call changes#Init()"
+if get(g:, 'changes_autocmd', 1) || get(g:, 'changes_fixed_sign_column', 0)
+    try
+	exe ":call changes#Init()"
+    catch
+	exe ":call changes#CleanUp()"
+    endtry
 endif
 " =====================================================================
 " Mappings:  "{{{1

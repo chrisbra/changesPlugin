@@ -51,7 +51,6 @@ fu! s:Check() "{{{1
 	endfu
     endif
 
-
     let s:ids={}
     let s:ids["add"]   = hlID("DiffAdd")
     let s:ids["del"]   = hlID("DiffDelete")
@@ -117,7 +116,12 @@ fu! s:UpdateView(...) "{{{1
     if get(g:, 'changes_fixed_sign_column', 0)
 	" Make sure, the sign column is presetn
 	" will call PlaceSignDummy
-	call changes#Init()
+	try
+	    call changes#Init()
+	catch
+	    call changes#CleanUp()
+	    return
+	endtry
 	let did_source_init = 1
     endif
     if empty(bufname(''))
@@ -1158,14 +1162,8 @@ fu! changes#Init() "{{{1
     let s:nodiff=0
     " Make sure, we are fetching all placed signs again
     unlet! s:all_signs
-    " This variable is a prefix for all placed signs.
-    " This is needed, to not mess with signs placed by the user
-    if !exists("b:sign_prefix")
-	let b:sign_prefix = s:GetSignId() + 10
-    endif
     let s:old_signs = get(s:, 'signs', {})
     let s:signs=s:InitSignDef()
-
     " Only check the first time this file is loaded
     " It should not be neccessary to check every time
     if !exists("s:precheck")
@@ -1174,10 +1172,18 @@ fu! changes#Init() "{{{1
 	catch
 	    call s:StoreMessage("changes plugin will not be working!")
 	    " Rethrow exception
+	    let s:autocmd = 0
 	    throw "changes:abort"
+	    return
 	endtry
 	let s:precheck=1
     endif
+    " This variable is a prefix for all placed signs.
+    " This is needed, to not mess with signs placed by the user
+    if !exists("b:sign_prefix")
+	let b:sign_prefix = s:GetSignId() + 10
+    endif
+
     let s:placed_signs = s:PlacedSigns()
     if s:old_signs !=? s:signs && !empty(s:old_signs)
 	" Sign definition changed, redefine them
