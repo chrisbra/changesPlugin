@@ -164,7 +164,7 @@ fu! s:UpdateView(...) "{{{1
 	    let b:changes_chg_tick = b:changedtick
 	    let b:changes_last_line = line('$')
 	catch
-	    call s:StoreMessage(s:msg, v:exception)
+	    call s:StoreMessage(v:exception)
 	    " Make sure, the message is actually displayed!
 	    verbose call changes#WarningMsg()
 	    call changes#CleanUp()
@@ -256,13 +256,8 @@ fu! s:Cwd() "{{{1
     return escape(getcwd(), ' ')
 endfu
 
-fu! s:StoreMessage(msg, ...) "{{{1
-    if !exists("a:1")
-	let level=0
-    else
-	let level=a:1
-    endif
-    if &vbs>level
+fu! s:StoreMessage(msg) "{{{1
+    if &vbs
 	call add(s:msg, a:msg)
     endif
 endfu
@@ -724,7 +719,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    \ && empty(s:placed_signs[0]))
 		" Make sure, diff and previous diff are different,
 		" otherwise, we might forget to update the signs
-		call s:StoreMessage('No differences found!',1)
+		call s:StoreMessage('No differences found!')
 		let s:nodiff=1
 	    elseif exists("s:changes_signs_undefined") && s:changes_signs_undefined
 		let s:diffhl = s:CheckInvalidSigns()
@@ -750,9 +745,11 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	catch /^changes/
 	    let b:changes_view_enabled=0
 	    let s:ignore[bufnr('%')] = 1
+	    throw "changes:abort" " rethrow
 	catch
 	    call s:StoreMessage("Error occured: ".v:exception)
-	    call s:StoreMessage("Trace: ". v:throwpoint,1)
+	    call s:StoreMessage("Trace: ". v:throwpoint)
+	    throw "changes:abort" " rethrow
 	finally
 	    if scratchbuf && a:arg < 3
 		exe "bw" scratchbuf
@@ -761,7 +758,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 			\ b:changes_view_enabled
 		" only add info here, when 'verbose' > 1
 		call s:StoreMessage("Check against ".
-		    \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type, 1)
+		    \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
 	    endif
 	    " remove dummy sign
 	    call changes#PlaceSignDummy(0)
@@ -1127,7 +1124,7 @@ fu! changes#Init() "{{{1
 	catch
 	    call s:StoreMessage("changes plugin will not be working!")
 	    " Rethrow exception
-	    throw changes:abort
+	    throw "changes:abort"
 	endtry
 	let s:precheck=1
     endif
@@ -1158,7 +1155,7 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
 	let arg = exists("a:1") ? a:1 : ''
 	call s:GetDiff(a:arg, a:bang, arg)
     catch
-	call changes#WarningMsg()
+	verbose call changes#WarningMsg()
 	call changes#CleanUp()
     endtry
 endfu
