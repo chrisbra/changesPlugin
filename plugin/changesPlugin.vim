@@ -43,6 +43,7 @@ com! ChangesLinesOverview	call changes#EnableChanges(2, '')
 com! ChangesDiffMode		call changes#EnableChanges(3, '')
 com! ChangesStyleToggle		call changes#ToggleHiStyle()
 com! -bang ChangesFoldDifferences call changes#FoldDifferences(<q-bang>)
+com! ChangesStageCurrentHunk	call changes#StageHunk(line('.'))
 
 if get(g:, 'changes_autocmd', 1) || get(g:, 'changes_fixed_sign_column', 0)
     try
