@@ -135,6 +135,14 @@ and >
     :ChangesStyleToggle
 
 To toggle between all states.
+                                                *:ChangesStageCurrentHunk*
+Stages the hunk, the cursor is currently on (works only for git). This is like
+incrementally save only part of a diff and commit it separately so that your
+commit histoy is cleaner. Use: >
+
+    :ChangesStageCurrentHunk
+< 
+to stage the hunk the cursor is currently on.
 
                                                 *ChangesPlugin-Maps* *[h* *]h*
 ChangesPlugin also sets up some mappings to move from one changed line to
@@ -145,6 +153,8 @@ another. By default, those mappings are defined:
                                                                     *v_ah*
 `ah`        selects the current hunk (only in Visual and Operator pending
           mode)
+                                                                *<Leader>h*
+`<Leader>h` selects the current hunk and stages it. (only possible for git).
 
 ==============================================================================
                                                         *ChangesPlugin-Config*
@@ -356,6 +366,7 @@ third line of this document.
             consecutive number has the correcty type
         NF: In insert mode, when <CR> is pressed, update the signs immediately
         NF: InsertEnter/Leave autocommands to update signs
+        NF: Stage hunks for git
     0.14: Aug 14, 2013:                                                 {{{1
         BF: Exception not caught (reported by Marco, thanks!)
         BF: Prevent flickering by resetting SignColumn on
