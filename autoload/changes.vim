@@ -39,11 +39,6 @@ fu! s:Check() "{{{1
 	call s:StoreMessage("No diff executable found")
 	throw 'changes:abort'
     endif
-    if !get(g:, 'changes_respect_SignColumn', 0)
-	" Make the Sign column not standout
-	hi! clear SignColumn
-	hi! link SignColumn Normal
-    endif
     let s:numeric_sort = v:version > 704 || v:version == 704 && has("patch341")
     if !s:numeric_sort
 	fu! s:MySortValues(i1, i2) "{{{2
@@ -1135,6 +1130,15 @@ fu! changes#Init() "{{{1
 	    return
 	endtry
 	let s:precheck=1
+    endif
+    if !get(g:, 'changes_respect_SignColumn', 0)
+	" Make the Sign column not standout
+	hi! clear SignColumn
+	if &l:nu || &l:rnu
+	    hi! link SignColumn LineNr
+	else
+	    hi! link SignColumn Normal
+	endif
     endif
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
