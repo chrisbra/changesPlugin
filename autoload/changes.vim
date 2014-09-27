@@ -800,12 +800,17 @@ endfu
 fu! s:CheckInvalidSigns() "{{{1
     let list=[[],{'add': [], 'del': [], 'ch': []}]
     let ind=0
+    let last=0
     for item in s:placed_signs[0]
 	if (item.type ==? 'dummy')
 	    continue
 	endif
 	if (item.type ==? '[Deleted]')
 	    " skip sign prefix '99'
+	    call add(list[0], item)
+	    continue
+	elseif (item.line == last)
+	    " remove duplicate signs
 	    call add(list[0], item)
 	    continue
 	endif
@@ -815,16 +820,18 @@ fu! s:CheckInvalidSigns() "{{{1
 	    " remove item from the placed sign list, so that we
 	    " don't erroneously place a dummy sign later on
 	    call remove(s:placed_signs[0], ind)
+	    "	Causes more harm, than good, so disabled for now
 "	elseif (s:PrevDictHasKey(item.line) !~? 'dummy' &&
 "	      \ empty(s:PrevDictHasKey((item.line-1)))) &&
 "	      \ index(b:diffhl[type], item.line+0) > -1
 "	    call add(list[0], item)
-"	    " line is of type dummy, but will probably needs to
+"	    " line is of type dummy, but will need to
 "	    " be of non-type dummy
 "	    call remove(s:placed_signs[0], ind)
 	else
 	    let ind+=1
 	endif
+	let last = item.line
     endfor
     for id in ['add', 'ch', 'del']
 	for line in sort(b:diffhl[id], (s:numeric_sort ? 'n' : 's:MySortValues'))
@@ -1208,7 +1215,7 @@ fu! changes#AuCmd(arg) "{{{1
 		    au FocusGained * :call s:UpdateView(1)
 		end
 		if !get(g:, 'changes_fast', 1)
-		    au InsertEnter,InsertLeave * :call s:UpdateView(1)
+		    au InsertEnter * :call changes#InsertSignOnEnter()
 		endif
 		au BufWinEnter * :call s:UpdateView(1)
 	    augroup END
@@ -1361,9 +1368,27 @@ endfu
 fu! changes#MapCR() "{{{1
     if !( pumvisible() ||
 	\ (exists("*wildmenumode") && wildmenumode()))
-	call s:UpdateView()
+	call changes#InsertSignOnEnter()
     endif
     return ''
+endfu
+fu! changes#InsertSignOnEnter() "{{{1
+    " prevent an expansive call to create a diff,
+    " simply check, if the current line has a sign
+    " and if not, add one
+    call changes#Init()
+    let prev = line('.')-1
+    let line = line('.')
+    let name=s:HasSign(line)
+    let prevname = s:HasSign(prev)
+    if empty(name)
+	" no sign yet on current line, add one.
+	let name = (!empty(prevname) ? 'dummyadd' : 'add')
+	let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
+			\ b:sign_prefix.s:SignId(), line, name, bufnr(''))
+	exe cmd
+    endif
+    let b:changes_last_line = line('$')
 endfu
 " Modeline "{{{1
 " vi:fdm=marker fdl=0
