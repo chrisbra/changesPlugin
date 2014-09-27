@@ -185,10 +185,14 @@ fu! s:SetupSignTextHl() "{{{1
     endif
 endfu
 
+fu! s:HasSign(line) "{{{1
+    let list =filter(copy(s:placed_signs[0]), 'v:val.line == a:line')
+    return (empty(list) ? '' : list[0].type)
+endfu
+
 fu! s:PlaceSigns(dict) "{{{1
-    let b = copy(s:placed_signs[1])
     " signs by other plugins
-    let changes_signs=[]
+    let b = copy(s:placed_signs[1])
     " Give changes a higher prio than adds
     for id in ['add', 'ch', 'del']
 	let prev_line = -1 
@@ -199,10 +203,6 @@ fu! s:PlaceSigns(dict) "{{{1
 	    " marks on the last line
 	    if item > line('$')
 		let item=line('$')
-	    endif
-	    if index(changes_signs, item) > -1
-		" There is already a Changes sign placed
-		continue
 	    endif
 	    " There already exists a sign in this line, skip now
 	    if index(b, item) > -1
@@ -221,12 +221,17 @@ fu! s:PlaceSigns(dict) "{{{1
 		    let name='dummy'.id
 		endif
 	    endif
+	    if s:HasSign(item) ==? name
+		" There is already a Changes sign placed
+		continue
+	    endif
+	    let sid=b:sign_prefix.s:SignId()
 	    let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
-			\ b:sign_prefix.s:SignId(), item, name, bufnr(''))
+			\ sid, item, name, bufnr(''))
 	    exe cmd
 	    " remember line number, so that we don't place a second sign
 	    " there!
-	    call add(changes_signs, item)
+	    call add(s:placed_signs[0], {'id': sid, 'line':item, 'type': name})
 	    let prev_line = item
 	endfor
     endfor
@@ -810,13 +815,13 @@ fu! s:CheckInvalidSigns() "{{{1
 	    " remove item from the placed sign list, so that we
 	    " don't erroneously place a dummy sign later on
 	    call remove(s:placed_signs[0], ind)
-	elseif (s:PrevDictHasKey(item.line) !~? 'dummy' &&
-	      \ empty(s:PrevDictHasKey((item.line-1)))) &&
-	      \ index(b:diffhl[type], item.line+0) > -1
-	    call add(list[0], item)
-	    " line is of type dummy, but will probably needs to
-	    " be of non-type dummy
-	    call remove(s:placed_signs[0], ind)
+"	elseif (s:PrevDictHasKey(item.line) !~? 'dummy' &&
+"	      \ empty(s:PrevDictHasKey((item.line-1)))) &&
+"	      \ index(b:diffhl[type], item.line+0) > -1
+"	    call add(list[0], item)
+"	    " line is of type dummy, but will probably needs to
+"	    " be of non-type dummy
+"	    call remove(s:placed_signs[0], ind)
 	else
 	    let ind+=1
 	endif
