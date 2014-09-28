@@ -1395,11 +1395,9 @@ fu! changes#InsertSignOnEnter() "{{{1
     endif
     if s:PrevDictHasKey(next) ==? 'add'
 	let item = filter(copy(s:placed_signs[0]), 'v:val.line ==? next')
-	let cmd  =  printf(":sil sign unplace %d buffer=%d", item[0].id, bufnr(''))
-	exe cmd
-	let cmd  =  printf(":sil sign place %d line=%d name=dummyadd buffer=%d",
+	call s:UnPlaceSpecificSigns(item)
+	exe  printf(":sil sign place %d line=%d name=dummyadd buffer=%d",
 		    \ item[0].id, next, bufnr(''))
-	exe cmd
     endif
     let b:changes_last_line = line('$')
 endfu
