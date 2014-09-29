@@ -173,14 +173,14 @@ fu! s:UpdateView(...) "{{{1
     endif
 endfu
 fu! s:SetupSignTextHl() "{{{1
-    if !hlID('ChangesSignTextAdd') || empty(synIDattr(hlID('ChangesSignTextAdd'), 'fg'))
+    if !hlID('ChangesSignTextAdd') || synIDattr(hlID('ChangesSignTextAdd'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextAdd'), 'fg'))
 	" highlighting group does not exist yet
 	hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green
     endif
-    if !hlID('ChangesSignTextDel') || empty(synIDattr(hlID('ChangesSignTextDel'), 'fg'))
+    if !hlID('ChangesSignTextDel') || synIDattr(hlID('ChangesSignTextDel'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextDel'), 'fg'))
 	hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=red
     endif
-    if !hlID('ChangesSignTextCh') || empty(synIDattr(hlID('ChangesSignTextCh'), 'fg'))
+    if !hlID('ChangesSignTextCh') || synIDattr(hlID('ChangesSignTextCh'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextCh'), 'fg'))
 	hi ChangesSignTextCh  ctermbg=21  ctermfg=white guibg=blue
     endif
 endfu
@@ -1205,7 +1205,7 @@ fu! changes#AuCmd(arg) "{{{1
 		autocmd!
 		au TextChanged,InsertLeave,FilterReadPost * :call s:UpdateView()
 		" make sure, hightlighting groups are not cleared
-		au GUIEnter * :try|call s:Check() |catch|endtry
+		au ColorScheme,GUIEnter * :try|call s:Check() |catch|endtry
 		if s:Is('unix')
 		    " FocusGained does not work well on Windows
 		    " because calling background processess triggers
