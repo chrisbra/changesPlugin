@@ -872,9 +872,8 @@ fu! s:UnPlaceSpecificSigns(dict) "{{{1
     endfor
 endfu
 fu! s:PlaceSpecificSign(id, line, type) "{{{1
-    let cmd=printf("sil sign place %d line=%d name=%s buffer=%d",
+    exe printf("sil sign place %d line=%d name=%s buffer=%d",
 		\ a:id, a:line, a:type, bufnr(''))
-    exe cmd
 endfu
 
 fu! s:InitSignDef() "{{{1
