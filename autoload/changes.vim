@@ -6,7 +6,6 @@
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
 " GetLatestVimScripts: 3052 14 :AutoInstall: ChangesPlugin.vim
-
 " Documentation: "{{{1
 " See :h ChangesPlugin.txt
 
@@ -62,7 +61,6 @@ fu! s:Check() "{{{1
     call s:SetupSignTextHl()
     call s:DefineSigns(0)
 endfu
-
 fu! s:DefineSigns(undef) "{{{1
     for key in keys(s:signs)
 	if a:undef
@@ -86,7 +84,6 @@ fu! s:DefineSigns(undef) "{{{1
 	endtry
     endfor
 endfu
-
 fu! s:CheckLines(arg) "{{{1
     " OLD: not needed any more.
     " a:arg  1: check original buffer
@@ -110,7 +107,6 @@ fu! s:CheckLines(arg) "{{{1
 	let line+=1
     endw
 endfu
-
 fu! s:UpdateView(...) "{{{1
     " if a:1 is given, force update!
     let force = exists("a:1") && a:1
@@ -177,7 +173,6 @@ fu! s:UpdateView(...) "{{{1
 	endtry
     endif
 endfu
-
 fu! s:SetupSignTextHl() "{{{1
     if !hlID('ChangesSignTextAdd') || empty(synIDattr(hlID('ChangesSignTextAdd'), 'fg'))
 	" highlighting group does not exist yet
@@ -190,12 +185,19 @@ fu! s:SetupSignTextHl() "{{{1
 	hi ChangesSignTextCh  ctermbg=21  ctermfg=white guibg=blue
     endif
 endfu
-
+" Is this faster than s:PrevDictHasKey?
 "fu! s:HasSign(line) "{{{1
 "    let list =filter(copy(s:placed_signs[0]), 'v:val.line == a:line')
 "    return (empty(list) ? '' : list[0].type)
 "endfu
-
+fu! s:PrevDictHasKey(line) "{{{1
+    for item in s:placed_signs[0]
+	if get(item, 'line', -1) ==? a:line
+	    return item.type
+	endif
+    endfor
+    return ''
+endfu
 fu! s:PlaceSigns(dict) "{{{1
     " signs by other plugins
     let b = copy(s:placed_signs[1])
@@ -240,7 +242,6 @@ fu! s:PlaceSigns(dict) "{{{1
 	endfor
     endfor
 endfu
-
 fu! s:UnPlaceSigns(force) "{{{1
     if !exists("b:sign_prefix")
 	return
@@ -256,11 +257,9 @@ fu! s:UnPlaceSigns(force) "{{{1
     let s:placed_signs = s:PlacedSigns()
     call s:UnPlaceSpecificSigns(s:placed_signs[0])
 endfu
-
 fu! s:Cwd() "{{{1
-    return escape(getcwd(), ' ')
+    return fnameescape(getcwd())
 endfu
-
 fu! s:StoreMessage(msg) "{{{1
     call add(s:msg, a:msg)
 endfu
@@ -305,7 +304,6 @@ fu! s:ChangeDir() "{{{1
     exe "lcd " fnameescape(fnamemodify(expand("%"), ':h'))
     return _pwd
 endfu
-
 fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
@@ -373,7 +371,6 @@ fu! s:MakeDiff_new(file) "{{{1
 	exe 'lcd' _pwd
     endtry
 endfu
-
 fu! s:MakeDiff(...) "{{{1
     " Old version, only needed, when GetDiff(3) is called (or argument 1 is non-empty)
     " Get diff for current buffer with original
@@ -437,7 +434,6 @@ fu! s:MakeDiff(...) "{{{1
     exe "lcd "  o_pwd
     return scratchbuf
 endfu
-
 fu! s:ParseDiffOutput(file) "{{{1
     let b:current_line = 1000000 
     for line in filter(readfile(a:file), 'v:val=~''^@@''')
@@ -489,7 +485,6 @@ fu! s:ParseDiffOutput(file) "{{{1
 	endif
     endfor
 endfu
-
 fu! s:ReturnGitRepPath() "{{{1
     " return the top level of the repository path. This is needed, so
     " git show will correctly return the file
@@ -509,15 +504,8 @@ fu! s:ReturnGitRepPath() "{{{1
 	throw 'changes: No git Repository found'
     else
 	return fnamemodify(dir, ':h')
-	let ldir  =  strlen(substitute(dir, '.', 'x', 'g'))-4
-	if ldir
-	    return file[ldir :]
-	else
-	    return ''
-	endif
     endif
 endfu
-
 fu! s:ShowDifferentLines() "{{{1
     if !exists("b:diffhl")
 	return
@@ -542,7 +530,6 @@ fu! s:ShowDifferentLines() "{{{1
 	lopen
     endif
 endfun
-
 fu! s:GetSignId() "{{{1
     let signs = s:GetPlacedSigns()
     if empty(signs)
@@ -557,7 +544,6 @@ fu! s:GetSignId() "{{{1
     endfor
     return max(list)
 endfu
-
 fu! s:GetPlacedSigns() "{{{1
     if exists("s:all_signs")
 	return s:all_signs
@@ -566,7 +552,6 @@ fu! s:GetPlacedSigns() "{{{1
     let s:all_signs = split(a,"\n")[1:]
     return s:all_signs
 endfu
-
 fu! s:PlacedSigns() "{{{1
     if empty(bufname(''))
 	" empty(bufname): unnamed buffer, can't get diff of it,
@@ -601,16 +586,15 @@ fu! s:PlacedSigns() "{{{1
     unlet! s:all_signs
     return [own, other]
 endfu
-
 fu! s:GuessVCSSystem() "{{{1
     " Check global config variable
-    if exists("g:changes_vcs_system")
-	let vcs=matchstr(g:changes_vcs_system, '\c\(git\)\|\(hg\)\|\(bzr\)\|\(cvs\)\|\(svn\)'.
+    for var in [ 'b:', 'g:']
+	let vcs=matchstr(get(var, changes_vcs_system, ''), '\c\(git\)\|\(hg\)\|\(bzr\)\|\(cvs\)\|\(svn\)'.
 		    \ '\|\(subversion\)\|\(mercurial\)\|\(rcs\)\|\(fossil\)\|\(darcs\)')
 	if vcs
 	    return vcs
 	endif
-    endif
+    endfor
     let file = fnamemodify(resolve(expand("%")), ':p')
     let path = escape(fnamemodify(file, ':h'), ' ')
     " First try git and hg, they seem to be the most popular ones these days
@@ -634,7 +618,6 @@ fu! s:GuessVCSSystem() "{{{1
 	return ''
     endif
 endfu
-
 fu! s:Is(os) "{{{1
     if (a:os == "win")
         return has("win32") || has("win16") || has("win64")
@@ -644,7 +627,6 @@ fu! s:Is(os) "{{{1
         return has("unix") || has("macunix")
     endif
 endfu
-
 fu! s:RemoveConsecutiveLines(fwd, list) "{{{1
     " only keep the start/end of a bunch of successive lines
     let temp  = -1
@@ -658,7 +640,6 @@ fu! s:RemoveConsecutiveLines(fwd, list) "{{{1
     endfor
     return lines
 endfu
-
 fu! s:GetDiff(arg, bang, ...) "{{{1
     " a:arg == 1 Create signs
     " a:arg == 2 Show changed lines in locationlist
@@ -792,13 +773,13 @@ fu! s:SignType(string) "{{{1
     " returns type but skips dummy type
     return matchstr(a:string, '\(dummy\)\?\zs.*$')
 endfu
-
 fu! s:CheckInvalidSigns() "{{{1
     " list[0]: signs to remove
     " list[1]: signs to add
     let list=[[],{'add': [], 'del': [], 'ch': []}]
     let ind=0
     let last=0
+    " 1) check, if there are signs to delete
     for item in s:placed_signs[0]
 	if (item.type ==? 'dummy')
 	    continue
@@ -831,6 +812,7 @@ fu! s:CheckInvalidSigns() "{{{1
 	    let last = item.line
 	endif
     endfor
+    " Check, which signs are to be placed
     for id in ['add', 'ch', 'del']
 	for line in sort(b:diffhl[id], (s:numeric_sort ? 'n' : 's:MySortValues'))
 	    let type = s:PrevDictHasKey(line)
@@ -854,15 +836,6 @@ fu! s:CheckInvalidSigns() "{{{1
     endfor
     return list
 endfu
-
-fu! s:PrevDictHasKey(line) "{{{1
-    for item in s:placed_signs[0]
-	if get(item, 'line', -1) ==? a:line
-	    return item.type
-	endif
-    endfor
-    return ''
-endfu
 fu! s:UnPlaceSpecificSigns(dict) "{{{1
     for sign in a:dict
 	if sign.type ==# 'dummy'
@@ -875,7 +848,6 @@ fu! s:PlaceSpecificSign(id, line, type) "{{{1
     exe printf("sil sign place %d line=%d name=%s buffer=%d",
 		\ a:id, a:line, a:type, bufnr(''))
 endfu
-
 fu! s:InitSignDef() "{{{1
     let signs={}
     let s:changes_sign_hi_style = get(s:, 'changes_sign_hi_style', 0)
@@ -919,12 +891,10 @@ fu! s:InitSignDef() "{{{1
     endif
     return signs
 endfu
-
 fu! s:MakeSignIcon() "{{{1
     " Windows seems to have problems with the gui
     return has("gui_running") && !s:Is("win")
 endfu
-
 fu! s:SaveRestoreChangeMarks(save) "{{{1
     if a:save
 	let s:_change_mark = [getpos("'["), getpos("']")]
@@ -990,7 +960,6 @@ fu! s:AddMatches(pattern) "{{{1
 	let b:changes_linehi_diff_match[changenr()] = matchadd('CursorLine', a:pattern)
     endif
 endfu
-
 fu! s:SignId() "{{{1
     if !exists("b:changes_sign_id")
 	let b:changes_sign_id = 0
@@ -998,7 +967,6 @@ fu! s:SignId() "{{{1
     let b:changes_sign_id += 1
     return printf("%02d", b:changes_sign_id)
 endfu
-
 fu! changes#PlaceSignDummy(doplace) "{{{1
     if !exists("b:sign_prefix")
 	return
@@ -1016,13 +984,11 @@ fu! changes#PlaceSignDummy(doplace) "{{{1
 	exe "sil sign unplace " b:sign_prefix.'0'
     endif
 endfu
-
 fu! changes#GetStats() "{{{1
     return [  len(get(get(b:, 'diffhl', []), 'add', [])),
 	    \ len(get(get(b:, 'diffhl', []), 'ch',  [])),
 	    \ len(get(get(b:, 'diffhl', []), 'del', []))]
 endfu
-
 fu! changes#WarningMsg() "{{{1
     if !&vbs
 	" Set verbose to 1 to have messages displayed!
@@ -1041,7 +1007,6 @@ fu! changes#WarningMsg() "{{{1
 	let s:msg = []
     endif
 endfu
-
 fu! changes#Output() "{{{1
     let add = '+'
     let ch  = '*'
@@ -1064,7 +1029,6 @@ fu! changes#Output() "{{{1
     echo ch. " Changed Lines"
     echohl Normal
 endfu
-
 fu! changes#Init() "{{{1
     " Message queue, that will be displayed.
     let s:msg      = []
@@ -1167,7 +1131,6 @@ fu! changes#Init() "{{{1
 	call ChangesMap('<cr>')
     endif
 endfu
-
 fu! changes#EnableChanges(arg, bang, ...) "{{{1
     if exists("s:ignore") && get(s:ignore, bufnr('%'), 0)
 	call remove(s:ignore, bufnr('%'))
@@ -1181,7 +1144,6 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
 	call changes#CleanUp()
     endtry
 endfu
-
 fu! changes#CleanUp() "{{{1
     " only delete signs, that have been set by this plugin
     call s:UnPlaceSigns(0)
@@ -1248,8 +1210,7 @@ fu! changes#TCV() "{{{1
 	    call changes#CleanUp()
 	endtry
     endif
-endfunction
-
+endfu
 fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     " Make sure, the hunks are up to date
     let _fen = &fen
@@ -1314,7 +1275,6 @@ fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     let prefix=(cnt > 0 ? "\<esc>" : "")
     return prefix.lines[cnt]. "G".suffix
 endfu
-
 fu! changes#CurrentHunk() "{{{1
     if changes#MoveToNextChange(0,1) == "\<Esc>"
 	" outside of a hunk
@@ -1339,7 +1299,6 @@ fu! changes#FoldDifferences(enable) "{{{1
 	endfor
     endif
 endfu
-
 fu! changes#ToggleHiStyle() "{{{1
     let s:changes_sign_hi_style += 1
     if s:changes_sign_hi_style > 2
