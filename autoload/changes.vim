@@ -778,7 +778,7 @@ fu! s:CheckInvalidSigns() "{{{1
     " list[1]: signs to add
     let list=[[],{'add': [], 'del': [], 'ch': []}]
     let ind=0
-    let last=0
+    let last={}
     " 1) check, if there are signs to delete
     for item in s:placed_signs[0]
 	if (item.type ==? 'dummy')
@@ -788,7 +788,7 @@ fu! s:CheckInvalidSigns() "{{{1
 	    " skip sign prefix '99'
 	    call add(list[0], item)
 	    continue
-	elseif (item.line == last)
+	elseif (item.line == get(last, 'line', 0))
 	    " remove duplicate signs
 	    call add(list[0], item)
 	    continue
@@ -804,14 +804,20 @@ fu! s:CheckInvalidSigns() "{{{1
 		" delete list and to the add list
 		call add(list[0], next)
 		if index(b:diffhl[type], next.line) > -1
-		    call add(list[1][type], next.line)
+		    call add(list[1][type], next.line+0)
 		endif
 		call remove(s:placed_signs[0], ind+1)
 	    endif
 	    call remove(s:placed_signs[0], ind)
 	else
+	    if item.type =~? 'dummy' && s:SignType(last.type) != type
+		call add(list[0], item)
+		if index(b:diffhl[type], item.line+0) > -1
+		    call add(list[1][type],  item.line)
+		endif
+	    endif
 	    let ind+=1
-	    let last = item.line
+	    let last = item
 	endif
     endfor
     " Check, which signs are to be placed
