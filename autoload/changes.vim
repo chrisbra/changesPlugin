@@ -1380,7 +1380,7 @@ fu! changes#StageHunk(line) "{{{1
 	    return
 	endif
 	if get(b:, 'vcs_type', '') == 'git' && changes#GetStats() !=? [0,0,0]
-	    noa write
+	    sil noa write
 	    let git_rep_p = s:ReturnGitRepPath()
 	    exe "lcd" git_rep_p
 	    let diff = split(system("git diff -U0 --no-ext-diff --no-color ".
@@ -1399,7 +1399,7 @@ fu! changes#StageHunk(line) "{{{1
 		    let lines = split(temp, ',')
 		    call map(lines, 'matchstr(v:val, ''\d\+'')+0')
 		    if (len(lines) == 2 &&
-			    \ cur >= lines[0] && cur < lines[0]+lines[1]) ||
+			    \ cur >= lines[0] && cur <= lines[0]+lines[1]) ||
 			\ (len(lines) == 1 && cur == lines[0])
 			" this is the hunk the cursor is on
 			let found=1
