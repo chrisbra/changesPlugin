@@ -69,8 +69,15 @@ if !hasmapto("ah", 'o')
     omap <silent> ah :norm Vah<cr>
 endif
 
+if !hasmapto('<Plug>(ChangesStageHunk)')
+    nmap <unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
+endif
+if !hasmapto('StageHunk')
+    nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>StageHunk
+endif
+nnoremap <sid>StageHunk :<c-u>call changes#StageHunk(line('.'))<cr>
+
 " In Insert mode, when <cr> is pressed, update the signs immediately
-"
 if !get(g:, 'changes_fast', 1)
     call ChangesMap('<cr>')
 endif
