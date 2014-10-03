@@ -1380,7 +1380,9 @@ fu! changes#StageHunk(line) "{{{1
 	    return
 	endif
 	if get(b:, 'vcs_type', '') == 'git' && changes#GetStats() !=? [0,0,0]
-	    sil noa write
+	    if &mod
+		sil noa write
+	    endif
 	    let git_rep_p = s:ReturnGitRepPath()
 	    exe "lcd" git_rep_p
 	    let diff = split(system("git diff -U0 --no-ext-diff --no-color ".
@@ -1389,7 +1391,6 @@ fu! changes#StageHunk(line) "{{{1
 	    let found=0
 	    let hunk=[]
 	    let index = match(diff, '^+++')
-	    let header=diff[0:index]
 	    for line in diff[index + 1 : ]
 		if line =~? '^@@.*@@'
 		    if found
@@ -1399,8 +1400,9 @@ fu! changes#StageHunk(line) "{{{1
 		    let lines = split(temp, ',')
 		    call map(lines, 'matchstr(v:val, ''\d\+'')+0')
 		    if (len(lines) == 2 &&
-			    \ cur >= lines[0] && cur <= lines[0]+lines[1]) ||
-			\ (len(lines) == 1 && cur == lines[0])
+			    \ cur >= lines[0] && cur < lines[0]+lines[1]) ||
+			\ (len(lines) == 1 && cur == lines[0]) ||
+			\ (len(lines) == 2 && lines[1] == 0 && cur == lines[0])
 			" this is the hunk the cursor is on
 			let found=1
 		    endif
@@ -1414,7 +1416,7 @@ fu! changes#StageHunk(line) "{{{1
 		return
 	    endif
 	    " Add filename to hunk
-	    let hunk = header + hunk
+	    let hunk = diff[0:index] + hunk
 	    let output=system('git apply --cached --unidiff-zero - ', s:Output(hunk))
 	    if v:shell_error
 		call s:StoreMessage(output)
