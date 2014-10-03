@@ -798,15 +798,17 @@ fu! s:CheckInvalidSigns() "{{{1
 	    call add(list[0], item)
 	    " remove item from the placed sign list, so that we
 	    " don't erroneously place a dummy sign later on
+	    let next = get(s:placed_signs[0], ind+1, {})
+	    if item.type !~? 'dummy' && !empty(next) && next.type =~? 'dummy'
+		" The next line should not be of type dummy, so add it to the
+		" delete list and to the add list
+		call add(list[0], next)
+		if index(b:diffhl[type], next.line) > -1
+		    call add(list[1][type], next.line)
+		endif
+		call remove(s:placed_signs[0], ind+1)
+	    endif
 	    call remove(s:placed_signs[0], ind)
-	    "	Causes more harm, than good, so disabled for now
-"	elseif (s:PrevDictHasKey(item.line) !~? 'dummy' &&
-"	      \ empty(s:PrevDictHasKey((item.line-1)))) &&
-"	      \ index(b:diffhl[type], item.line+0) > -1
-"	    call add(list[0], item)
-"	    " line is of type dummy, but will need to
-"	    " be of non-type dummy
-"	    call remove(s:placed_signs[0], ind)
 	else
 	    let ind+=1
 	    let last = item.line
