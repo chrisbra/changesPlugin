@@ -1356,6 +1356,10 @@ fu! changes#InsertSignOnEnter() "{{{1
     " prevent an expansive call to create a diff,
     " simply check, if the current line has a sign
     " and if not, add one
+    if empty(bufname(''))
+	" Can't get a diff out of an unnamed buffer
+	return
+    endif
     call changes#Init()
     let line = line('.')
     let prev = line - 1
