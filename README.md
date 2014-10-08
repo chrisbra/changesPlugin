@@ -60,6 +60,7 @@ Here is a short overview of the functionality provided by the plugin:
     ]h   - Moves forward to the next changed line
     [h   - Moves backwards to the previous changed line
     ah   - Selects the current hunk (TextObject)
+    <Leader>h - Stage the hunk, the cursor is on (works only for git)
 
 ### Configuration
 

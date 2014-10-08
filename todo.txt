@@ -7,7 +7,7 @@
 - add timing statistics for debug mode
 - better update of highlighting (if lines change, add offset to highlighting pattern)
 - Make highlighting use its own highlight group (which might be linked to whatever group)
-
+- add staging possibility for at least hg
 
 " Should work now:
 - more ways to highlight changes:
