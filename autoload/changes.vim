@@ -1371,11 +1371,14 @@ fu! changes#StageHunk(line) "{{{1
 	let cur = a:line
 	let _pwd = s:ChangeDir()
 	let _wsv = winsaveview()
+	let _vbs = &verbose
 	call changes#Init()
 	if get(b:, 'vcs_type', '') !=? 'git'
+	    let &vbs=1
 	    call s:StoreMessage("Sorry, staging Hunks is only supported for git!")
 	    return
 	elseif changes#GetStats() ==? [0,0,0]
+	    let &vbs=1
 	    call s:StoreMessage('No changes detected, nothing to do!')
 	    return
 	endif
@@ -1413,6 +1416,7 @@ fu! changes#StageHunk(line) "{{{1
 	    endfor
 	    if empty(hunk)
 		call s:StoreMessage('Cursor not on a diff hunk, aborting!')
+		let &vbs=1
 		return
 	    endif
 	    " Add filename to hunk
@@ -1424,11 +1428,15 @@ fu! changes#StageHunk(line) "{{{1
 	    call s:GetDiff(1, '')
 	endif
     catch
+	let &vbs=1
 	call s:StoreMessage("Exception occured")
 	call s:StoreMessage(string(v:exception))
     finally
 	exe "lcd " _pwd
 	call changes#WarningMsg()
+	if &vbs != _vbs
+	    let &vbs = _vbs
+	endif
 	call winrestview(_wsv)
     endtry
 endfu
