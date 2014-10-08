@@ -1085,10 +1085,10 @@ fu! changes#Init() "{{{1
 	" Define aliases...
 	let s:vcs_cat.mercurial  = s:vcs_cat.hg
 	let s:vcs_cat.subversion = s:vcs_cat.svn
-	let s:vcs_diff = {'git': ' git diff -U0 --no-ext-diff --no-color ',
-	                \ 'hg' : ' hg diff -U0 '}
-	let s:vcs_apply = {'git': ' git apply --cached --unidiff-zero -',
-		        \ 'hg' :  ' hg import --bypass --mq -m "ChangesStageHunk" - '}
+	let s:vcs_diff = {'git': ' diff -U0 --no-ext-diff --no-color ',
+	                \ 'hg' : ' diff -U0 '}
+	let s:vcs_apply = {'git': ' apply --cached --unidiff-zero -',
+		        \ 'hg' :  ' import - '}
     endif
 
     " Settings for Version Control
@@ -1385,24 +1385,23 @@ fu! changes#StageHunk(line) "{{{1
 	let _wsv = winsaveview()
 	let _vbs = &verbose
 	call changes#Init()
-	if get(b:, 'vcs_type', '') !=? 'git' && get(b:, 'vcs_type', '') !=? 'hg'
+	if get(b:, 'vcs_type', '') !=? 'git'
 	    let &vbs=1
-	    call s:StoreMessage("Sorry, staging Hunks is only supported for git/hg!")
+	    call s:StoreMessage("Sorry, staging Hunks is only supported for git!")
 	    return
 	elseif changes#GetStats() ==? [0,0,0]
 	    let &vbs=1
 	    call s:StoreMessage('No changes detected, nothing to do!')
 	    return
 	endif
-	if  changes#GetStats() !=? [0,0,0]
+	if get(b:, 'vcs_type', '') !=? 'git' && get(b:, 'vcs_type', '') !=? 'hg' && 
+		    \ changes#GetStats() !=? [0,0,0]
 	    if &mod
 		sil noa write
 	    endif
-	    if get(b:, 'vcs_type', '') ==? 'git'
-		let git_rep_p = s:ReturnGitRepPath()
-		exe "lcd" git_rep_p
-	    endif
-	    let diff = split(system(s:vcs_diff[b:vcs_type]. ' '. 
+	    let git_rep_p = s:ReturnGitRepPath()
+	    exe "lcd" git_rep_p
+	    let diff = split(system(b:vcs_type. s:vcs_diff[b:vcs_type]
 			\ expand('%')), "\n")
 	    let file=''
 	    let found=0
@@ -1435,7 +1434,7 @@ fu! changes#StageHunk(line) "{{{1
 	    endif
 	    " Add filename to hunk
 	    let hunk = diff[0:index] + hunk
-	    let output=system(s:vcs_apply[b:vcs_type], s:Output(hunk))
+	    let output=system(b:vcs_type. s:vcs_apply[b:vcs_type], s:Output(hunk))
 	    if v:shell_error
 		call s:StoreMessage(output)
 	    endif
