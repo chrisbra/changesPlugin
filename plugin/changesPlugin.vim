@@ -70,7 +70,7 @@ if !hasmapto("ah", 'o')
 endif
 
 if !hasmapto('<Plug>(ChangesStageHunk)')
-    nmap <unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
+    nmap <silent><unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
     nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunk
     nnoremap <sid>ChangesStageHunk :<c-u>call changes#StageHunk(line('.'))<cr>
 endif
