@@ -142,7 +142,12 @@ commit histoy is cleaner. Use: >
 
     :ChangesStageCurrentHunk
 < 
-to stage the hunk the cursor is currently on.
+to stage the hunk the cursor is currently on. Use: >
+
+    :ChangesStageCurrentHunk!
+
+to revert a staged hunk. Note: The cursor needs to be on a line, that has been
+staged or that is on a diff.
 
                                                 *ChangesPlugin-Maps* *[h* *]h*
 ChangesPlugin also sets up some mappings to move from one changed line to
@@ -155,6 +160,7 @@ another. By default, those mappings are defined:
           mode)
                                                                 *<Leader>h*
 `<Leader>h` selects the current hunk and stages it. (only possible for git).
+`<Leader>H` selects the staged hunk and reverts it. (only possible for git).
 
 ==============================================================================
                                                         *ChangesPlugin-Config*

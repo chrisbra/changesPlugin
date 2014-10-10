@@ -1089,6 +1089,7 @@ fu! changes#Init() "{{{1
 	                \ 'hg' : ' diff -U0 '}
 	let s:vcs_apply = {'git': ' apply --cached --unidiff-zero -',
 		        \ 'hg' :  ' import - '}
+	let s:vcs_revert = {'git': ' apply --cached --reverse --unidiff-zero -'}
     endif
 
     " Settings for Version Control
@@ -1378,7 +1379,7 @@ fu! changes#InsertSignOnEnter() "{{{1
     endif
     let b:changes_last_line = line('$')
 endfu
-fu! changes#StageHunk(line) "{{{1
+fu! changes#StageHunk(line, revert) "{{{1
     try
 	let cur = a:line
 	let _pwd = s:ChangeDir()
@@ -1389,19 +1390,27 @@ fu! changes#StageHunk(line) "{{{1
 	    let &vbs=1
 	    call s:StoreMessage("Sorry, staging Hunks is only supported for git!")
 	    return
-	elseif changes#GetStats() ==? [0,0,0]
+	elseif !a:revert && changes#GetStats() ==? [0,0,0]
 	    let &vbs=1
 	    call s:StoreMessage('No changes detected, nothing to do!')
 	    return
 	endif
-	if  changes#GetStats() !=? [0,0,0]
+	if  changes#GetStats() !=? [0,0,0] || a:revert
 	    if &mod
 		sil noa write
 	    endif
 	    let git_rep_p = s:ReturnGitRepPath()
 	    exe "lcd" git_rep_p
-	    let diff = split(system(b:vcs_type. s:vcs_diff[b:vcs_type]
+	    " When reverting, need to get cached diff
+	    let diff = split(system(b:vcs_type.
+			\ s:vcs_diff[b:vcs_type].
+			\ (a:revert ? ' --cached ' : '').
 			\ expand('%')), "\n")
+	    if v:shell_error
+		let &vbs=1
+		call s:StoreMessage("Error occured: ". join(diff, "\n"))
+		return
+	    endif
 	    let file=''
 	    let found=0
 	    let hunk=[]
@@ -1433,7 +1442,9 @@ fu! changes#StageHunk(line) "{{{1
 	    endif
 	    " Add filename to hunk
 	    let hunk = diff[0:index] + hunk
-	    let output=system(b:vcs_type. s:vcs_apply[b:vcs_type], s:Output(hunk))
+	    let output=system(b:vcs_type. (a:revert ?
+		    \ s:vcs_revert[b:vcs_type] :
+		    \ s:vcs_apply[b:vcs_type]), s:Output(hunk))
 	    if v:shell_error
 		call s:StoreMessage(output)
 	    endif

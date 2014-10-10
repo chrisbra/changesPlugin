@@ -42,8 +42,8 @@ com! ChangesCaption		call changes#Output()
 com! ChangesLinesOverview	call changes#EnableChanges(2, '')
 com! ChangesDiffMode		call changes#EnableChanges(3, '')
 com! ChangesStyleToggle		call changes#ToggleHiStyle()
-com! -bang ChangesFoldDifferences call changes#FoldDifferences(<q-bang>)
-com! ChangesStageCurrentHunk	call changes#StageHunk(line('.'))
+com! -bang ChangesFoldDifferences   call changes#FoldDifferences(<q-bang>)
+com! -bang ChangesStageCurrentHunk  call changes#StageHunk(line('.'), !empty(<q-bang>))
 
 if get(g:, 'changes_autocmd', 1) || get(g:, 'changes_fixed_sign_column', 0)
     try
@@ -73,7 +73,13 @@ endif
 if !hasmapto('<Plug>(ChangesStageHunk)')
     nmap <silent><unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
     nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunk
-    nnoremap <sid>ChangesStageHunk :<c-u>call changes#StageHunk(line('.'))<cr>
+    nnoremap <sid>ChangesStageHunk :<c-u>call changes#StageHunk(line('.'), 0)<cr>
+endif
+
+if !hasmapto('<Plug>(ChangesStageHunkRevert)')
+    nmap <silent><unique><nowait> <Leader>H <Plug>(ChangesStageHunkRevert)
+    nnoremap <unique><script> <Plug>(ChangesStageHunkRevert) <sid>ChangesStageHunkRevert
+    nnoremap <sid>ChangesStageHunkRevert :<c-u>call changes#StageHunk(line('.'), 1)<cr>
 endif
 
 " In Insert mode, when <cr> is pressed, update the signs immediately
