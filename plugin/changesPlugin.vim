@@ -71,13 +71,13 @@ if !hasmapto("ah", 'o')
 endif
 
 if !hasmapto('<Plug>(ChangesStageHunk)')
-    nmap <silent><unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
-    nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunk
-    nnoremap <sid>ChangesStageHunk :<c-u>call changes#StageHunk(line('.'), 0)<cr>
+    nmap     <silent><unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
+    nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunkAdd
+    nnoremap <sid>ChangesStageHunkAdd :<c-u>call changes#StageHunk(line('.'), 0)<cr>
 endif
 
 if !hasmapto('<Plug>(ChangesStageHunkRevert)')
-    nmap <silent><unique><nowait> <Leader>H <Plug>(ChangesStageHunkRevert)
+    nmap     <silent><unique><nowait> <Leader>H <Plug>(ChangesStageHunkRevert)
     nnoremap <unique><script> <Plug>(ChangesStageHunkRevert) <sid>ChangesStageHunkRevert
     nnoremap <sid>ChangesStageHunkRevert :<c-u>call changes#StageHunk(line('.'), 1)<cr>
 endif
