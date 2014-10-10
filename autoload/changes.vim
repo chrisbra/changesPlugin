@@ -1394,8 +1394,7 @@ fu! changes#StageHunk(line) "{{{1
 	    call s:StoreMessage('No changes detected, nothing to do!')
 	    return
 	endif
-	if get(b:, 'vcs_type', '') !=? 'git' && get(b:, 'vcs_type', '') !=? 'hg' && 
-		    \ changes#GetStats() !=? [0,0,0]
+	if  changes#GetStats() !=? [0,0,0]
 	    if &mod
 		sil noa write
 	    endif
