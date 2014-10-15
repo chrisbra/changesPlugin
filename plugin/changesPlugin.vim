@@ -83,7 +83,7 @@ if !hasmapto('<Plug>(ChangesStageHunkRevert)')
 endif
 
 " In Insert mode, when <cr> is pressed, update the signs immediately
-if !get(g:, 'changes_fast', 1)
+if !get(g:, 'changes_fast', 1) && !hasmapto('<cr>', 'i')
     call ChangesMap('<cr>')
 endif
 
