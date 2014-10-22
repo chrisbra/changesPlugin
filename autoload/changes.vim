@@ -122,6 +122,9 @@ fu! s:UpdateView(...) "{{{1
     if empty(bufname(''))
 	" Can't get a diff out of an unnamed buffer
 	return
+    elseif !empty(&buftype) || &ro
+	" Can't get a diff of a special buffer
+	return
     endif
     let b:changes_last_line = get(b:, 'changes_last_line', line('$'))
     if exists("s:ignore")
@@ -149,10 +152,6 @@ fu! s:UpdateView(...) "{{{1
 	" bit more unprecise.)
 	" If you don't like this, set the g:changes_fast variable to zero
 	let b:changes_chg_tick = b:changedtick
-    endif
-    if &buftype==?"help" || &ro
-	" Skip Vim help files and readonly files
-	return
     endif
 	
     if  b:changes_chg_tick != b:changedtick || force
@@ -686,6 +685,12 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 		return
 	    endif
 
+	    " do not generate signs for special buffers
+	    if !empty(&buftype)
+		call s:StoreMessage("Not generating diff for special buffer!")
+		let s:ignore[bufnr('%')] = 1
+	    endif
+
 	    let b:diffhl={'add': [], 'del': [], 'ch': []}
 	    if a:arg == 3
 		let s:temp = {'del': []}
@@ -986,6 +991,9 @@ fu! s:SignId() "{{{1
 endfu
 fu! changes#PlaceSignDummy(doplace) "{{{1
     if !exists("b:sign_prefix")
+	return
+    elseif !empty(&buftype)
+	" do not place a dummy sign here
 	return
     endif
     if a:doplace
@@ -1358,6 +1366,9 @@ fu! changes#InsertSignOnEnter() "{{{1
     " and if not, add one
     if empty(bufname(''))
 	" Can't get a diff out of an unnamed buffer
+	return
+    elseif !empty(&buftype)
+	" Can't get a diff of a special buffer
 	return
     endif
     call changes#Init()
