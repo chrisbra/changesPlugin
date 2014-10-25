@@ -119,11 +119,7 @@ fu! s:UpdateView(...) "{{{1
 	endtry
 	let did_source_init = 1
     endif
-    if empty(bufname(''))
-	" Can't get a diff out of an unnamed buffer
-	return
-    elseif !empty(&buftype) || &ro
-	" Can't get a diff of a special buffer
+    if !s:IsUpdateAllowed()
 	return
     endif
     let b:changes_last_line = get(b:, 'changes_last_line', line('$'))
@@ -989,11 +985,18 @@ fu! s:SignId() "{{{1
     let b:changes_sign_id += 1
     return printf("%02d", b:changes_sign_id)
 endfu
+fu! s:IsUpdateAllowed() "{{{1
+    if empty(bufname('')) || !empty(&buftype) || &ro
+	" Don't make a diff out of an unnamed buffer
+	" or of a special buffer or of a read-only buffer
+	return 0
+    endif
+    return 1
+endfu
 fu! changes#PlaceSignDummy(doplace) "{{{1
     if !exists("b:sign_prefix")
 	return
-    elseif !empty(&buftype)
-	" do not place a dummy sign here
+    elseif !s:IsUpdateAllowed()
 	return
     endif
     if a:doplace
@@ -1364,11 +1367,7 @@ fu! changes#InsertSignOnEnter() "{{{1
     " prevent an expansive call to create a diff,
     " simply check, if the current line has a sign
     " and if not, add one
-    if empty(bufname(''))
-	" Can't get a diff out of an unnamed buffer
-	return
-    elseif !empty(&buftype)
-	" Can't get a diff of a special buffer
+    if !s:IsUpdateAllowed()
 	return
     endif
     call changes#Init()
