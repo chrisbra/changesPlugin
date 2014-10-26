@@ -986,7 +986,7 @@ fu! s:SignId() "{{{1
     return printf("%02d", b:changes_sign_id)
 endfu
 fu! s:IsUpdateAllowed() "{{{1
-    if empty(bufname('')) || !empty(&buftype) || &ro
+    if empty(bufname('')) || !empty(&buftype) || &ro || get(s:ignore, bufnr('%'), 0)
 	" Don't make a diff out of an unnamed buffer
 	" or of a special buffer or of a read-only buffer
 	return 0
