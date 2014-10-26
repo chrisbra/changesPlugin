@@ -1063,7 +1063,9 @@ fu! changes#Init() "{{{1
     " save change marks
     call s:SaveRestoreChangeMarks(1)
     " Ignore buffer
-    let s:ignore   = {}
+    if !exists("s:ignore")
+	let s:ignore   = {}
+    endif
     let s:changes_signs_undefined=0
     let s:autocmd  = get(g:, 'changes_autocmd', 1)
     " Check against a file in a vcs system
