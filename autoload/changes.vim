@@ -515,16 +515,22 @@ fu! s:ShowDifferentLines() "{{{1
     else
 	let list=[]
 	let placed={}
+	let tline = -1
 	let types={'ch':'*', 'add': '+', 'del': '-'}
 	for type in ['ch', 'del', 'add']
 	    for line in b:diffhl[type]
 		if has_key(placed, line)
 		    continue
 		endif
+		if line == tline+1
+		    let tline=line
+		    continue
+		endif
 		call add(list, {'bufnr': bufnr(''),
 		    \ 'lnum': line, 'text': getline(line),
 		    \ 'type': types[type]})
 		let placed.line=1
+		let tline=line
 	    endfor
 	endfor
     endif
