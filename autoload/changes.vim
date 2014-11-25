@@ -119,7 +119,7 @@ fu! s:UpdateView(...) "{{{1
 	endtry
 	let did_source_init = 1
     endif
-    if !s:IsUpdateAllowed()
+    if !s:IsUpdateAllowed(1)
 	return
     endif
     let b:changes_last_line = get(b:, 'changes_last_line', line('$'))
@@ -991,10 +991,13 @@ fu! s:SignId() "{{{1
     let b:changes_sign_id += 1
     return printf("%02d", b:changes_sign_id)
 endfu
-fu! s:IsUpdateAllowed() "{{{1
-    if empty(bufname('')) || !empty(&buftype) || &ro || get(s:ignore, bufnr('%'), 0)
+fu! s:IsUpdateAllowed(empty) "{{{1
+    if !empty(&buftype) || &ro || get(s:ignore, bufnr('%'), 0)
 	" Don't make a diff out of an unnamed buffer
 	" or of a special buffer or of a read-only buffer
+	return 0
+	" only check for empty buffer when a:empty is true
+    elseif a:empty && empty(bufname(''))
 	return 0
     endif
     return 1
@@ -1002,7 +1005,7 @@ endfu
 fu! changes#PlaceSignDummy(doplace) "{{{1
     if !exists("b:sign_prefix")
 	return
-    elseif !s:IsUpdateAllowed()
+    elseif !s:IsUpdateAllowed(0)
 	return
     endif
     if a:doplace
@@ -1375,7 +1378,7 @@ fu! changes#InsertSignOnEnter() "{{{1
     " prevent an expansive call to create a diff,
     " simply check, if the current line has a sign
     " and if not, add one
-    if !s:IsUpdateAllowed()
+    if !s:IsUpdateAllowed(1)
 	return
     endif
     call changes#Init()
