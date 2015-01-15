@@ -10,7 +10,9 @@ all: uninstall vimball install
 
 vimball: $(PLUGIN).vmb
 
-release: uninstall vim
+zip: $(PLUGIN).zip
+
+release: uninstall version zip
 
 clean:
 	rm -rf *.vmb *.vba */*.orig *.~* .VimballRecord doc/tags
