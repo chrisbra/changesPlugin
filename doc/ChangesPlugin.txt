@@ -1,7 +1,7 @@
 *ChangesPlugin.txt*  Print indication of changed lines for a buffer
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.14 Wed, 14 Aug 2013 22:10:39 +0200
+Version: 0.15 Thu, 15 Jan 2015 21:16:40 +0100
 Copyright: (c) 2010-2014 by Christian Brabandt
 
                                            *ChangesPlugin-copyright*
@@ -336,7 +336,7 @@ third line of this document.
     BF: Bugfix
     NF: New Feature
 
-    0.15: (unreleased)
+    0.15: Jan 15, 2015:                                                 {{{1
         NF: use |TextChanged| autocommand to update signs faster
         NF: use new utf8 symbols
         NF: Hide SignColumn

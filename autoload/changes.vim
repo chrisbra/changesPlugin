@@ -1,11 +1,11 @@
 " Changes.vim - Using Signs for indicating changed lines
 " ---------------------------------------------------------------
-" Version:  0.14
+" Version:  0.15
 " Author:  Christian Brabandt <cb@256bit.org>
-" Last Change: Wed, 14 Aug 2013 22:10:39 +0200
+" Last Change: Thu, 15 Jan 2015 21:16:40 +0100
 " License: VIM License
 " Documentation: see :help changesPlugin.txt
-" GetLatestVimScripts: 3052 14 :AutoInstall: ChangesPlugin.vim
+" GetLatestVimScripts: 3052 15 :AutoInstall: ChangesPlugin.vim
 " Documentation: "{{{1
 " See :h ChangesPlugin.txt
 
