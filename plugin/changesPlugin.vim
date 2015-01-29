@@ -36,7 +36,7 @@ com! CT  ChangesStyleToggle
 com! -bang CF ChangesFoldDiff<bang>
 
 com! -nargs=? -complete=file -bang EnableChanges	call changes#EnableChanges(1, <q-bang>, <q-args>)
-com! DisableChanges		call changes#CleanUp()
+com! DisableChanges		call changes#CleanUp(1)
 com! ToggleChangeView		call changes#TCV()
 com! ChangesCaption		call changes#Output()
 com! ChangesLinesOverview	call changes#EnableChanges(2, '')

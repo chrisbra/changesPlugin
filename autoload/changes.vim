@@ -1198,12 +1198,13 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
 	call changes#CleanUp()
     endtry
 endfu
-fu! changes#CleanUp() "{{{1
+fu! changes#CleanUp(...) "{{{1
     " only delete signs, that have been set by this plugin
-    call s:UnPlaceSigns(0)
+    let force = (exists("a:1") && a:1)
+    call s:UnPlaceSigns(force)
     let s:ignore[bufnr('%')] = 1
     for key in keys(get(s:, 'signs', {}))
-	if key ==# 'dummy'
+	if key ==# 'dummy' && !force
 	    continue
 	endif
 	exe "sil! sign undefine " key
@@ -1218,7 +1219,7 @@ fu! changes#CleanUp() "{{{1
 	    sil! call matchdelete(val)
 	endfor
     endif
-    unlet! b:diffhl s:signs s:old_signs b:changes_linehi_diff_match b:changes_sign_id
+    unlet! b:diffhl s:signs s:old_signs b:changes_linehi_diff_match b:changes_sign_id s:precheck
 endfu
 fu! changes#AuCmd(arg) "{{{1
     if a:arg
