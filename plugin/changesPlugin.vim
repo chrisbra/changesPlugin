@@ -15,6 +15,7 @@ endif
 let g:loaded_changes       = 1
 let s:keepcpo              = &cpo
 set cpo&vim
+let s:nowait = v:version > 703 || v:version == 703 && has("patch1261")
 
 " ---------------------------------------------------------------------
 " Public Functions: {{{1
@@ -71,13 +72,13 @@ if !hasmapto("ah", 'o')
 endif
 
 if !hasmapto('<Plug>(ChangesStageHunk)')
-    nmap     <silent><unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
+    exe "nmap     <silent><unique>".(s:nowait ? "<nowait>" : ""). " <Leader>h <Plug>(ChangesStageHunk)"
     nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunkAdd
     nnoremap <sid>ChangesStageHunkAdd :<c-u>call changes#StageHunk(line('.'), 0)<cr>
 endif
 
 if !hasmapto('<Plug>(ChangesStageHunkRevert)')
-    nmap     <silent><unique><nowait> <Leader>H <Plug>(ChangesStageHunkRevert)
+    exe "nmap     <silent><unique>". (s:nowait ? "<nowait>" : ""). " <Leader>H <Plug>(ChangesStageHunkRevert)"
     nnoremap <unique><script> <Plug>(ChangesStageHunkRevert) <sid>ChangesStageHunkRevert
     nnoremap <sid>ChangesStageHunkRevert :<c-u>call changes#StageHunk(line('.'), 1)<cr>
 endif
