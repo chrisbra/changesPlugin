@@ -149,7 +149,7 @@ fu! s:UpdateView(...) "{{{1
 	" If you don't like this, set the g:changes_fast variable to zero
 	let b:changes_chg_tick = b:changedtick
     endif
-	
+
     if  b:changes_chg_tick != b:changedtick || force
 	try
 	    if !did_source_init
@@ -197,7 +197,7 @@ fu! s:PlaceSigns(dict) "{{{1
     let b = copy(s:placed_signs[1])
     " Give changes a higher prio than adds
     for id in ['add', 'ch', 'del']
-	let prev_line = -1 
+	let prev_line = -1
 	for item in a:dict[id]
 	    " One special case could occur:
 	    " You could delete the last lines. In that case, we couldn't place
@@ -333,7 +333,7 @@ fu! s:MakeDiff_new(file) "{{{1
 		endif
 	    elseif b:vcs_type == 'cvs'
 		" I am not sure, if this is the best way
-		" to query CVS. But just to make sure, 
+		" to query CVS. But just to make sure,
 		" we are in the right path and we don't have
 		" to consider CVSROOT
 		exe 'lcd' fnamemodify(expand('%'), ':p:h')
@@ -348,7 +348,7 @@ fu! s:MakeDiff_new(file) "{{{1
 		throw "changes:abort"
 	    endif
 	endif
-	let cmd = printf("diff -a -U0 -N %s %s > %s", 
+	let cmd = printf("diff -a -U0 -N %s %s > %s",
 	    \ s:diff_in_old, s:diff_in_cur, s:diff_out)
 	if s:Is('win') && &shell =~? 'cmd.exe$'
 	    let cmd = '( '. cmd. ' )'
@@ -396,7 +396,7 @@ fu! s:MakeDiff(...) "{{{1
 		endif
 	    elseif vcs == 'cvs'
 		" I am not sure, if this is the best way
-		" to query CVS. But just to make sure, 
+		" to query CVS. But just to make sure,
 		" we are in the right path and we don't have
 		" to consider CVSROOT
 		exe 'lcd' fnamemodify(expand('#'), ':p:h')
@@ -438,7 +438,7 @@ fu! s:MakeDiff(...) "{{{1
     return scratchbuf
 endfu
 fu! s:ParseDiffOutput(file) "{{{1
-    let b:current_line = 1000000 
+    let b:current_line = 1000000
     for line in filter(readfile(a:file), 'v:val=~''^@@''')
 	let submatch = matchlist(line,
 	    \ '@@ -\(\d\+\),\?\(\d*\) +\(\d\+\),\?\(\d*\) @@')
@@ -653,7 +653,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
     " a:arg == 1 Create signs
     " a:arg == 2 Show changed lines in locationlist
     " a:arg == 3 Stay in diff mode
-    
+
     " If error happened, don't try to get a diff list
     try
 	if (exists("s:ignore") && get(s:ignore, bufnr('%'), 0) &&
@@ -713,7 +713,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    call s:SortDiffHl()
 
 	    " Check for empty dict of signs
-	    if !exists("b:diffhl") || 
+	    if !exists("b:diffhl") ||
 	    \ ((b:diffhl ==? {'add': [], 'del': [], 'ch': []})
 	    \ && empty(s:placed_signs[0]))
 		" Make sure, diff and previous diff are different,
@@ -881,7 +881,7 @@ fu! s:InitSignDef() "{{{1
 	let ch  = printf("%s texthl=SignColumn", "\<Char-0xa0>")
     else
 	let add = printf("%s texthl=%s %s",
-		\ (get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+'), 
+		\ (get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+'),
 		\ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn"),
 		\ (s:MakeSignIcon() ? 'icon='.s:i_path.'add1.bmp' : ''))
 	let del = printf("%s texthl=%s %s",
@@ -975,7 +975,7 @@ fu! s:GenerateHiPattern(startl, endl) "{{{1
 	    \	'\%(\%>'. a:startl[0]. 'l\%<'. a:endl[0]. 'l.*\)\|'.
 	    \   '\%(\%'.  a:endl[0]. 'l.*\%<'. a:endl[1]. 'c\)'
     endif
-endfu 
+endfu
 fu! s:AddMatches(pattern) "{{{1
     if  !empty(a:pattern)
 	if !exists("b:changes_linehi_diff_match")
@@ -1096,7 +1096,7 @@ fu! changes#Init() "{{{1
     endif
     if !exists("s:vcs_cat")
 	let s:vcs_cat  = {'git': 'show :',
-			 \'bzr': 'cat ', 
+			 \'bzr': 'cat ',
 			 \'cvs': '-q update -p ',
 			 \'darcs': '--show-contents ',
 			 \'fossil': 'finfo -p ',
