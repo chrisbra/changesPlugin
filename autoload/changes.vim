@@ -1185,6 +1185,19 @@ fu! changes#Init() "{{{1
 	call ChangesMap('<cr>')
     endif
 endfu
+fu! changes#CurrentBufferIsIgnored() "{{{1
+    return exists("s:ignore") && get(s:ignore, bufnr('%'), 0)
+endfu
+fu! changes#IgnoreCurrentBuffer() "{{{1
+    if exists("s:ignore")
+        let s:ignore[bufnr('%')]=1
+    endif
+endfu
+fu! changes#UnignoreCurrentBuffer() "{{{1
+    if exists("s:ignore") && get(s:ignore, bufnr('%'), 0)
+        call remove(s:ignore, bufnr('%'))
+    endif
+endfu
 fu! changes#EnableChanges(arg, bang, ...) "{{{1
     if exists("s:ignore") && get(s:ignore, bufnr('%'), 0)
 	call remove(s:ignore, bufnr('%'))
