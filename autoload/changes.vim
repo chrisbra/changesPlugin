@@ -123,17 +123,15 @@ fu! s:UpdateView(...) "{{{1
 	return
     endif
     let b:changes_last_line = get(b:, 'changes_last_line', line('$'))
-    if exists("s:ignore")
 	if get(g:, 'gitgutter_enabled', 0) &&
 		    \ exists('b:gitgutter_gitgutter_signs')
 	    " Gitgutter plugin is available, stop here
-	    let s:ignore[bufnr('%')] = 1
+        call changes#IgnoreCurrentBuffer()
 	    let force = 0
 	endif
-	if get(s:ignore, bufnr('%'), 0) && !force
+	if changes#CurrentBufferIsIgnored() && !force
 	    return
 	endif
-    endif
     " Only update, if there have been changes to the buffer
     if exists("b:diffhl") &&
 	\ get(g:, 'changes_fast', 1) &&
@@ -656,14 +654,13 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 
     " If error happened, don't try to get a diff list
     try
-	if (exists("s:ignore") && get(s:ignore, bufnr('%'), 0) &&
-	    \ empty(a:bang)) || !empty(&l:bt) ||
-	    \ line2byte(line('$')) == -1
+	if (changes#CurrentBufferIsIgnored() && empty(a:bang)) ||
+        \ !empty(&l:bt) || line2byte(line('$')) == -1
 	    call s:StoreMessage('Buffer is ignored, use ! to force command')
 	    return
-	elseif !empty(a:bang) && get(s:ignore, bufnr('%'), 0)
+	elseif !empty(a:bang)
 	    " remove buffer from ignore list
-	    call remove(s:ignore, bufnr('%'))
+	    call changes#UnignoreCurrentBuffer()
 	endif
 
 	" Save some settings
@@ -690,7 +687,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    " do not generate signs for special buffers
 	    if !empty(&buftype)
 		call s:StoreMessage("Not generating diff for special buffer!")
-		let s:ignore[bufnr('%')] = 1
+        call changes#IgnoreCurrentBuffer()
 	    endif
 
 	    let b:diffhl={'add': [], 'del': [], 'ch': []}
@@ -743,7 +740,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
 	    return
 	catch /^changes/
 	    let b:changes_view_enabled=0
-	    let s:ignore[bufnr('%')] = 1
+        call changes#IgnoreCurrentBuffer()
 	catch
 	    call s:StoreMessage("Error occured: ".v:exception)
 	    call s:StoreMessage("Trace: ". v:throwpoint)
@@ -992,7 +989,7 @@ fu! s:SignId() "{{{1
     return printf("%02d", b:changes_sign_id)
 endfu
 fu! s:IsUpdateAllowed(empty) "{{{1
-    if !empty(&buftype) || &ro || get(s:ignore, bufnr('%'), 0)
+    if !empty(&buftype) || &ro || changes#CurrentBufferIsIgnored()
 	" Don't make a diff out of an unnamed buffer
 	" or of a special buffer or of a read-only buffer
 	return 0
@@ -1194,14 +1191,12 @@ fu! changes#IgnoreCurrentBuffer() "{{{1
     endif
 endfu
 fu! changes#UnignoreCurrentBuffer() "{{{1
-    if exists("s:ignore") && get(s:ignore, bufnr('%'), 0)
+    if changes#CurrentBufferIsIgnored()
         call remove(s:ignore, bufnr('%'))
     endif
 endfu
 fu! changes#EnableChanges(arg, bang, ...) "{{{1
-    if exists("s:ignore") && get(s:ignore, bufnr('%'), 0)
-	call remove(s:ignore, bufnr('%'))
-    endif
+    call changes#UnignoreCurrentBuffer()
     try
 	call changes#Init()
 	let arg = exists("a:1") ? a:1 : ''
@@ -1215,7 +1210,7 @@ fu! changes#CleanUp(...) "{{{1
     " only delete signs, that have been set by this plugin
     let force = (exists("a:1") && a:1)
     call s:UnPlaceSigns(force)
-    let s:ignore[bufnr('%')] = 1
+    call changes#IgnoreCurrentBuffer()
     for key in keys(get(s:, 'signs', {}))
 	if key ==# 'dummy' && !force
 	    continue
