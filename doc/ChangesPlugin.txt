@@ -338,6 +338,9 @@ third line of this document.
 
     0.16: unreleased:
         BF: |:DC| should also undefine the dummy sign
+        BF: Check for <nowait> flag for mappings
+        BF: various improvements by Constantin Kulikov,
+        https://github.com/chrisbra/changesPlugin/pull/14, thanks!
     0.15: Jan 15, 2015:                                                 {{{1
         NF: use |TextChanged| autocommand to update signs faster
         NF: use new utf8 symbols
