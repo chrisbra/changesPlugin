@@ -34,7 +34,7 @@ com! CC  ChangesCaption
 com! CL  ChangesLinesOverview
 com! CD  ChangesDiffMode
 com! CT  ChangesStyleToggle
-com! -bang CF ChangesFoldDiff<bang>
+com! -nargs=? -bang CF ChangesFoldDiff <args>
 
 com! -nargs=? -complete=file -bang EnableChanges	call changes#EnableChanges(1, <q-bang>, <q-args>)
 com! DisableChanges		call changes#CleanUp(1)
@@ -43,7 +43,7 @@ com! ChangesCaption		call changes#Output()
 com! ChangesLinesOverview	call changes#EnableChanges(2, '')
 com! ChangesDiffMode		call changes#EnableChanges(3, '')
 com! ChangesStyleToggle		call changes#ToggleHiStyle()
-com! -bang ChangesFoldDifferences   call changes#FoldDifferences(<q-bang>)
+com! -nargs=? ChangesFoldDifferences     call changes#FoldDifferences(<f-args>)
 com! -bang ChangesStageCurrentHunk  call changes#StageHunk(line('.'), !empty(<q-bang>))
 
 if get(g:, 'changes_autocmd', 1) || get(g:, 'changes_fixed_sign_column', 0)
