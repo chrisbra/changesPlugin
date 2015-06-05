@@ -122,9 +122,7 @@ command >
 and >
     :ChangesFoldDiff
 
-The non-bang versions of those commands will fold away all lines, that were
-not modified and the bang-versions (:CF!/:ChangesFoldDiff!) will reset
-the folding.
+Issuing the command again, will restore the previous state.
 
                                                  *:CT* *:ChangesStyleToggle*
 This command changes how changed lines will be highlighted. It toggles between
@@ -341,6 +339,8 @@ third line of this document.
         BF: Check for <nowait> flag for mappings
         BF: various improvements by Constantin Kulikov,
         https://github.com/chrisbra/changesPlugin/pull/14, thanks!
+        BF: Document that |:ChangesFoldDiff| toggles
+        BF: Make |:ChangesFoldDiff| show context lines
     0.15: Jan 15, 2015:                                                 {{{1
         NF: use |TextChanged| autocommand to update signs faster
         NF: use new utf8 symbols

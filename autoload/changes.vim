@@ -1354,16 +1354,31 @@ fu! changes#CurrentHunk() "{{{1
         return "[ho]h$"
     endif
 endfu
-fu! changes#FoldDifferences(enable) "{{{1
-    if empty(a:enable) && &fde!=?'index(g:lines,v:lnum)>-1?0:1'
+fu! changes#FoldDifferences() "{{{1
+    if &fde!=?'index(g:lines,v:lnum)>-1?0:1'
         let b:chg_folds = {'fen': &fen, 'fdm': &fdm, 'fde': &fde}
-        let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
+        let g:lines = []
+        for line in sort(get(get(b:, 'diffhl', []), 'add', []) +
                     \ get(get(b:, 'diffhl', []), 'ch' , []) +
                     \ get(get(b:, 'diffhl', []), 'del', []), (s:numeric_sort ? 'n' : 's:MySortValues'))
+            for item in [ line-2, line-1, line, line+1, line+2 ]
+                " Add some context
+                if index(g:lines, item) > -1 || item < 1 || item > line('$')
+                    continue
+                endif
+                call add(g:lines, item)
+            endfor
+        endfor
         if exists('*uniq')
             let g:lines=uniq(g:lines)
         endif
-        setl fen fdm=expr fde=index(g:lines,v:lnum)>-1?0:1
+        if !empty(g:lines)
+            setl fen fdm=expr fde=index(g:lines,v:lnum)>-1?0:1
+        else
+            let s:msg=[]
+            call s:StoreMessage('Not folding, no lines changes!')
+            verbose call changes#WarningMsg()
+        endif
     else
         for items in items(get(b:, 'chg_folds', {}))
             exe "let &".items[0]."=".string(items[1])
