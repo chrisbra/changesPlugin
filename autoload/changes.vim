@@ -563,7 +563,7 @@ fu! s:GetPlacedSigns() "{{{1
     redir => a| exe "silent sign place buffer=".bufnr('')|redir end
     let s:all_signs = split(a,"\n")[1:]
     if lang != 'C'
-        exe "sil lang mess" locale
+        exe "sil lang mess" lang
     endif
     return s:all_signs
 endfu
@@ -1359,7 +1359,7 @@ fu! changes#FoldDifferences(enable) "{{{1
         let b:chg_folds = {'fen': &fen, 'fdm': &fdm, 'fde': &fde}
         let g:lines=sort(get(get(b:, 'diffhl', []), 'add', []) +
                     \ get(get(b:, 'diffhl', []), 'ch' , []) +
-                    \ get(get(b:, 'diffhl', []), 'del', []), (s:numeric_sort ? 'n', 's:MySortValues'))
+                    \ get(get(b:, 'diffhl', []), 'del', []), (s:numeric_sort ? 'n' : 's:MySortValues'))
         if exists('*uniq')
             let g:lines=uniq(g:lines)
         endif
