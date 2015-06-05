@@ -556,12 +556,15 @@ fu! s:GetPlacedSigns() "{{{1
         return s:all_signs
     endif
     " set local to english
-    redir => locale | exe "sil lang mes"|redir end
-    let locale=matchstr(locale, '"\zs[^"]*\ze"')
-    sil lang mess C
+    let lang=v:lang
+    if lang isnot# 'C'
+        sil lang mess C
+    endif
     redir => a| exe "silent sign place buffer=".bufnr('')|redir end
     let s:all_signs = split(a,"\n")[1:]
-    exe "sil lang mess" locale
+    if lang != 'C'
+        exe "sil lang mess" locale
+    endif
     return s:all_signs
 endfu
 fu! s:PlacedSigns() "{{{1
