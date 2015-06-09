@@ -123,7 +123,7 @@ and >
     :ChangesFoldDiff
 
 An optional number argument can be given to select the number of context lines
-to be shown (default: 3).
+to be shown (default: context value from 'diffopt' or 3 if not given).
 Issuing the command again, will restore the previous state.
 
                                                  *:CT* *:ChangesStyleToggle*

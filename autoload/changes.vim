@@ -1357,7 +1357,12 @@ endfu
 fu! changes#FoldDifferences(...) "{{{1
     if &fde!=?'index(g:lines,v:lnum)>-1?0:1'
         let b:chg_folds = {'fen': &fen, 'fdm': &fdm, 'fde': &fde}
-        let context = empty(a:000) ? 3 : a:1
+        " Use context from 'diffopt' setting, if it is set
+        let context = matchstr(&diffopt, 'context:\zs\d\+\ze')+0
+        if context == 0
+            let context = 3
+        endif
+        let context = empty(a:000) ? context : a:1
         let g:lines = []
         for line in sort(get(get(b:, 'diffhl', []), 'add', []) +
                     \ get(get(b:, 'diffhl', []), 'ch' , []) +
