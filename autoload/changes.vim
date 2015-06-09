@@ -129,9 +129,6 @@ fu! s:UpdateView(...) "{{{1
         call changes#IgnoreCurrentBuffer()
         let force = 0
     endif
-    if changes#CurrentBufferIsIgnored() && !force
-        return
-    endif
     " Only update, if there have been changes to the buffer
     if exists("b:diffhl") &&
                 \ get(g:, 'changes_fast', 1) &&
