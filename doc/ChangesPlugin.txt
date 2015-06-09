@@ -257,6 +257,13 @@ g:changes_sign_text_utf8 (default 1)
     If set, will use nice little UTF8 symbols for displaying the indicator
     signs.
 
+g:changes_max_filesize (default 500)
+------------------------------------
+
+    Maximum size in kbytes of a buffer, for which to perform the check. Larger
+    buffers will likely slow down Vim considerably, since it needs to perform
+    diffs and parse the result often.
+
                                                         *ChangesPlugin-colors*
 Specify different colors
 ------------------------

@@ -997,9 +997,22 @@ fu! s:IsUpdateAllowed(empty) "{{{1
     if !empty(&buftype) || &ro || changes#CurrentBufferIsIgnored()
         " Don't make a diff out of an unnamed buffer
         " or of a special buffer or of a read-only buffer
+        if empty(&buftype)
+            call s:StoreMessage("Special Buffer, not performing diffs!")
+        elseif &ro
+            call s:StoreMessage("Buffer read-only, not performing diffs!")
+        else
+            call s:StoreMessage("Buffer is currently ignored, not performing diffs!")
+        endif
         return 0
         " only check for empty buffer when a:empty is true
     elseif a:empty && empty(bufname(''))
+        call s:StoreMessage("Buffer hasn't been written yet. Can't diff!")
+        return 0
+    elseif !empty(bufname('')) &&
+            \ get(g:, 'changes_max_filesize', 1024*500) > getfsize(bufname('')) ||
+            \ getfsize(bufname('')) < 0
+        call s:StoreMessage('FileSize too large, skipping check')
         return 0
     endif
     return 1
