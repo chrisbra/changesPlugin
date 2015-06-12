@@ -693,6 +693,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
             if !empty(&buftype)
                 call s:StoreMessage("Not generating diff for special buffer!")
                 call changes#IgnoreCurrentBuffer()
+                return
             endif
 
             let b:diffhl={'add': [], 'del': [], 'ch': []}
@@ -1218,12 +1219,18 @@ endfu
 fu! changes#EnableChanges(arg, bang, ...) "{{{1
     call changes#UnignoreCurrentBuffer()
     try
+        let savevar = get(g:, 'changes_max_filesize', 0)
+        unlet! g:changes_max_filesize
         call changes#Init()
         let arg = exists("a:1") ? a:1 : ''
         verbose call s:GetDiff(a:arg, a:bang, arg)
     catch
         call changes#WarningMsg()
         call changes#CleanUp()
+    finally
+        if savevar > 0
+            let g:changes_max_filesize = savevar
+        endif
     endtry
 endfu
 fu! changes#CleanUp(...) "{{{1
