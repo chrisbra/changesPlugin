@@ -1,5 +1,5 @@
 " Changes.vim - Using Signs for indicating changed lines
-" ---------------------------------------------------------------
+" ------------------------------------------------------
 " Version:  0.15
 " Author:  Christian Brabandt <cb@256bit.org>
 " Last Change: Thu, 15 Jan 2015 21:16:40 +0100
@@ -160,6 +160,11 @@ fu! s:UpdateView(...) "{{{1
             verbose call changes#WarningMsg()
             call changes#CleanUp()
         endtry
+    else
+        " if nothing has been added, remove the sign, that has been added
+        " using the InsertEnter autocommand
+        let dict = {'name': 'add', 'id': s:SignIdRemove(), 'type': 'add'}
+        call s:UnPlaceSpecificSigns([dict])
     endif
 endfu
 fu! s:SetupSignTextHl() "{{{1
@@ -986,6 +991,16 @@ fu! s:AddMatches(pattern) "{{{1
         endif
         let b:changes_linehi_diff_match[changenr()] = matchadd('CursorLine', a:pattern)
     endif
+endfu
+fu! s:SignIdRemove() "{{{1
+    if !exists("b:changes_sign_id")
+        return
+    endif
+    " return the last id, that has been used for placing a sign
+    " and decrement id, so that the next call to s:SignId() will
+    " get a valid ID
+    let b:changes_sign_id -= 1
+    return printf("%d%02d", b:sign_prefix, b:changes_sign_id + 1)
 endfu
 fu! s:SignId() "{{{1
     if !exists("b:changes_sign_id")
