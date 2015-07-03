@@ -163,8 +163,13 @@ fu! s:UpdateView(...) "{{{1
     else
         " if nothing has been added, remove the sign, that has been added
         " using the InsertEnter autocommand
-        let dict = {'name': 'add', 'id': s:SignIdRemove(), 'type': 'add'}
-        call s:UnPlaceSpecificSigns([dict])
+        if exists("s:changes_last_inserted_sign")
+            let name=s:PrevDictHasKey(line('.'))
+            if name ==# s:changes_last_inserted_sign.type
+            let dict = {'name': 'add', 'id': s:SignIdRemove(), 'type': 'add'}
+                call s:UnPlaceSpecificSigns([dict])
+            endi
+        endif
     endif
 endfu
 fu! s:SetupSignTextHl() "{{{1
@@ -1450,6 +1455,7 @@ fu! changes#InsertSignOnEnter() "{{{1
     " prevent an expansive call to create a diff,
     " simply check, if the current line has a sign
     " and if not, add one
+    unlet! s:changes_last_inserted_sign
     if !s:IsUpdateAllowed(1)
         return
     endif
@@ -1462,7 +1468,12 @@ fu! changes#InsertSignOnEnter() "{{{1
     if empty(name)
         " no sign yet on current line, add one.
         let name = ((!empty(prevname) && prevname =~? 'add') ? 'dummyadd' : 'add')
-        call s:PlaceSpecificSign(b:sign_prefix.s:SignId(), line, name)
+        let id=b:sign_prefix.s:SignId()
+        call s:PlaceSpecificSign(id, line, name)
+        " on o in normal mode, we should keep the sign
+        if b:changes_last_line == line('$')
+            let s:changes_last_inserted_sign={'id': id, 'line':line, 'type':name}
+        endif
     endif
     if s:PrevDictHasKey(next) ==? 'add'
         let item = filter(copy(s:placed_signs[0]), 'v:val.line ==? next')
