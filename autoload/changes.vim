@@ -318,8 +318,6 @@ fu! s:MakeDiff_new(file) "{{{1
     try
         let _pwd = s:ChangeDir()
         unlet! b:current_line
-        let filename = shellescape(fnamemodify(resolve(expand('%')), ':.'))
-        let doit = 1
         exe ":sil keepalt noa :w!" s:diff_in_cur
         if !s:vcs || !empty(a:file)
             let file = !empty(a:file) ? a:file : bufname('')
@@ -338,17 +336,6 @@ fu! s:MakeDiff_new(file) "{{{1
                 if !empty(git_rep_p)
                     exe 'lcd' git_rep_p
                 endif
-                let git_exists = system('git ls-tree -r HEAD --name-only '. filename)
-                if empty(git_exists)
-                    " file does not exist
-                    let cp = (!s:Is('unix') ? 'copy ' : 'cp ')
-                    let output = system(cp. shellescape(file). " ". s:diff_in_old)
-                    if v:shell_error
-                        call s:StoreMessage(output[:-2])
-                        throw "changes:abort"
-                    endif
-                    let doit = 0
-                endif
             elseif b:vcs_type == 'cvs'
                 " I am not sure, if this is the best way
                 " to query CVS. But just to make sure,
@@ -356,15 +343,14 @@ fu! s:MakeDiff_new(file) "{{{1
                 " to consider CVSROOT
                 exe 'lcd' fnamemodify(expand('%'), ':p:h')
             endif
-            if doit
-                let cmd = printf("%s %s%s > %s", (b:vcs_type==?'rcs'?'':
-                            \ b:vcs_type), s:vcs_cat[b:vcs_type], filename,
-                            \ s:diff_in_old)
-                let output = system(cmd)
-                if v:shell_error
-                    call s:StoreMessage(output[:-2])
-                    throw "changes:abort"
-                endif
+            let cmd = printf("%s %s%s > %s", (b:vcs_type==?'rcs'?'':
+                        \ b:vcs_type), s:vcs_cat[b:vcs_type],
+                        \ shellescape(fnamemodify(resolve(expand('%')), ':.')),
+                        \ s:diff_in_old)
+            let output = system(cmd)
+            if v:shell_error
+                call s:StoreMessage(output[:-2])
+                throw "changes:abort"
             endif
         endif
         let cmd = printf("diff -a -U0 -N %s %s > %s",
@@ -634,7 +620,8 @@ fu! s:GuessVCSSystem() "{{{1
     let file = fnamemodify(resolve(expand("%")), ':p')
     let path = escape(fnamemodify(file, ':h'), ' ')
     " First try git and hg, they seem to be the most popular ones these days
-    if !empty(finddir('.git',path.';'))
+    if !empty(finddir('.git',path.';')) &&
+        \ !empty(system('git ls-tree -r HEAD --name-only '. file))
         return 'git'
     elseif !empty(finddir('.hg',path.';'))
         return 'hg'
