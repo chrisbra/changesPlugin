@@ -620,10 +620,12 @@ fu! s:GuessVCSSystem() "{{{1
     let file = fnamemodify(resolve(expand("%")), ':p')
     let path = escape(fnamemodify(file, ':h'), ' ')
     " First try git and hg, they seem to be the most popular ones these days
+    " also check that the file actually exists in the repository
     if !empty(finddir('.git',path.';')) &&
         \ !empty(system('git ls-tree -r HEAD --name-only '. file))
         return 'git'
-    elseif !empty(finddir('.hg',path.';'))
+    elseif !empty(finddir('.hg',path.';')) &&
+        \ empty(system('hg status -ui '. file))
         return 'hg'
     elseif isdirectory(path . '/CVS')
         return 'cvs'
