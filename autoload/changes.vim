@@ -1474,7 +1474,7 @@ fu! changes#InsertSignOnEnter() "{{{1
         let id=b:sign_prefix.s:SignId()
         call s:PlaceSpecificSign(id, line, name)
         " on o in normal mode, we should keep the sign
-        if b:changes_last_line == line('$')
+        if get(b:, 'changes_last_line', 0) == line('$')
             let s:changes_last_inserted_sign={'id': id, 'line':line, 'type':name}
         endif
     endif
