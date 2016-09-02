@@ -11,8 +11,9 @@
 
 scriptencoding utf-8
 let s:i_path = fnamemodify(expand("<sfile>"), ':p:h'). '/changes_icons/'
+let s:signcol = exists("+signcolumn")
 
-fu! <sid>GetSID()
+fu! <sid>GetSID() "{{{1
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_GetSID$')
 endfu
 
@@ -316,6 +317,9 @@ fu! s:MakeDiff_new(file) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
     try
+        " TODO: Use Vims channel and job functions
+        "       to let Vim handle the output asynchroneously
+        "       Probably needs a future Vim version 7.5
         let _pwd = s:ChangeDir()
         unlet! b:current_line
         exe ":sil keepalt noa :w!" s:diff_in_cur
@@ -1050,16 +1054,24 @@ fu! changes#PlaceSignDummy(doplace) "{{{1
         return
     endif
     if a:doplace
-        let b = copy(s:placed_signs[0])
-        if !exists("b:changes_sign_dummy_placed") &&
-                    \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
-            " only place signs, if signs have been defined
-            " and there isn't one placed yet
-            call s:PlaceSpecificSign(b:sign_prefix.'00', s:maxlnum, 'dummy')
-            let b:changes_sign_dummy_placed = 1
+        if s:signcolumn
+            set signcolumn=yes
+        else
+            let b = copy(s:placed_signs[0])
+            if !exists("b:changes_sign_dummy_placed") &&
+                        \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
+                " only place signs, if signs have been defined
+                " and there isn't one placed yet
+                call s:PlaceSpecificSign(b:sign_prefix.'00', s:maxlnum, 'dummy')
+                let b:changes_sign_dummy_placed = 1
+            endif
         endif
     elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
-        exe "sil sign unplace " b:sign_prefix.'0'
+        if s:signcolumn
+            set signcolumn=auto
+        else
+            exe "sil sign unplace " b:sign_prefix.'0'
+        endif
     endif
 endfu
 fu! changes#GetStats() "{{{1

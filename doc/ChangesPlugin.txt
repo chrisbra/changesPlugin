@@ -351,6 +351,7 @@ third line of this document.
         BF: Document that |:ChangesFoldDiff| toggles
         BF: Make |:ChangesFoldDiff| show context lines
         BF: check, that the file exists in git
+        NF: use signcolumn function if available
     0.15: Jan 15, 2015:                                                 {{{1
         NF: use |TextChanged| autocommand to update signs faster
         NF: use new utf8 symbols
