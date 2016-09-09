@@ -11,7 +11,7 @@
 
 scriptencoding utf-8
 let s:i_path = fnamemodify(expand("<sfile>"), ':p:h'). '/changes_icons/'
-let s:signcol = exists("+signcolumn")
+let s:signcolumn = exists("+signcolumn")
 
 fu! <sid>GetSID() "{{{1
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_GetSID$')
