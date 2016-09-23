@@ -362,7 +362,7 @@ fu! s:MakeDiff_new(file) "{{{1
         if s:Is('win') && &shell =~? 'cmd.exe$'
             let cmd = '( '. cmd. ' )'
         endif
-        let output = system(cmd)
+        let output = s:System(cmd)
         if v:shell_error >= 2 || v:shell_error < 0
             " diff returns 2 on errors
             call s:StoreMessage(output[:-2])
@@ -1049,6 +1049,25 @@ fu! s:IsUpdateAllowed(empty) "{{{1
     endif
     return 1
 endfu
+
+if has("job") "{{{1
+    fu! ErrCallbackHandler(channel, msg)
+        echomsg "Error:". a:msg
+    endfu
+endif
+
+fu! s:System(string) "{{{1
+    " uses jobs and async features on a Vim that supports it, else
+    " will fallback to using plain old system command
+    if has("job")
+        let s:output = []
+        let cmd = 'sh -c "'.a:string.'"'
+        let job = job_start(cmd, {"err_cb": "ErrCallbackHandler"})
+    else
+        return system(a:string)
+    endif
+endfu
+
 fu! changes#PlaceSignDummy(doplace) "{{{1
     if !exists("b:sign_prefix")
         return
