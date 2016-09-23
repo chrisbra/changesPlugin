@@ -368,13 +368,15 @@ fu! s:MakeDiff_new(file) "{{{1
             call s:StoreMessage(output[:-2])
             throw "changes:abort"
         endif
-        if getfsize(s:diff_out) == 0
-            call s:StoreMessage("No differences found!")
+        if getfsize(s:diff_out) <= 0
+            call s:StoreMessage("File not found or no differences found!")
             return
         endif
         call s:ParseDiffOutput(s:diff_out)
     finally
-        call s:PreviewDiff(s:diff_out)
+        if filereadable(s:diff_out)
+            call s:PreviewDiff(s:diff_out)
+        endif
         if !get(g:, 'changes_debug', 0)
             for file in [s:diff_in_cur, s:diff_in_old, s:diff_out]
                 call delete(file)
