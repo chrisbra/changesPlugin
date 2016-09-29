@@ -1237,9 +1237,9 @@ fu! changes#EnableChanges(arg, bang, ...) "{{{1
         endif
     endtry
 endfu
-fu! changes#CleanUp(...) "{{{1
+fu! changes#CleanUp() "{{{1
     " only delete signs, that have been set by this plugin
-    call s:UnPlaceSigns(force)
+    call s:UnPlaceSigns(1)
     call changes#IgnoreCurrentBuffer()
     for key in keys(get(s:, 'signs', {}))
         exe "sil! sign undefine " key
