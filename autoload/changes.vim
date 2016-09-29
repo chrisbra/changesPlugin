@@ -151,7 +151,7 @@ fu! s:UpdateView(...) "{{{1
             if !did_source_init
                 call changes#Init()
             endif
-            call s:GetDiff(1, '')
+            call s:GetDiff(1, '', '')
             call s:HighlightTextChanges()
             let b:changes_chg_tick = b:changedtick
             let b:changes_last_line = line('$')
@@ -313,13 +313,10 @@ fu! s:Output(list) "{{{1
     endif
     return join(a:list, eol).eol
 endfu
-fu! s:MakeDiff_new(file) "{{{1
+fu! s:MakeDiff_new(file, type) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
     try
-        " TODO: Use Vims channel and job functions
-        "       to let Vim handle the output asynchroneously
-        "       Probably needs a future Vim version 7.5
         let _pwd = s:ChangeDir()
         unlet! b:current_line
         exe ":sil keepalt noa :w!" s:diff_in_cur
@@ -362,17 +359,21 @@ fu! s:MakeDiff_new(file) "{{{1
         if s:Is('win') && &shell =~? 'cmd.exe$'
             let cmd = '( '. cmd. ' )'
         endif
-        let output = s:System(cmd)
-        if v:shell_error >= 2 || v:shell_error < 0
-            " diff returns 2 on errors
-            call s:StoreMessage(output[:-2])
-            throw "changes:abort"
+        if has('job')
+            call s:DoAsync(cmd, fnamemodify(bufname(''), ':p'), a:type)
+        else
+            call system(cmd)
+            if v:shell_error >= 2 || v:shell_error < 0
+                " diff returns 2 on errors
+                call s:StoreMessage(output[:-2])
+                throw "changes:abort"
+            endif
+            if getfsize(s:diff_out) <= 0
+                call s:StoreMessage("File not found or no differences found!")
+                return
+            endif
+            call s:ParseDiffOutput(s:diff_out)
         endif
-        if getfsize(s:diff_out) <= 0
-            call s:StoreMessage("File not found or no differences found!")
-            return
-        endif
-        call s:ParseDiffOutput(s:diff_out)
     finally
         if filereadable(s:diff_out)
             call s:PreviewDiff(s:diff_out)
@@ -671,10 +672,11 @@ fu! s:RemoveConsecutiveLines(fwd, list) "{{{1
     endfor
     return lines
 endfu
-fu! s:GetDiff(arg, bang, ...) "{{{1
+fu! s:GetDiff(arg, bang, file) "{{{1
     " a:arg == 1 Create signs
     " a:arg == 2 Show changed lines in locationlist
     " a:arg == 3 Stay in diff mode
+    " a:file -> which file to diff against
 
     " If error happened, don't try to get a diff list
     try
@@ -691,13 +693,12 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
         let _wsv   = winsaveview()
         " Lazy redraw
         setl lz
-        let isfolded = foldclosed('.')
         let scratchbuf = 0
 
         try
             if !filereadable(bufname(''))
                 call s:StoreMessage("You've opened a new file so viewing changes ".
-                            \ "is disabled until the file is saved ")
+                                  \ "is disabled until the file is saved ")
                 return
             endif
 
@@ -720,7 +721,7 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
                 let s:temp = {'del': []}
                 let curbuf = bufnr('%')
                 let _ft = &ft
-                let scratchbuf = s:MakeDiff(exists("a:1") ? a:1 : '')
+                let scratchbuf = s:MakeDiff(a:file)
                 call s:CheckLines(1)
                 exe "noa" bufwinnr(scratchbuf) "wincmd w"
                 exe "setl ft=". _ft
@@ -730,31 +731,9 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
                 let b:diffhl['del'] = s:temp['del']
             else
                 " parse diff output
-                call s:MakeDiff_new(exists("a:1") ? a:1 : '')
+                call s:MakeDiff_new(a:file, a:arg)
             endif
-            call s:SortDiffHl()
-
-            " Check for empty dict of signs
-            if !exists("b:diffhl") ||
-                        \ ((b:diffhl ==? {'add': [], 'del': [], 'ch': []})
-                        \ && empty(s:placed_signs[0]))
-                " Make sure, diff and previous diff are different,
-                " otherwise, we might forget to update the signs
-                call s:StoreMessage('No differences found!')
-                let s:nodiff=1
-            elseif exists("s:changes_signs_undefined") && s:changes_signs_undefined
-                let s:diffhl = s:CheckInvalidSigns()
-                " remove invalid signs
-                call s:UnPlaceSpecificSigns(s:diffhl[0])
-                call s:PlaceSigns(b:diffhl)
-            else
-                let s:diffhl = s:CheckInvalidSigns()
-                " diffhl[0] - invalid signs, that need to be removed
-                " diffhl[1] - valid signs, that need to be added
-                call s:UnPlaceSpecificSigns(s:diffhl[0])
-                " Make sure to only place new signs!
-                call s:PlaceSigns(s:diffhl[1])
-            endif
+            call s:AfterDiff()
             if a:arg != 3 || s:nodiff
                 let b:changes_view_enabled=1
             endif
@@ -770,23 +749,15 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
             call s:StoreMessage("Error occured: ".v:exception)
             call s:StoreMessage("Trace: ". v:throwpoint)
         finally
-            if scratchbuf && a:arg < 3
-                exe "bw" scratchbuf
-            endif
-            if s:vcs && exists("b:changes_view_enabled") &&
-                        \ b:changes_view_enabled
+            if s:vcs && get(b:, "b:changes_view_enabled", 0)
                 " only add info here, when 'verbose' > 1
                 call s:StoreMessage("Check against ".
-                            \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
+                    \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
             endif
             " remove dummy sign
             call changes#PlaceSignDummy(0)
             " redraw (there seems to be some junk left)
             redr!
-            if isfolded == -1 && foldclosed('.') != -1
-                " resetting 'fdm' might fold the cursorline, reopen it
-                norm! zv
-            endif
         endtry
     finally
         if exists("_wsv")
@@ -797,6 +768,31 @@ fu! s:GetDiff(arg, bang, ...) "{{{1
         " restore change marks
         call s:SaveRestoreChangeMarks(0)
     endtry
+endfu
+fu! s:AfterDiff()
+    call s:SortDiffHl()
+
+    " Check for empty dict of signs
+    if !exists("b:diffhl") ||
+                \ ((b:diffhl ==? {'add': [], 'del': [], 'ch': []})
+                \ && empty(s:placed_signs[0]))
+        " Make sure, diff and previous diff are different,
+        " otherwise, we might forget to update the signs
+        call s:StoreMessage('No differences found!')
+        let s:nodiff=1
+    elseif exists("s:changes_signs_undefined") && s:changes_signs_undefined
+        let s:diffhl = s:CheckInvalidSigns()
+        " remove invalid signs
+        call s:UnPlaceSpecificSigns(s:diffhl[0])
+        call s:PlaceSigns(b:diffhl)
+    else
+        let s:diffhl = s:CheckInvalidSigns()
+        " diffhl[0] - invalid signs, that need to be removed
+        " diffhl[1] - valid signs, that need to be added
+        call s:UnPlaceSpecificSigns(s:diffhl[0])
+        " Make sure to only place new signs!
+        call s:PlaceSigns(s:diffhl[1])
+    endif
 endfu
 fu! s:SortDiffHl() "{{{1
     for i in ['add', 'ch', 'del']
@@ -1051,48 +1047,75 @@ fu! s:IsUpdateAllowed(empty) "{{{1
 endfu
 
 if has("job") "{{{1
-    fu! ErrCallbackHandler(channel, msg)
-        echomsg "Error:". a:msg
+    let s:jobs = {}
+
+    function! s:on_exit(channel) dict abort
+        if getfsize(self.output) <= 0
+            call s:StoreMessage("File not found or no differences found!")
+            return
+        endif
+        call s:ParseDiffOutput(self.output)
+        call s:AfterDiff()
+        redr!
+        if self.type != 3 || s:nodiff
+            let b:changes_view_enabled=1
+        endif
+        if self.type ==# 2
+            call s:ShowDifferentLines()
+        endif
+        call changes#WarningMsg()
+        call s:SaveRestoreChangeMarks(0)
+    endfunction
+
+    function! s:DoAsync(cmd, file, type)
+        if s:Is("win")
+            let cmd = a:cmd
+        else
+            let cmd = ['sh', '-c', a:cmd]
+        endif
+        if empty(a:file)
+            return
+        endif
+
+        let options = {'file': a:file, 'cmd': a:cmd, 'type': a:type, 'output': s:diff_out}
+        if has_key(s:jobs, a:file)
+            if job_status(get(s:jobs, a:file)) == 'run'
+                return
+            else
+                call job_stop(get(s:jobs, a:file))
+                call remove(s:jobs, a:file)
+            endif
+        endif
+        let id = job_start(cmd, {
+            \ 'err_io':   'out',
+            \ 'close_cb': function('s:on_exit', options)})
+        let s:jobs[a:file] = id
     endfu
 endif
 
-fu! s:System(string) "{{{1
-    " uses jobs and async features on a Vim that supports it, else
-    " will fallback to using plain old system command
-    if has("job")
-        let s:output = []
-        let cmd = 'sh -c "'.a:string.'"'
-        let job = job_start(cmd, {"err_cb": "ErrCallbackHandler"})
-    else
-        return system(a:string)
-    endif
-endfu
-
 fu! changes#PlaceSignDummy(doplace) "{{{1
+    if s:signcolumn
+        if a:doplace && !&scl isnot# 'yes'
+            set signcolumn=yes
+        endif
+        return
+    endif
     if !exists("b:sign_prefix")
         return
     elseif !s:IsUpdateAllowed(0)
         return
     endif
     if a:doplace
-        if s:signcolumn
-            set signcolumn=yes
-        else
-            let b = copy(s:placed_signs[0])
-            if !exists("b:changes_sign_dummy_placed") &&
-                        \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
-                " only place signs, if signs have been defined
-                " and there isn't one placed yet
-                call s:PlaceSpecificSign(b:sign_prefix.'00', s:maxlnum, 'dummy')
-                let b:changes_sign_dummy_placed = 1
-            endif
+        let b = copy(s:placed_signs[0])
+        if !exists("b:changes_sign_dummy_placed") &&
+                    \ (!empty(b) || get(g:, 'changes_fixed_sign_column', 0))
+            " only place signs, if signs have been defined
+            " and there isn't one placed yet
+            call s:PlaceSpecificSign(b:sign_prefix.'00', s:maxlnum, 'dummy')
+            let b:changes_sign_dummy_placed = 1
         endif
     elseif (!a:doplace && !get(g:, 'changes_fixed_sign_column', 0))
-        if s:signcolumn
-            set signcolumn=auto
-        else
-            exe "sil sign unplace " b:sign_prefix.'0'
-        endif
+        exe "sil sign unplace " b:sign_prefix.'0'
     endif
 endfu
 fu! changes#GetStats() "{{{1
@@ -1273,13 +1296,13 @@ fu! changes#UnignoreCurrentBuffer() "{{{1
     endif
 endfu
 fu! changes#EnableChanges(arg, bang, ...) "{{{1
+    " if a:1 given, make a diff against the given file
     call changes#UnignoreCurrentBuffer()
     try
         let savevar = get(g:, 'changes_max_filesize', 0)
         unlet! g:changes_max_filesize
         call changes#Init()
-        let arg = exists("a:1") ? a:1 : ''
-        verbose call s:GetDiff(a:arg, a:bang, arg)
+        verbose call s:GetDiff(a:arg, a:bang, (a:0 ? a:1 : ''))
     catch
         call changes#WarningMsg()
         call changes#CleanUp()
@@ -1340,14 +1363,14 @@ fu! changes#AuCmd(arg) "{{{1
     endif
 endfu
 fu! changes#TCV() "{{{1
-    if  exists("b:changes_view_enabled") && b:changes_view_enabled
+    if  get(b:, "changes_view_enabled", 0)
         call s:UnPlaceSigns(0)
         let b:changes_view_enabled = 0
         echo "Hiding changes since last save"
     else
         try
             call changes#Init()
-            call s:GetDiff(1, '')
+            call s:GetDiff(1, '', '')
             let b:changes_view_enabled = 1
             echo "Showing changes since last save"
         catch
@@ -1473,7 +1496,7 @@ fu! changes#ToggleHiStyle() "{{{1
     endif
     try
         call changes#Init()
-        call s:GetDiff(1, '')
+        call s:GetDiff(1, '', '')
     catch
         " Make sure, the message is actually displayed!
         verbose call changes#WarningMsg()
@@ -1587,7 +1610,7 @@ fu! changes#StageHunk(line, revert) "{{{1
             if v:shell_error
                 call s:StoreMessage(output)
             endif
-            call s:GetDiff(1, '')
+            call s:GetDiff(1, '', '')
         endif
     catch
         let &vbs=1
