@@ -302,6 +302,8 @@ appearing SignColumn (|hl-SignColumn|) To enable, set in your |.vimrc| >
 
     let g:changes_fixed_sign_column=1
 <
+(not used for Vim 8 which has the 'signcolumn' setting.)
+
 g:changes_fast (default: 1)
 --------------------------
 If set (which it is by default), skip creating diffs at a couple occasions.
