@@ -15,7 +15,12 @@ endif
 let g:loaded_changes       = 1
 let s:keepcpo              = &cpo
 set cpo&vim
-let s:nowait = v:version > 703 || v:version == 703 && has("patch1261")
+if v:version < 800
+    echohl WarningMsg
+    echomsg "The ChangesPlugin needs at least a Vim version 8"
+    echohl Normal
+    finish
+endif
 
 " ---------------------------------------------------------------------
 " Public Functions: {{{1
@@ -37,17 +42,16 @@ com! CT  ChangesStyleToggle
 com! -nargs=? -bang CF ChangesFoldDiff <args>
 
 com! -nargs=? -complete=file -bang EnableChanges	call changes#EnableChanges(1, <q-bang>, <q-args>)
-com! DisableChanges		call changes#CleanUp(1)
+com! DisableChanges		call changes#CleanUp()
 com! ToggleChangeView		call changes#TCV()
 com! ChangesCaption		call changes#Output()
 com! ChangesLinesOverview	call changes#EnableChanges(2, '')
-com! ChangesDiffMode		call changes#EnableChanges(3, '')
 com! ChangesStyleToggle		call changes#ToggleHiStyle()
 com! -nargs=? ChangesFoldDifferences     call changes#FoldDifferences(<f-args>)
 " Allow range, but ignore it (will be figured out from the diff)
 com! -range -bang ChangesStageCurrentHunk  call changes#StageHunk(line('.'), !empty(<q-bang>))
 
-if get(g:, 'changes_autocmd', 1) || get(g:, 'changes_fixed_sign_column', 0)
+if get(g:, 'changes_autocmd', 1)
     try
 	exe ":call changes#Init()"
     catch
@@ -73,13 +77,13 @@ if !hasmapto("ah", 'o')
 endif
 
 if !hasmapto('<Plug>(ChangesStageHunk)')
-    exe "nmap     <silent><unique>".(s:nowait ? "<nowait>" : ""). " <Leader>h <Plug>(ChangesStageHunk)"
+    nmap     <silent><unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
     nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunkAdd
     nnoremap <sid>ChangesStageHunkAdd :<c-u>call changes#StageHunk(line('.'), 0)<cr>
 endif
 
 if !hasmapto('<Plug>(ChangesStageHunkRevert)')
-    exe "nmap     <silent><unique>". (s:nowait ? "<nowait>" : ""). " <Leader>H <Plug>(ChangesStageHunkRevert)"
+    nmap     <silent><unique><nowait> <Leader>H <Plug>(ChangesStageHunkRevert)
     nnoremap <unique><script> <Plug>(ChangesStageHunkRevert) <sid>ChangesStageHunkRevert
     nnoremap <sid>ChangesStageHunkRevert :<c-u>call changes#StageHunk(line('.'), 1)<cr>
 endif
