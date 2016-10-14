@@ -327,8 +327,8 @@ fu! s:MakeDiff_new(file, type) "{{{1
                 throw "changes:abort"
             endif
         endif
-        let cmd = printf("diff -a -U0 -N %s %s > %s",
-                    \ s:diff_in_old, s:diff_in_cur, s:diff_out)
+        let cmd = printf("diff -a -U0 -N %s %s > %s.%d",
+                    \ s:diff_in_old, s:diff_in_cur, s:diff_out, s:jobid)
         if s:Is('win') && &shell =~? 'cmd.exe$'
             let cmd = '( '. cmd. ' )'
         endif
@@ -1012,6 +1012,9 @@ if has("job") "{{{1
         endif
         call changes#WarningMsg()
         call s:SaveRestoreChangeMarks(0)
+        " Remove from s:jobs
+        call remove(s:jobs, self.file)
+        let s:jobid -= 1
     endfunction
 
     function! s:DoAsync(cmd, file, type)
@@ -1024,7 +1027,7 @@ if has("job") "{{{1
             return
         endif
 
-        let options = {'file': a:file, 'cmd': a:cmd, 'type': a:type, 'output': s:diff_out}
+        let options = {'file': a:file, 'cmd': a:cmd, 'type': a:type, 'output': s:diff_out.s:jobid}
         if has_key(s:jobs, a:file)
             if job_status(get(s:jobs, a:file)) == 'run'
                 return
@@ -1037,6 +1040,7 @@ if has("job") "{{{1
             \ 'err_io':   'out',
             \ 'close_cb': function('s:on_exit', options)})
         let s:jobs[a:file] = id
+        let s:jobid += 1
     endfu
 endif
 
@@ -1157,6 +1161,7 @@ fu! changes#Init() "{{{1
         let s:diff_out    = tempname()
         let s:diff_in_cur = s:diff_out.'cur'
         let s:diff_in_old = s:diff_out.'old'
+        let s:jobid = 1  " job id
     endif
     let s:nodiff=0
     " Make sure, we are fetching all placed signs again
