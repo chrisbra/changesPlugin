@@ -333,7 +333,7 @@ fu! s:MakeDiff_new(file, type) "{{{1
             let cmd = '( '. cmd. ' )'
         endif
         if has('job')
-            call s:DoAsync(cmd, fnamemodify(bufname(''), ':p'), a:type)
+            call s:ChangesDoAsync(cmd, fnamemodify(bufname(''), ':p'), a:type)
         else
             call system(cmd)
             if v:shell_error >= 2 || v:shell_error < 0
@@ -1017,7 +1017,7 @@ if has("job") "{{{1
         let s:jobid -= 1
     endfunction
 
-    function! s:DoAsync(cmd, file, type)
+    function! s:ChangesDoAsync(cmd, file, type)
         if s:Is("win")
             let cmd = a:cmd
         else
@@ -1027,7 +1027,7 @@ if has("job") "{{{1
             return
         endif
 
-        let options = {'file': a:file, 'cmd': a:cmd, 'type': a:type, 'output': s:diff_out.s:jobid}
+        let options = {'file': a:file, 'cmd': a:cmd, 'type': a:type, 'output': s:diff_out.'.'.s:jobid}
         if has_key(s:jobs, a:file)
             if job_status(get(s:jobs, a:file)) == 'run'
                 return
