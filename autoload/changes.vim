@@ -788,7 +788,7 @@ fu! s:CheckInvalidSigns() "{{{1
                 " The next line should not be of type dummy, so add it to the
                 " delete list and to the add list
                 call add(list[0], next)
-                if index(b:diffhl[type], next.line) > -1
+                if index(b:diffhl[type], next.line+0) > -1
                     call add(list[1][type], next.line+0)
                 endif
                 call remove(s:placed_signs[0], ind+1)
@@ -798,7 +798,7 @@ fu! s:CheckInvalidSigns() "{{{1
             if item.type =~? 'dummy' && s:SignType(get(last, 'type', item.type)) != type
                 call add(list[0], item)
                 if index(b:diffhl[type], item.line+0) > -1
-                    call add(list[1][type],  item.line)
+                    call add(list[1][type],  item.line+0)
                 endif
             endif
             let ind+=1
@@ -819,7 +819,9 @@ fu! s:CheckInvalidSigns() "{{{1
                 " with sign type 'add' make sure, that the already existing
                 " sign type 'add' will be set to 'dummyadd' so that the '+'
                 " sign appears at the correct line
-                call add(list[1][id], line)
+                if (index(list[1][id], line) == -1)
+                    call add(list[1][id], line)
+                endif
                 if s:PrevDictHasKey(line) ==? id
                     let previtem = filter(copy(s:placed_signs[0]), 'v:val.line ==? line')
                     call add(list[0], previtem[0])
@@ -831,6 +833,10 @@ fu! s:CheckInvalidSigns() "{{{1
 endfu
 fu! s:UnPlaceSpecificSigns(dict) "{{{1
     for sign in a:dict
+        let ind = index(s:placed_signs[0], sign)
+        if ind > -1
+            call remove(s:placed_signs[0], ind)
+        endif
         exe "sign unplace ". sign.id. " buffer=".bufnr('')
     endfor
 endfu
