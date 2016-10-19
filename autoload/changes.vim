@@ -1013,7 +1013,9 @@ if has("job") "{{{1
         call changes#WarningMsg()
         call s:SaveRestoreChangeMarks(0)
         " Remove from s:jobs
-        call remove(s:jobs, self.file)
+        if has_key(s:jobs, self.file)
+            call remove(s:jobs, self.file)
+        endif
         let s:jobid -= 1
     endfunction
 
