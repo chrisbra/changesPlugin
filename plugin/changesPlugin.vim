@@ -32,7 +32,7 @@ endfu
 
 " Public Interface: {{{1
 " Define the Shortcuts:
-com! -nargs=? -complete=file -bang EC	 EnableChanges<bang> <args>
+com! -nargs=? -complete=file EC	 EnableChanges <args>
 com! DC	 DisableChanges
 com! TCV ToggleChangeView
 com! CC  ChangesCaption
@@ -41,12 +41,12 @@ com! CD  ChangesDiffMode
 com! CT  ChangesStyleToggle
 com! -nargs=? -bang CF ChangesFoldDiff <args>
 
-com! -nargs=? -complete=file -bang EnableChanges	call changes#EnableChanges(1, <q-bang>, <q-args>)
+com! -nargs=? -complete=file EnableChanges	call changes#EnableChanges(1, <q-args>)
 com! DisableChanges		call changes#CleanUp()
 com! ToggleChangeView		call changes#TCV()
 com! ChangesCaption		call changes#Output()
-com! ChangesLinesOverview	call changes#EnableChanges(2, '')
-com! ChangesDiffMode           call changes#EnableChanges(3, '')
+com! ChangesLinesOverview	call changes#EnableChanges(2)
+com! ChangesDiffMode           call changes#EnableChanges(3)
 com! ChangesStyleToggle		call changes#ToggleHiStyle()
 com! -nargs=? ChangesFoldDifferences     call changes#FoldDifferences(<f-args>)
 " Allow range, but ignore it (will be figured out from the diff)

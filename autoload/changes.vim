@@ -132,7 +132,7 @@ fu! s:UpdateView(...) "{{{1
             if !did_source_init
                 call changes#Init()
             endif
-            call s:GetDiff(1, '', '')
+            call s:GetDiff(1, '')
             call s:HighlightTextChanges()
             let b:changes_chg_tick = b:changedtick
             let b:changes_last_line = line('$')
@@ -635,7 +635,7 @@ fu! s:RemoveConsecutiveLines(fwd, list) "{{{1
     endfor
     return lines
 endfu
-fu! s:GetDiff(arg, bang, file) "{{{1
+fu! s:GetDiff(arg, file) "{{{1
     " a:arg == 1 Create signs
     " a:arg == 2 Show changed lines in locationlist
     " a:arg == 3 Stay in diff mode
@@ -643,13 +643,10 @@ fu! s:GetDiff(arg, bang, file) "{{{1
 
     " If error happened, don't try to get a diff list
     try
-        if (changes#CurrentBufferIsIgnored() && empty(a:bang)) ||
+        if changes#CurrentBufferIsIgnored() ||
                     \ !empty(&l:bt) || line2byte(line('$')) == -1
             call s:StoreMessage('Buffer is ignored, use ! to force command')
             return
-        elseif !empty(a:bang)
-            " remove buffer from ignore list
-            call changes#UnignoreCurrentBuffer()
         endif
 
         " Save some settings
@@ -1234,14 +1231,14 @@ fu! changes#UnignoreCurrentBuffer() "{{{1
         call remove(s:ignore, bufnr('%'))
     endif
 endfu
-fu! changes#EnableChanges(arg, bang, ...) "{{{1
+fu! changes#EnableChanges(arg, ...) "{{{1
     " if a:1 given, make a diff against the given file
     call changes#UnignoreCurrentBuffer()
     try
         let savevar = get(g:, 'changes_max_filesize', 0)
         unlet! g:changes_max_filesize
         call changes#Init()
-        verbose call s:GetDiff(a:arg, a:bang, (a:0 ? a:1 : ''))
+        verbose call s:GetDiff(a:arg, (a:0 ? a:1 : ''))
     catch
         call changes#WarningMsg()
         call changes#CleanUp()
@@ -1305,7 +1302,7 @@ fu! changes#TCV() "{{{1
     else
         try
             call changes#Init()
-            call s:GetDiff(1, '', '')
+            call s:GetDiff(1, '')
             let b:changes_view_enabled = 1
             echo "Showing changes since last save"
         catch
@@ -1426,7 +1423,7 @@ fu! changes#ToggleHiStyle() "{{{1
     endif
     try
         call changes#Init()
-        call s:GetDiff(1, '', '')
+        call s:GetDiff(1, '')
     catch
         " Make sure, the message is actually displayed!
         verbose call changes#WarningMsg()
@@ -1540,7 +1537,7 @@ fu! changes#StageHunk(line, revert) "{{{1
             if v:shell_error
                 call s:StoreMessage(output)
             endif
-            call s:GetDiff(1, '', '')
+            call s:GetDiff(1, '')
         endif
     catch
         let &vbs=1

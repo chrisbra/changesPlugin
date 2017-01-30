@@ -65,8 +65,7 @@ Alternatively, you can enter the shortcut >
 which basically calls :EnableChanges and supports the same arguments.
 
 If errors happen, the current buffer will be silently ignored when :EC
-is called later. Use the ! attribute, to force reevaluating the command (and
-see error messages).
+is called later.
 
                                                     *:DC* *:DisableChanges*
 If you want to disable the plugin, enter >
