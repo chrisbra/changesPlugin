@@ -1002,6 +1002,8 @@ if has("job") "{{{1
     function! s:on_exit(channel) dict abort
         if getfsize(self.output) <= 0
             call s:StoreMessage("File not found or no differences found!")
+            " might need to remove invalid signs
+            call s:AfterDiff()
             return
         endif
         call s:ParseDiffOutput(self.output)
