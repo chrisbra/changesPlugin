@@ -729,7 +729,7 @@ fu! s:GetDiff(arg, file) "{{{1
         call s:SaveRestoreChangeMarks(0)
     endtry
 endfu
-fu! s:AfterDiff()
+fu! s:AfterDiff() "{{{1
     call s:SortDiffHl()
     " Check for empty dict of signs
     if !exists("b:diffhl") ||
@@ -1002,8 +1002,10 @@ if has("job") "{{{1
     function! s:on_exit(channel) dict abort
         if getfsize(self.output) <= 0
             call s:StoreMessage("File not found or no differences found!")
-            " might need to remove invalid signs
-            call s:AfterDiff()
+            if exists("b:diffhl")
+                " might need to remove invalid signs
+                call s:AfterDiff()
+            endif
             return
         endif
         call s:ParseDiffOutput(self.output)
