@@ -1056,7 +1056,11 @@ endif
 fu! changes#PlaceSignDummy() "{{{1
     if exists("s:old_signcolumn") && &scl isnot# 'yes'
         " user changed the setting, do not change it back again
-        return
+        if &scl is# 'no'
+            throw 'changes:abort'
+        else
+            return
+        endif
     elseif &scl isnot# 'yes'
         set signcolumn=yes
         let s:old_signcolumn = 1
