@@ -999,7 +999,7 @@ endfu
 if has("job") "{{{1
     let s:jobs = {}
 
-    function! s:on_exit(channel) dict abort
+    function! s:on_exit(channel) dict abort "{{{2
         if getfsize(self.output) <= 0
             call s:StoreMessage("File not found or no differences found!")
             if exists("b:diffhl")
@@ -1026,7 +1026,7 @@ if has("job") "{{{1
         let s:jobid -= 1
     endfunction
 
-    function! s:ChangesDoAsync(cmd, file, type)
+    function! s:ChangesDoAsync(cmd, file, type) "{{{2
         if s:Is("win")
             let cmd = a:cmd
         else
@@ -1054,8 +1054,12 @@ if has("job") "{{{1
 endif
 
 fu! changes#PlaceSignDummy() "{{{1
-    if &scl isnot# 'yes'
+    if exists("s:old_signcolumn") && &scl isnot# 'yes'
+        " user changed the setting, do not change it back again
+        return
+    elseif &scl isnot# 'yes'
         set signcolumn=yes
+        let s:old_signcolumn = 1
     endif
 endfu
 fu! changes#GetStats() "{{{1
