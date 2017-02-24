@@ -1007,6 +1007,7 @@ if has("job") "{{{1
                 " might need to remove invalid signs
                 call s:AfterDiff()
             endif
+            call changes#WarningMsg()
             return
         endif
         call s:ParseDiffOutput(self.output)
@@ -1081,7 +1082,7 @@ fu! changes#WarningMsg() "{{{1
         redraw!
         let msg=["Changes.vim: " . s:msg[0]] + (len(s:msg) > 1 ? s:msg[1:] : [])
         echohl WarningMsg
-        for mess in msg
+        for mess in reverse(msg)
             echomsg mess
         endfor
 
