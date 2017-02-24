@@ -327,32 +327,33 @@ fu! s:MakeDiff_new(file, type) "{{{1
                 throw "changes:abort"
             endif
         endif
-        let cmd = printf("diff -a -U0 -N %s %s > %s.%d",
-                    \ s:diff_in_old, s:diff_in_cur, s:diff_out, s:jobid)
+        let outfile = printf("%s.%d", s:diff_out, s:jobid)
+        let cmd = printf("diff -a -U0 -N %s %s > %s",
+                    \ s:diff_in_old, s:diff_in_cur, outfile)
         if s:Is('win') && &shell =~? 'cmd.exe$'
             let cmd = '( '. cmd. ' )'
         endif
         if has('job')
             call s:ChangesDoAsync(cmd, fnamemodify(bufname(''), ':p'), a:type)
         else
-            call system(cmd)
+            let output = system(cmd)
             if v:shell_error >= 2 || v:shell_error < 0
                 " diff returns 2 on errors
                 call s:StoreMessage(output[:-2])
                 throw "changes:abort"
             endif
-            if getfsize(s:diff_out) <= 0
+            if getfsize(outfile) <= 0
                 call s:StoreMessage("File not found or no differences found!")
                 return
             endif
-            call s:ParseDiffOutput(s:diff_out)
+            call s:ParseDiffOutput(outfile)
         endif
     finally
-        if filereadable(s:diff_out)
-            call s:PreviewDiff(s:diff_out)
+        if filereadable(outfile)
+            call s:PreviewDiff(outfile)
         endif
         if !get(g:, 'changes_debug', 0)
-            for file in [s:diff_in_cur, s:diff_in_old, s:diff_out]
+            for file in [s:diff_in_cur, s:diff_in_old, s:diff_out, outfile]
                 call delete(file)
             endfor
         endif
