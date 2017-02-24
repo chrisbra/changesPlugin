@@ -339,7 +339,7 @@ fu! s:MakeDiff_new(file, type) "{{{1
             let cmd = '( '. cmd. ' )'
         endif
         if has('job')
-            call s:ChangesDoAsync(cmd, fnamemodify(bufname(''), ':p'), a:type)
+            call s:ChangesDoAsync(cmd, fnamemodify(bufname(''), ':p'), a:type, outfile)
         else
             let output = system(cmd)
             if v:shell_error >= 2 || v:shell_error < 0
@@ -1026,23 +1026,31 @@ if has("job") "{{{1
         let s:jobid -= 1
     endfunction
 
-    function! s:ChangesDoAsync(cmd, file, type) "{{{2
+    function! s:ChangesDoAsync(cmd, file, type, outfile) "{{{2
         if s:Is("win")
             let cmd = (&sh =~# 'cmd.exe' ? 'cmd.exe /c ' : 'sh -c ') . a:cmd
         else
             let cmd = ['sh', '-c', a:cmd]
         endif
+        if !empty(a:outfile)
+            let outfile=s:diff_out.'.'.s:jobid
+        else
+            let outfile=a:outfile
+        endif
         if empty(a:file)
             return
         endif
 
-        let options = {'file': a:file, 'cmd': a:cmd, 'type': a:type, 'output': s:diff_out.'.'.s:jobid}
+        let options = {'file': a:file, 'cmd': a:cmd, 'type': a:type, 'output': outfile}
         if has_key(s:jobs, a:file)
             if job_status(get(s:jobs, a:file)) == 'run'
                 return
             else
                 call job_stop(get(s:jobs, a:file))
                 call remove(s:jobs, a:file)
+                if s:jobid > 1
+                    let s:jobid -= 1
+                endif
             endif
         endif
         let id = job_start(cmd, {
