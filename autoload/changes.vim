@@ -1028,7 +1028,7 @@ if has("job") "{{{1
 
     function! s:ChangesDoAsync(cmd, file, type) "{{{2
         if s:Is("win")
-            let cmd = a:cmd
+            let cmd = (&sh =~# 'cmd.exe' ? 'cmd.exe /c ' : 'sh -c ') . a:cmd
         else
             let cmd = ['sh', '-c', a:cmd]
         endif
