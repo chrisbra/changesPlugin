@@ -286,6 +286,11 @@ fu! s:Output(list) "{{{1
     endif
     return join(a:list, eol).eol
 endfu
+fu! s:DeleteTempFiles() "{{{1
+    for file in glob(s:diff_out.'*', 1, 1)
+        call delete(file)
+    endfor
+endfu
 fu! s:MakeDiff_new(file, type) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
@@ -352,11 +357,6 @@ fu! s:MakeDiff_new(file, type) "{{{1
         if filereadable(outfile)
             call s:PreviewDiff(outfile)
         endif
-        if !get(g:, 'changes_debug', 0)
-            for file in [s:diff_in_cur, s:diff_in_old, s:diff_out, outfile]
-                call delete(file)
-            endfor
-        endif
         exe 'lcd' _pwd
     endtry
 endfu
@@ -394,7 +394,6 @@ fu! s:MakeDiff(...) "{{{1
             endif
             let fsize=getfsize(s:diff_out)
             if fsize == 0
-                call delete(s:diff_out)
                 call s:StoreMessage("Couldn't get VCS output, aborting")
                 "call s:MoveToPrevWindow()
                 exe "noa" bufwinnr(bnr) "wincmd w"
@@ -413,7 +412,6 @@ fu! s:MakeDiff(...) "{{{1
             endif
             throw "changes:abort"
         finally
-            call delete(s:diff_out)
         endtry
     endif
     0d_
@@ -1178,8 +1176,8 @@ fu! changes#Init() "{{{1
     endif
     if !exists("s:diff_out")
         let s:diff_out    = tempname()
-        let s:diff_in_cur = s:diff_out.'cur'
-        let s:diff_in_old = s:diff_out.'old'
+        let s:diff_in_cur = s:diff_out.'.cur.txt'
+        let s:diff_in_old = s:diff_out.'.old.txt'
         let s:jobid = 1  " job id
     endif
     let s:nodiff=0
@@ -1298,7 +1296,8 @@ fu! changes#AuCmd(arg) "{{{1
                 if !get(g:, 'changes_fast', 1)
                     au InsertEnter * :call changes#InsertSignOnEnter()
                 endif
-                au BufWinEnter * :call s:UpdateView(1)
+                au BufWritePost,BufWinEnter * :call s:UpdateView(1)
+                au VimLeave * call s:DeleteTempFiles()
             augroup END
         endif
     else
