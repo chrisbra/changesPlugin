@@ -1008,6 +1008,9 @@ if has("job") "{{{1
             call changes#WarningMsg()
             return
         endif
+        if !exists("b:diffhl")
+            let b:diffhl={'add': [], 'del': [], 'ch': []}
+        endif
         call s:ParseDiffOutput(self.output)
         call s:AfterDiff()
         redr!
