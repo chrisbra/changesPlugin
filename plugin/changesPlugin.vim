@@ -15,7 +15,7 @@ endif
 let g:loaded_changes       = 1
 let s:keepcpo              = &cpo
 set cpo&vim
-if v:version < 800
+if v:version < 800 && !has('nvim')
     echohl WarningMsg
     echomsg "The ChangesPlugin needs at least a Vim version 8"
     echohl Normal
