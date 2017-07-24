@@ -79,6 +79,8 @@ Here is a short overview of the functionality provided by the plugin:
 
 `g:changes_linehi_diff` (default: 0) - If set, will overlay the text with a highlighting for the actual difference within the line.
 
+`g:changes_use_icons` (default: 1) - If set, will display graphical icons if support is available.
+
 #### Similar Work
 [vim-gitgutter](https://github.com/airblade/vim-gitgutter)
 Only works for git, only updates the signs on write
