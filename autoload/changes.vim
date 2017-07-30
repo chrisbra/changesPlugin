@@ -884,7 +884,8 @@ fu! s:InitSignDef() "{{{1
 endfu
 fu! s:MakeSignIcon() "{{{1
     " Windows seems to have problems with the gui
-    return has("gui_running") && !s:Is("win")
+    return has("gui_running") && !s:Is("win") &&
+                \ get(g:, 'changes_use_icons', 1)
 endfu
 fu! s:SaveRestoreChangeMarks(save) "{{{1
     if a:save
