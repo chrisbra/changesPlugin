@@ -1470,7 +1470,10 @@ fu! changes#InsertSignOnEnter() "{{{1
     if !s:IsUpdateAllowed(1)
         return
     endif
-    call changes#Init()
+    try
+        call changes#Init()
+    catch changes:abort
+    endtry
     let line = line('.')
     let prev = line - 1
     let next = line + 1
