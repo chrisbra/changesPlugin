@@ -294,6 +294,7 @@ endfu
 fu! s:MakeDiff_new(file, type) "{{{1
     " Parse Diff output and place signs
     " Needs unified diff output
+    let outfile = printf("%s.%d", s:diff_out, s:jobid)
     try
         let _pwd = s:ChangeDir()
         unlet! b:current_line
@@ -332,7 +333,6 @@ fu! s:MakeDiff_new(file, type) "{{{1
                 throw "changes:abort"
             endif
         endif
-        let outfile = printf("%s.%d", s:diff_out, s:jobid)
         let cmd = printf("diff -a -U0 -N %s %s > %s",
                     \ s:diff_in_old, s:diff_in_cur, outfile)
         if s:Is('win') && &shell =~? 'cmd.exe$'
