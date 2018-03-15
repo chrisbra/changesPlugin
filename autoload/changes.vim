@@ -716,7 +716,8 @@ fu! s:GetDiff(arg, file) "{{{1
                     \ fnamemodify(expand("%"),':t') . " from " . b:vcs_type)
             endif
             " redraw (there seems to be some junk left)
-            redr!
+            " disabled, redraw is expensive
+            "redr!
         endtry
     finally
         if exists("_wsv")
