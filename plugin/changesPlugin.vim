@@ -25,15 +25,15 @@ endif
 " ---------------------------------------------------------------------
 " Public Functions: {{{1
 fu! ChangesMap(char) "{{{2
-    if a:char == '<cr>'
-	imap <silent><script> <cr> <cr><c-r>=changes#MapCR()<cr>
-    endif
+  if a:char is '<cr>'
+    imap <silent><script> <cr> <cr><c-r>=changes#MapCR()<cr>
+  endif
 endfu
 
 " Public Interface: {{{1
 " Define the Shortcuts:
-com! -nargs=? -complete=file EC	 EnableChanges <args>
-com! DC	 DisableChanges
+com! -nargs=? -complete=file EC  EnableChanges <args>
+com! DC  DisableChanges
 com! TCV ToggleChangeView
 com! CC  ChangesCaption
 com! CL  ChangesLinesOverview
@@ -41,62 +41,61 @@ com! CD  ChangesDiffMode
 com! CT  ChangesStyleToggle
 com! -nargs=? -bang CF ChangesFoldDiff <args>
 
-com! -nargs=? -complete=file EnableChanges	call changes#EnableChanges(1, <q-args>)
-com! DisableChanges		call changes#CleanUp()
-com! ToggleChangeView		call changes#TCV()
-com! ChangesCaption		call changes#Output()
-com! ChangesLinesOverview	call changes#EnableChanges(2)
+com! -nargs=? -complete=file EnableChanges  call changes#EnableChanges(1, <q-args>)
+com! DisableChanges   call changes#CleanUp()
+com! ToggleChangeView   call changes#TCV()
+com! ChangesCaption   call changes#Output()
+com! ChangesLinesOverview call changes#EnableChanges(2)
 com! ChangesDiffMode           call changes#EnableChanges(3)
-com! ChangesStyleToggle		call changes#ToggleHiStyle()
+com! ChangesStyleToggle   call changes#ToggleHiStyle()
 com! -nargs=? ChangesFoldDifferences     call changes#FoldDifferences(<f-args>)
 " Allow range, but ignore it (will be figured out from the diff)
 com! -range -bang ChangesStageCurrentHunk  call changes#StageHunk(line('.'), !empty(<q-bang>))
 
-if get(g:, 'changes_autocmd', 1)
-    try
-	exe ":call changes#Init()"
-    catch
-	exe ":call changes#CleanUp()"
-    endtry
+if get(g:, 'changes_autocmd', 1) && v:vim_did_enter
+  try
+    call changes#Init()
+  catch
+    call changes#CleanUp()
+  endtry
 endif
 " =====================================================================
 " Mappings:  "{{{1
 if !hasmapto("[h")
-    map <expr> <silent> [h changes#MoveToNextChange(0, v:count1)
+  map <expr> <silent> [h changes#MoveToNextChange(0, v:count1)
 endif
 if !hasmapto("]h")
-    map <expr> <silent> ]h changes#MoveToNextChange(1, v:count1)
+  map <expr> <silent> ]h changes#MoveToNextChange(1, v:count1)
 endif
 
 " Text-object: A hunk
 if !hasmapto("ah", 'v')
-    vmap <expr> <silent> ah changes#CurrentHunk()
+  vmap <expr> <silent> ah changes#CurrentHunk()
 endif
 
 if !hasmapto("ah", 'o')
-    omap <silent> ah :norm Vah<cr>
+  omap <silent> ah :norm Vah<cr>
 endif
 
 if !hasmapto('<Plug>(ChangesStageHunk)')
-    nmap     <silent><unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
-    nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunkAdd
-    nnoremap <sid>ChangesStageHunkAdd :<c-u>call changes#StageHunk(line('.'), 0)<cr>
+  nmap     <silent><unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
+  nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunkAdd
+  nnoremap <sid>ChangesStageHunkAdd :<c-u>call changes#StageHunk(line('.'), 0)<cr>
 endif
 
 if !hasmapto('<Plug>(ChangesStageHunkRevert)')
-    nmap     <silent><unique><nowait> <Leader>H <Plug>(ChangesStageHunkRevert)
-    nnoremap <unique><script> <Plug>(ChangesStageHunkRevert) <sid>ChangesStageHunkRevert
-    nnoremap <sid>ChangesStageHunkRevert :<c-u>call changes#StageHunk(line('.'), 1)<cr>
+  nmap     <silent><unique><nowait> <Leader>H <Plug>(ChangesStageHunkRevert)
+  nnoremap <unique><script> <Plug>(ChangesStageHunkRevert) <sid>ChangesStageHunkRevert
+  nnoremap <sid>ChangesStageHunkRevert :<c-u>call changes#StageHunk(line('.'), 1)<cr>
 endif
 
 " In Insert mode, when <cr> is pressed, update the signs immediately
 if !get(g:, 'changes_fast', 1) && !hasmapto('<cr>', 'i')
-    call ChangesMap('<cr>')
+  call ChangesMap('<cr>')
 endif
 
 " Restoration And Modelines: {{{1
-" vim: fdm=marker
-let &cpo= s:keepcpo
+let &cpo=s:keepcpo
 unlet s:keepcpo
 " Modeline
 " vi:fdm=marker fdl=0
