@@ -52,13 +52,20 @@ com! -nargs=? ChangesFoldDifferences     call changes#FoldDifferences(<f-args>)
 " Allow range, but ignore it (will be figured out from the diff)
 com! -range -bang ChangesStageCurrentHunk  call changes#StageHunk(line('.'), !empty(<q-bang>))
 
-if get(g:, 'changes_autocmd', 1) && v:vim_did_enter
+if get(g:, 'changes_autocmd', 1)
+  augroup ChangesPlugin
+    au!
+    au VimEnter * call s:ChangesStartup()
+  augroup END
+endif
+
+function s:ChangesStartup()
   try
     call changes#Init()
   catch
     call changes#CleanUp()
   endtry
-endif
+endfu
 " =====================================================================
 " Mappings:  "{{{1
 if !hasmapto("[h")
