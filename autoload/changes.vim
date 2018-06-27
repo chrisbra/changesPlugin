@@ -171,6 +171,9 @@ fu! s:ChangesSignsLines() "{{{1
     return sort(map(copy(s:placed_signs[0]), 'get(v:val, "line")+0'))
 endfu
 fu! s:PrevDictHasKey(line) "{{{1
+    " Return existing sign on the current line
+    let result=filter(copy(s:placed_signs[0]), 'v:val.line==?a:line')
+    return result == [] ? '' : result[0].type
     for item in s:placed_signs[0]
         if get(item, 'line', -1) ==? a:line
             return item.type
