@@ -178,6 +178,13 @@ fu! s:PrevDictHasKey(line) "{{{1
     endfor
     return ''
 endfu
+fu! s:Write(name)
+    " turn off fsync, so writing is faster
+    let _fsync=&fsync
+    set nofsync
+    exe ":sil keepalt noa :w!" a:name
+    let &fsync=_fsync
+endfu
 fu! s:PlaceSigns(dict) "{{{1
     " signs by other plugins
     let b = copy(s:placed_signs[1])
@@ -306,7 +313,7 @@ fu! s:MakeDiff_new(file, type) "{{{1
     try
         let _pwd = s:ChangeDir()
         unlet! b:current_line
-        exe ":sil keepalt noa :w!" s:diff_in_cur
+        call s:Write(s:diff_in_cur)
         if !s:vcs || !empty(a:file)
             let file = !empty(a:file) ? a:file : bufname('')
             if empty(file)
