@@ -825,19 +825,17 @@ fu! s:CheckInvalidSigns() "{{{1
             let type = has_sign ? s:PrevDictHasKey(line) : ''
             let cur  = index(list[1][id], line)
             let prev = index(b:diffhl[id], (line-1))
-            if empty(type) && index(list[1][id], line) == -1
+            if empty(type) && cur == -1
                 call add(list[1][id], line)
-            elseif prev > -1 && (
-                        \ index(list[1][id],  (line-1)) > -1 ||
-                        \ index(b:diffhl[id], (line-1)) > -1)
+            elseif prev > -1 && index(list[1][id],  (line-1)) > -1
                 " if a new line is inserted above an already existing line
                 " with sign type 'add' make sure, that the already existing
                 " sign type 'add' will be set to 'dummyadd' so that the '+'
                 " sign appears at the correct line
-                if (index(list[1][id], line) == -1)
+                if cur == -1
                     call add(list[1][id], line)
                 endif
-                if s:PrevDictHasKey(line) ==? id
+                if has_sign && s:PrevDictHasKey(line) ==? id
                     let previtem = filter(copy(s:placed_signs[0]), 'v:val.line ==? line')
                     call add(list[0], previtem[0])
                 endif
