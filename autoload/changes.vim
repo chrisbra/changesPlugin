@@ -348,8 +348,10 @@ fu! s:MakeDiff_new(file, type) "{{{1
                 throw "changes:abort"
             endif
         endif
-        let cmd = printf("diff -a -U0 -N %s %s > %s",
-                    \ s:diff_in_old, s:diff_in_cur, outfile)
+        let cmd = printf("diff -a -U0 -N %s %s %s > %s",
+            \ s:diff_in_old, s:diff_in_cur, 
+            \ (get(g:, 'changes_grep_diff', 0) ? '|fgrep "@@"' : ''),
+            \ outfile)
         if s:Is('win') && &shell =~? 'cmd.exe$'
             let cmd = '( '. cmd. ' )'
         endif
@@ -438,9 +440,13 @@ fu! s:MakeDiff(...) "{{{1
 endfu
 fu! s:ParseDiffOutput(file) "{{{1
     let b:current_line = 1000000
-    for line in filter(readfile(a:file), 'v:val=~''^@@''')
-        let submatch = matchlist(line,
-                    \ '@@ -\(\d\+\),\?\(\d*\) +\(\d\+\),\?\(\d*\) @@')
+    let file=readfile(a:file)
+    if !get(g:, 'changes_grep_diff', 0)
+        let file=filter(file, 'v:val=~''^@@''')
+    endif
+    for line in file
+        " TODO: matchlist seems slow, can this be made faster by manually parsing?
+        let submatch = matchlist(line, '@@ -\(\d\+\),\?\(\d*\) +\(\d\+\),\?\(\d*\) @@')
         if empty(submatch)
             " There was probably an error, skip parsing now
             return
@@ -782,7 +788,6 @@ fu! s:CheckInvalidSigns() "{{{1
     " 1) check, if there are signs to delete
     for item in s:placed_signs[0]
         if (item.type ==? '[Deleted]')
-            " skip sign prefix '99'
             call add(list[0], item)
             continue
         elseif (item.line == get(last, 'line', 0))
