@@ -994,7 +994,7 @@ fu! s:SignId() "{{{1
         let b:changes_sign_id = 0
     endif
     let b:changes_sign_id += 1
-    return printf("%02d", b:changes_sign_id)
+    return b:changes_sign_id
 endfu
 fu! s:IsUpdateAllowed(empty) "{{{1
     if !empty(&buftype) || &ro || &diff || changes#CurrentBufferIsIgnored()
