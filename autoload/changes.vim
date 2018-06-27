@@ -170,16 +170,20 @@ fu! s:ChangesSignsLines() "{{{1
     " returns a list of all changes placed signs
     return sort(map(copy(s:placed_signs[0]), 'get(v:val, "line")+0'))
 endfu
-fu! s:PrevDictHasKey(line) "{{{1
+fu! s:PrevDictHasKey(line, ...) "{{{1
     " Return existing sign on the current line
+    " If a:1, return complete dict item
     let result=filter(copy(s:placed_signs[0]), 'v:val.line==?a:line')
+    if result == []
+        return a:0 ? {} : ''
+    endif
+    return a:0 ? result[0] : result[0].type
+endfu
+fu! s:PrevDictHasKeyType(line, id) "{{{1
+    " Return existing sign on the current line
+    " If a:1, return complete dict item
+    let result=filter(copy(s:placed_signs[0]), 'v:val.line ==? a:line && v:val.type[0:2] ==? a:id')
     return result == [] ? '' : result[0].type
-    for item in s:placed_signs[0]
-        if get(item, 'line', -1) ==? a:line
-            return item.type
-        endif
-    endfor
-    return ''
 endfu
 fu! s:Write(name)
     " turn off fsync, so writing is faster
@@ -213,7 +217,7 @@ fu! s:PlaceSigns(dict) "{{{1
             let sign_exists_prev = index(changes_signs_lines, (item-1)) > -1
             " Make sure, 'dummych' ==? 'ch'
             " or 'dummydel' ==? 'del'
-            if prev_line+1 == item || (sign_exists_prev && s:SignType(s:PrevDictHasKey(item-1)) ==? id)
+            if prev_line+1 == item || (sign_exists_prev && s:SignType(s:PrevDictHasKeyType(item-1, id)) ==? id)
                 if id=='del'
                     " don't need to place more deleted signs on those lines,
                     " skip
@@ -831,10 +835,9 @@ fu! s:CheckInvalidSigns() "{{{1
     for id in ['add', 'cha', 'del']
         for line in b:diffhl[id]
             let has_sign = index(changes_signs_lines, line) > -1
-            let type = has_sign ? s:PrevDictHasKey(line) : ''
             let cur  = index(list[1][id], line)
             let prev = index(b:diffhl[id], (line-1))
-            if empty(type) && cur == -1
+            if !has_sign && cur == -1
                 call add(list[1][id], line)
             elseif prev > -1 && index(list[1][id],  (line-1)) > -1
                 " if a new line is inserted above an already existing line
@@ -844,9 +847,11 @@ fu! s:CheckInvalidSigns() "{{{1
                 if cur == -1
                     call add(list[1][id], line)
                 endif
-                if has_sign && s:PrevDictHasKey(line) ==? id
-                    let previtem = filter(copy(s:placed_signs[0]), 'v:val.line ==? line')
-                    call add(list[0], previtem[0])
+                if has_sign
+                    let previtem = s:PrevDictHasKey(line, 1)
+                    if previtem.type == id
+                        call add(list[0], previtem)
+                    endif
                 endif
             endif
         endfor
