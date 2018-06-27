@@ -990,10 +990,7 @@ fu! s:SignIdRemove() "{{{1
     return printf("%d%02d", b:sign_prefix, b:changes_sign_id + 1)
 endfu
 fu! s:SignId() "{{{1
-    if !exists("b:changes_sign_id")
-        let b:changes_sign_id = 0
-    endif
-    let b:changes_sign_id += 1
+    let b:changes_sign_id = get(b:, 'changes_sign_id', 0) + 1
     return b:changes_sign_id
 endfu
 fu! s:IsUpdateAllowed(empty) "{{{1
