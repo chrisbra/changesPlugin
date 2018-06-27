@@ -42,7 +42,7 @@ fu! s:Check() "{{{1
     let s:ids={}
     let s:ids["add"]   = hlID("DiffAdd")
     let s:ids["del"]   = hlID("DiffDelete")
-    let s:ids["ch"]    = hlID("DiffChange")
+    let s:ids["cha"]   = hlID("DiffChange")
     let s:ids["ch2"]   = hlID("DiffText")
 
     call s:SetupSignTextHl()
@@ -83,8 +83,8 @@ fu! s:CheckLines(arg) "{{{1
             let s:temp['del']   = s:temp['del'] + [ line ]
         elseif (id == s:ids['add']) && a:arg
             let b:diffhl['add'] = b:diffhl['add'] + [ line ]
-        elseif ((id == s:ids['ch']) || (id == s:ids['ch2']))  && a:arg
-            let b:diffhl['ch']  = b:diffhl['ch'] + [ line ]
+        elseif ((id == s:ids['cha']) || (id == s:ids['ch2']))  && a:arg
+            let b:diffhl['cha']  = b:diffhl['cha'] + [ line ]
         endif
         let line+=1
     endw
@@ -116,7 +116,7 @@ fu! s:UpdateView(...) "{{{1
                 \ get(g:, 'changes_fast', 1) &&
                 \ line("'[") == line("']") &&
                 \ !empty(b:diffhl) &&
-                \ index(b:diffhl['add'] + b:diffhl['ch'] + b:diffhl['del'], line("'[")) > -1 &&
+                \ index(b:diffhl['add'] + b:diffhl['cha'] + b:diffhl['del'], line("'[")) > -1 &&
                 \ b:changes_last_line == line('$')
         " there already is a sign on the current line, so
         " skip an expensive call to create diff (might happen with many
@@ -190,7 +190,7 @@ fu! s:PlaceSigns(dict) "{{{1
     let b = copy(s:placed_signs[1])
     let changes_signs_lines=s:ChangesSignsLines()
     " Give changes a higher prio than adds
-    for id in ['add', 'ch', 'del']
+    for id in ['add', 'cha', 'del']
         let prev_line = -1
         for item in a:dict[id]
             " One special case could occur:
@@ -217,7 +217,7 @@ fu! s:PlaceSigns(dict) "{{{1
                     let prev_line = item
                     continue
                 else
-                    let name='dummy'.id
+                    let name=id.'_dummy'
                 endif
             endif
             if sign_exists && s:PrevDictHasKey(item) ==? name
@@ -477,7 +477,7 @@ fu! s:ParseDiffOutput(file) "{{{1
         " 2 deleted, 2 changed
         " @@ -3,4 +3,2 @@
         elseif old_count >= new_count
-            let b:diffhl.ch += range(new_line, new_line + new_count - 1)
+            let b:diffhl.cha += range(new_line, new_line + new_count - 1)
             if new_line + new_count <= old_line+old_count
                 let b:diffhl.del+= range(new_count + new_line, old_line + old_count - 1)
             endif
@@ -486,7 +486,7 @@ fu! s:ParseDiffOutput(file) "{{{1
         " 3 added, 2 changed
         " @@ -4,2 +4,5 @@
         else " old_count < new_count
-            let b:diffhl.ch += range(new_line, new_line + old_count - 1)
+            let b:diffhl.cha += range(new_line, new_line + old_count - 1)
             if new_line + old_count <= new_line+new_count-1
                 let b:diffhl.add += range(new_line + old_count, new_line + new_count - 1)
             endif
@@ -512,8 +512,8 @@ fu! s:ShowDifferentLines() "{{{1
         let list=[]
         let placed={}
         let tline = -1
-        let types={'ch':'*', 'add': '+', 'del': '-'}
-        for type in ['ch', 'del', 'add']
+        let types={'cha':'*', 'add': '+', 'del': '-'}
+        for type in ['cha', 'del', 'add']
             for line in b:diffhl[type]
                 if has_key(placed, line)
                     continue
@@ -696,7 +696,7 @@ fu! s:GetDiff(arg, file) "{{{1
                 return
             endif
 
-            let b:diffhl={'add': [], 'del': [], 'ch': []}
+            let b:diffhl={'add': [], 'del': [], 'cha': []}
             if a:arg == 3
                 let s:temp = {'del': []}
                 let curbuf = bufnr('%')
@@ -754,7 +754,7 @@ fu! s:AfterDiff() "{{{1
     call s:SortDiffHl()
     " Check for empty dict of signs
     if !exists("b:diffhl") ||
-                \ ((b:diffhl ==? {'add': [], 'del': [], 'ch': []})
+                \ ((b:diffhl ==? {'add': [], 'del': [], 'cha': []})
                 \ && empty(s:placed_signs[0]))
         " Make sure, diff and previous diff are different,
         " otherwise, we might forget to update the signs
@@ -770,19 +770,20 @@ fu! s:AfterDiff() "{{{1
     endif
 endfu
 fu! s:SortDiffHl() "{{{1
-    for i in ['add', 'ch', 'del']
+    for i in ['add', 'cha', 'del']
         call sort(b:diffhl[i], 'n')
         call uniq(b:diffhl[i])
     endfor
 endfu
 fu! s:SignType(string) "{{{1
     " returns type but skips dummy type
-    return matchstr(a:string, '\(dummy\)\?\zs.*$')
+    return a:string[0:2]
+    "return matchstr(a:string, '\(dummy\)\?\zs.*$')
 endfu
 fu! s:CheckInvalidSigns() "{{{1
     " list[0]: signs to remove
     " list[1]: signs to add
-    let list=[[],{'add': [], 'del': [], 'ch': []}]
+    let list=[[],{'add': [], 'del': [], 'cha': []}]
     let ind=0
     let last={}
     " 1) check, if there are signs to delete
@@ -824,7 +825,7 @@ fu! s:CheckInvalidSigns() "{{{1
     endfor
     " Check, which signs are to be placed
     let changes_signs_lines=s:ChangesSignsLines()
-    for id in ['add', 'ch', 'del']
+    for id in ['add', 'cha', 'del']
         for line in b:diffhl[id]
             let has_sign = index(changes_signs_lines, line) > -1
             let type = has_sign ? s:PrevDictHasKey(line) : ''
@@ -886,21 +887,21 @@ fu! s:InitSignDef() "{{{1
     endif
 
     let signs["add"] = "add text=".add
-    let signs["ch"]  = "ch  text=".ch
+    let signs["cha"] = "cha  text=".ch
     let signs["del"] = "del text=".del
 
     " Add some more dummy signs
-    let signs["dummyadd"] = "dummyadd text=\<Char-0xa0>\<Char-0xa0> texthl=".
+    let signs["add_dummy"] = "add_dummy text=\<Char-0xa0>\<Char-0xa0> texthl=".
                 \ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn")
-    let signs["dummych"]  = "dummych text=\<Char-0xa0>\<Char-0xa0> texthl=".
+    let signs["cha_dummy"]  = "cha_dummy text=\<Char-0xa0>\<Char-0xa0> texthl=".
                 \ (sign_hi<2 ? "ChangesSignTextCh" : "SignColumn")
 
     if sign_hi > 0
         let signs['add'] .= ' linehl=DiffAdd'
-        let signs['ch'] .= ' linehl=DiffChange'
+        let signs['cha'] .= ' linehl=DiffChange'
         let signs['del'] .= ' linehl=DiffDelete'
-        let signs['dummyadd'] .= ' linehl=DiffAdd'
-        let signs['dummych'] .= ' linehl=DiffChange'
+        let signs['add_dummy'] .= ' linehl=DiffAdd'
+        let signs['cha_dummy']  .= ' linehl=DiffChange'
     endif
     return signs
 endfu
@@ -1034,7 +1035,7 @@ if has("job") "{{{1
             return
         endif
         if !exists("b:diffhl")
-            let b:diffhl={'add': [], 'del': [], 'ch': []}
+            let b:diffhl={'add': [], 'del': [], 'cha': []}
         endif
         call s:ParseDiffOutput(self.output)
         call s:AfterDiff()
@@ -1105,7 +1106,7 @@ fu! changes#PlaceSignDummy() "{{{1
 endfu
 fu! changes#GetStats() "{{{1
     return [  len(get(get(b:, 'diffhl', []), 'add', [])),
-                \ len(get(get(b:, 'diffhl', []), 'ch',  [])),
+                \ len(get(get(b:, 'diffhl', []), 'cha',  [])),
                 \ len(get(get(b:, 'diffhl', []), 'del', []))]
 endfu
 fu! changes#WarningMsg() "{{{1
@@ -1133,7 +1134,7 @@ fu! changes#Output() "{{{1
     let sign_def = s:signs
     if !empty(sign_def)
         let add = matchstr(sign_def['add'], 'text=\zs..')
-        let ch  = matchstr(sign_def['ch'], 'text=\zs..')
+        let ch  = matchstr(sign_def['cha'], 'text=\zs..')
         let del = matchstr(sign_def['del'], 'text=\zs..')
     endif
     echohl Title
@@ -1373,7 +1374,7 @@ fu! changes#MoveToNextChange(fwd, cnt) "{{{1
     let dict = get(b:, "diffhl", {})
     let lines = get(dict, "add", []) +
                 \   get(dict, "del", []) +
-                \   get(dict, "ch",  [])
+                \   get(dict, "cha",  [])
     let lines = sort(lines, 'n')
     " remove duplicates
     let lines = uniq(lines)
@@ -1443,7 +1444,7 @@ fu! changes#FoldDifferences(...) "{{{1
         let context = empty(a:000) ? context : a:1
         let g:lines = []
         let dict=get(b:, 'diffhl', {})
-        for line in sort(get(dict, 'add', []) + get(dict, 'ch' , []) + get(dict, 'del', []), 'n')
+        for line in sort(get(dict, 'add', []) + get(dict, 'cha' , []) + get(dict, 'del', []), 'n')
             for item in range(line-context,line+context)
                 " Add some context
                 if index(g:lines, item) > -1 || item < 1 || item > line('$')
@@ -1506,7 +1507,7 @@ fu! changes#InsertSignOnEnter() "{{{1
     let prevname = s:PrevDictHasKey(prev)
     if empty(name)
         " no sign yet on current line, add one.
-        let name = ((!empty(prevname) && prevname =~? 'add') ? 'dummyadd' : 'add')
+        let name = ((!empty(prevname) && prevname =~? 'add') ? 'add_dummy' : 'add')
         let id=b:sign_prefix.s:SignId()
         call s:PlaceSpecificSign(id, line, name)
         " on o in normal mode, we should keep the sign
@@ -1517,7 +1518,7 @@ fu! changes#InsertSignOnEnter() "{{{1
     if s:PrevDictHasKey(next) ==? 'add'
         let item = filter(copy(s:placed_signs[0]), 'v:val.line ==? next')
         call s:UnPlaceSpecificSigns(item)
-        call s:PlaceSpecificSign(item[0].id, next, 'dummyadd')
+        call s:PlaceSpecificSign(item[0].id, next, 'add_dummy')
     endif
     let b:changes_last_line = line('$')
 endfu
