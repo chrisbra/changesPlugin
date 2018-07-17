@@ -1501,7 +1501,10 @@ fu! changes#InsertSignOnEnter() "{{{1
     " simply check, if the current line has a sign
     " and if not, add one
     unlet! s:changes_last_inserted_sign
-    if !s:IsUpdateAllowed(1)
+    if !s:IsUpdateAllowed(1) || &cpo =~ '$'
+        " If '$' is inside 'cpo' setting, than the redraw by placing a sign
+        " will overwrite the '$' placed from the change command. So return
+        " if the user has '$' inside the cpoptions.
         return
     endif
     try
