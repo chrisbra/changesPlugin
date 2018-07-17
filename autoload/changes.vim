@@ -1512,9 +1512,9 @@ fu! changes#InsertSignOnEnter() "{{{1
     let prev = line - 1
     let next = line + 1
     let name=s:PrevDictHasKey(line)
-    let prevname = s:PrevDictHasKey(prev)
     if empty(name)
         " no sign yet on current line, add one.
+        let prevname = s:PrevDictHasKey(prev)
         let name = ((!empty(prevname) && prevname =~? 'add') ? 'add_dummy' : 'add')
         let id=b:sign_prefix.s:SignId()
         call s:PlaceSpecificSign(id, line, name)
