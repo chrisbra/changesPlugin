@@ -804,6 +804,9 @@ fu! s:CheckInvalidSigns() "{{{1
             continue
         endif
         let type=s:SignType(item.type)
+        if match(keys(b:diffhl), type == -1)
+            return
+        endif
         if !empty(type) && index(b:diffhl[type], item.line+0) == -1
             call add(list[0], item)
             " remove item from the placed sign list, so that we
