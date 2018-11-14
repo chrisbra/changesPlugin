@@ -542,6 +542,7 @@ fu! s:ShowDifferentLines() "{{{1
         lopen
     endif
 endfun
+let g:Changes_funcref=funcref("<sid>ShowDifferentLines")
 fu! s:GetSignId() "{{{1
     let signs = s:GetPlacedSigns()
     if empty(signs)
@@ -672,7 +673,7 @@ fu! s:GetDiff(arg, file) "{{{1
     try
         if changes#CurrentBufferIsIgnored() ||
                     \ !empty(&l:bt) || line2byte(line('$')) == -1
-            call s:StoreMessage('Buffer is ignored, use ! to force command')
+            call s:StoreMessage('Buffer is ignored')
             return
         endif
 
@@ -804,7 +805,7 @@ fu! s:CheckInvalidSigns() "{{{1
             continue
         endif
         let type=s:SignType(item.type)
-        if match(keys(b:diffhl), type == -1)
+        if match(keys(b:diffhl), type) < 0
             return
         endif
         if !empty(type) && index(b:diffhl[type], item.line+0) == -1
