@@ -814,7 +814,7 @@ fu! s:CheckInvalidSigns() "{{{1
             endif
             let type=s:SignType(item.type)
             if match(keys(b:diffhl), type) < 0
-                return
+                continue
             endif
             if !empty(type) && index(b:diffhl[type], item.line+0) == -1
                 call add(list[0], item)
