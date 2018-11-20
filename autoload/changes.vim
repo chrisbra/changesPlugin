@@ -199,6 +199,10 @@ fu! s:PlaceSigns(dict) "{{{1
     " Give changes a higher prio than adds
     for id in ['add', 'cha', 'del']
         let prev_line = -1
+        if !has_key(a:dict, id)
+            " safety check
+            break
+        endif
         for item in a:dict[id]
             " One special case could occur:
             " You could delete the last lines. In that case, we couldn't place
@@ -773,8 +777,11 @@ fu! s:AfterDiff() "{{{1
         " remove invalid signs
         " s:diffhl[0] - invalid signs, that need to be removed
         " s:diffhl[1] - valid signs, that need to be added
-        call s:UnPlaceSpecificSigns(s:diffhl[0])
-        call s:PlaceSigns(s:diffhl[1])
+        " safety check
+        if type(s:diffhl) == type([]) && len(s:diffhl) == 2 && type(s:diffhl[0]) == type([])
+            call s:UnPlaceSpecificSigns(s:diffhl[0])
+            call s:PlaceSigns(s:diffhl[1])
+        endif
     endif
 endfu
 fu! s:SortDiffHl() "{{{1
@@ -794,73 +801,78 @@ fu! s:CheckInvalidSigns() "{{{1
     let list=[[],{'add': [], 'del': [], 'cha': []}]
     let ind=0
     let last={}
-    " 1) check, if there are signs to delete
-    for item in s:placed_signs[0]
-        if (item.type ==? '[Deleted]')
-            call add(list[0], item)
-            continue
-        elseif (item.line == get(last, 'line', 0))
-            " remove duplicate signs
-            call add(list[0], item)
-            continue
-        endif
-        let type=s:SignType(item.type)
-        if match(keys(b:diffhl), type) < 0
-            return
-        endif
-        if !empty(type) && index(b:diffhl[type], item.line+0) == -1
-            call add(list[0], item)
-            " remove item from the placed sign list, so that we
-            " don't erroneously place a dummy sign later on
-            let next = get(s:placed_signs[0], ind+1, {})
-            if item.type !~? 'dummy' && !empty(next) && next.type =~? 'dummy'
-                " The next line should not be of type dummy, so add it to the
-                " delete list and to the add list
-                call add(list[0], next)
-                if index(b:diffhl[type], next.line+0) > -1
-                    call add(list[1][type], next.line+0)
-                endif
-                call remove(s:placed_signs[0], ind+1)
-            endif
-            call remove(s:placed_signs[0], ind)
-        else
-            if item.type =~? 'dummy' && s:SignType(get(last, 'type', item.type)) != type
+    try
+        " 1) check, if there are signs to delete
+        for item in s:placed_signs[0]
+            if (item.type ==? '[Deleted]')
                 call add(list[0], item)
-                if index(b:diffhl[type], item.line+0) > -1
-                    call add(list[1][type],  item.line+0)
-                endif
+                continue
+            elseif (item.line == get(last, 'line', 0))
+                " remove duplicate signs
+                call add(list[0], item)
+                continue
             endif
-            let ind+=1
-            let last = item
-        endif
-    endfor
-    " Check, which signs are to be placed
-    let changes_signs_lines=s:ChangesSignsLines()
-    for id in ['add', 'cha', 'del']
-        for line in b:diffhl[id]
-            let has_sign = index(changes_signs_lines, line) > -1
-            let cur  = index(list[1][id], line)
-            let prev = index(b:diffhl[id], (line-1))
-            if !has_sign && cur == -1
-                call add(list[1][id], line)
-            elseif prev > -1 && index(list[1][id],  (line-1)) > -1
-                " if a new line is inserted above an already existing line
-                " with sign type 'add' make sure, that the already existing
-                " sign type 'add' will be set to 'dummyadd' so that the '+'
-                " sign appears at the correct line
-                if cur == -1
-                    call add(list[1][id], line)
+            let type=s:SignType(item.type)
+            if match(keys(b:diffhl), type) < 0
+                return
+            endif
+            if !empty(type) && index(b:diffhl[type], item.line+0) == -1
+                call add(list[0], item)
+                " remove item from the placed sign list, so that we
+                " don't erroneously place a dummy sign later on
+                let next = get(s:placed_signs[0], ind+1, {})
+                if item.type !~? 'dummy' && !empty(next) && next.type =~? 'dummy'
+                    " The next line should not be of type dummy, so add it to the
+                    " delete list and to the add list
+                    call add(list[0], next)
+                    if index(b:diffhl[type], next.line+0) > -1
+                        call add(list[1][type], next.line+0)
+                    endif
+                    call remove(s:placed_signs[0], ind+1)
                 endif
-                if has_sign
-                    let previtem = s:PrevDictHasKey(line, 1)
-                    if previtem.type == id
-                        call add(list[0], previtem)
+                call remove(s:placed_signs[0], ind)
+            else
+                if item.type =~? 'dummy' && s:SignType(get(last, 'type', item.type)) != type
+                    call add(list[0], item)
+                    if index(b:diffhl[type], item.line+0) > -1
+                        call add(list[1][type],  item.line+0)
                     endif
                 endif
+                let ind+=1
+                let last = item
             endif
         endfor
-    endfor
-    return list
+        " Check, which signs are to be placed
+        let changes_signs_lines=s:ChangesSignsLines()
+        for id in ['add', 'cha', 'del']
+            for line in b:diffhl[id]
+                let has_sign = index(changes_signs_lines, line) > -1
+                let cur  = index(list[1][id], line)
+                let prev = index(b:diffhl[id], (line-1))
+                if !has_sign && cur == -1
+                    call add(list[1][id], line)
+                elseif prev > -1 && index(list[1][id],  (line-1)) > -1
+                    " if a new line is inserted above an already existing line
+                    " with sign type 'add' make sure, that the already existing
+                    " sign type 'add' will be set to 'dummyadd' so that the '+'
+                    " sign appears at the correct line
+                    if cur == -1
+                        call add(list[1][id], line)
+                    endif
+                    if has_sign
+                        let previtem = s:PrevDictHasKey(line, 1)
+                        if previtem.type == id
+                            call add(list[0], previtem)
+                        endif
+                    endif
+                endif
+            endfor
+        endfor
+    catch
+    finally
+        " in any case, return an empty list
+        return list
+    endtry
 endfu
 fu! s:UnPlaceSpecificSigns(dict) "{{{1
     for sign in a:dict
