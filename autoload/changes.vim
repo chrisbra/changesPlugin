@@ -832,11 +832,19 @@ fu! s:CheckInvalidSigns() "{{{1
                 endif
                 call remove(s:placed_signs[0], ind)
             else
-                if item.type =~? 'dummy' && s:SignType(get(last, 'type', item.type)) != type
+                if item.type =~? 'dummy' && s:SignType(get(last, 'type', '')) != type
                     call add(list[0], item)
                     if index(b:diffhl[type], item.line+0) > -1
                         call add(list[1][type],  item.line+0)
                     endif
+                endif
+                if s:SignType(item.type) == s:SignType(get(last, 'type', ''))
+                            \ && item.type !~ 'dummy'
+                            \ && item.line+0 == get(last, 'line', 0)+1
+                    " Current type needs to be of type dummy, but isn't,
+                    " remove and re-add the sign
+                    call add(list[0], item)
+                    call add(list[1][type],  item.line+0)
                 endif
                 let ind+=1
                 let last = item
