@@ -183,11 +183,17 @@ fu! s:SetupSignTextHl() "{{{1
         " highlighting group does not exist yet
         hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green
     endif
+    if !hlID('ChangesSignTextDummyAdd') || synIDattr(hlID('ChangesSignTextDummyAdd'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextDummyAdd'), 'fg'))
+        hi ChangesSignTextDummyAdd ctermbg=46 ctermfg=black guibg=green
+    endif
     if !hlID('ChangesSignTextDel') || synIDattr(hlID('ChangesSignTextDel'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextDel'), 'fg'))
         hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=red
     endif
     if !hlID('ChangesSignTextCh') || synIDattr(hlID('ChangesSignTextCh'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextCh'), 'fg'))
         hi ChangesSignTextCh  ctermbg=21  ctermfg=white guibg=blue
+    endif
+    if !hlID('ChangesSignTextDummyAdd') || synIDattr(hlID('ChangesSignTextDummyAdd'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextDummyAdd'), 'fg'))
+        hi ChangesSignTextDummyCh  ctermbg=21  ctermfg=white guibg=blue
     endif
 endfu
 fu! s:ChangesSignsLines() "{{{1
@@ -968,11 +974,11 @@ fu! s:InitSignDef() "{{{1
     endif
     let signs['add_dummy'] = {
                     \ 'text': "\<Char-0xa0>\<Char-0xa0>",
-                    \ 'texthl': (sign_hi<2 ? "ChangesSignTextAdd": "SignColumn"),
+                    \ 'texthl': (sign_hi<2 ? "ChangesSignTextDummyAdd": "SignColumn"),
                     \ 'linehl': sign_hi > 0 ? 'DiffAdd' : ''}
     let signs['cha_dummy'] = {
                     \ 'text': "\<Char-0xa0>\<Char-0xa0>",
-                    \ 'texthl': (sign_hi<2 ? "ChangesSignTextCh": "SignColumn"),
+                    \ 'texthl': (sign_hi<2 ? "ChangesSignTextDummyCh": "SignColumn"),
                     \ 'linehl': sign_hi > 0 ? 'DiffChange' : ''}
 
     for name in keys(signs)

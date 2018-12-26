@@ -281,6 +281,8 @@ highlighting. For example, you can place the following lines in your
     hi ChangesSignTextAdd ctermbg=yellow ctermfg=black guibg=green
     hi ChangesSignTextDel ctermbg=white  ctermfg=black guibg=red
     hi ChangesSignTextCh  ctermbg=black  ctermfg=white guibg=blue
+    hi ChangesSignTextDummyCh  ctermfg=NONE ctermbg=white guifg=NONE guibg=white
+    hi ChangesSignTextDummyAdd ctermfg=NONE ctermbg=green guifg=NONE guibg=green
 
 g:changes_linehi_diff (default: 0)
 ----------------------------------
