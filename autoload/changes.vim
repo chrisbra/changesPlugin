@@ -172,8 +172,8 @@ fu! s:UpdateView(...) "{{{1
         " using the InsertEnter autocommand
         if exists("s:changes_last_inserted_sign")
             let name=s:PrevDictHasKey(line('.'))
-            if name ==# s:changes_last_inserted_sign.name
-                call s:UnPlaceSpecificSigns([{'id': s:SignIdRemove()}])
+            if get(name, 'name', '') ==# s:changes_last_inserted_sign.name
+                call s:UnPlaceSpecificSigns([{'id': get(name, 'id', s:SignIdRemove())}])
             endif
         endif
     endif
@@ -200,14 +200,14 @@ fu! s:ChangesSignsLines() "{{{1
     " returns a list of all changes placed signs
     return sort(map(copy(s:placed_signs[0]), 'get(v:val, "line")+0'), 'N')
 endfu
-fu! s:PrevDictHasKey(line, ...) "{{{1
+fu! s:PrevDictHasKey(line) "{{{1
     " Return existing sign on the current line
-    " If a:1, return complete dict item
-    let result=filter(copy(s:placed_signs[0]), 'v:val.line==?a:line')
-    if result == []
-        return a:0 ? {} : ''
+    if s:sign_api
+        let result=sign_getplaced(bufnr(''), {'group': s:sign_api_group, 'lnum': a:line})[0]['signs']
+        return len(result) ? result[0] : {}
     endif
-    return a:0 ? result[0] : result[0].name
+    let result=filter(copy(s:placed_signs[0]), 'v:val.line==?a:line')
+    return result == [] ? {} : result[0]
 endfu
 fu! s:PrevDictHasKeyType(line, id) "{{{1
     " Return existing sign on the current line
@@ -261,12 +261,12 @@ fu! s:PlaceSigns(dict) "{{{1
                     let name=id.'_dummy'
                 endif
             endif
-            if sign_exists && s:PrevDictHasKey(item) ==? name
+            if sign_exists && get(s:PrevDictHasKey(item), 'name', '') ==? name
                 " There is already a Changes sign placed
                 continue
             endif
             let sid=b:sign_prefix.s:SignId()
-            call s:PlaceSpecificSign(sid, item, name)
+            call s:PlaceSpecificSign(sid, item, name, bufnr(''))
             " remember line number, so that we don't place a second sign
             " there!
             call add(s:placed_signs[0], {'id': sid, 'line':item, 'type': name})
@@ -770,7 +770,7 @@ fu! s:GetDiff(arg, file) "{{{1
                 call s:MakeDiff_new(a:file, a:arg)
             endif
             if !has("job")
-                call s:AfterDiff()
+                call s:AfterDiff(bufnr(''))
                 if a:arg != 3 || s:nodiff
                     let b:changes_view_enabled=1
                 endif
@@ -806,22 +806,28 @@ fu! s:GetDiff(arg, file) "{{{1
         call s:SaveRestoreChangeMarks(0)
     endtry
 endfu
-fu! s:AfterDiff() "{{{1
+fu! s:AfterDiff(bufnr) "{{{1
     call s:SortDiffHl()
     if s:sign_api
         " First unplace all plugin specific signs
         call s:UnPlaceSigns(1)
         for name in ['add', 'cha', 'del']
-            let previous=0
+            let previous=-1
             for line in b:diffhl[name]
-                let sid=b:sign_prefix.s:SignId()
-                if line==previous+1 && index(['add', 'cha'], name) > -1
-                    call s:PlaceSpecificSign(sid, line, name.'_dummy')
+                if line==previous+1
+                    if index(['add', 'cha'], name) > -1
+                        call s:PlaceSpecificSign(0, line, name.'_dummy', a:bufnr)
+                    else
+                        " nothing to do for deleted lines
+                        let previous=line
+                        continue
+                    endif
                 else
-                    call s:PlaceSpecificSign(sid, line, name)
+                    call s:PlaceSpecificSign(0, line, name, a:bufnr)
                 endif
                 let previous=line
             endfor
+        endfor
         return
     endif
     " Check for empty dict of signs
@@ -928,7 +934,7 @@ fu! s:CheckInvalidSigns() "{{{1
                         call add(list[1][id], line)
                     endif
                     if has_sign
-                        let previtem = s:PrevDictHasKey(line, 1)
+                        let previtem = s:PrevDictHasKey(line)
                         if previtem.name == id
                             call add(list[0], previtem)
                         endif
@@ -949,18 +955,18 @@ fu! s:UnPlaceSpecificSigns(dict) "{{{1
             call remove(s:placed_signs[0], ind)
         endif
         if s:sign_api
-            call sign_unplace(s:sign_api_group, {'id': s:SignIdRemove(), 'buffer': bufnr('')})
+            call sign_unplace(s:sign_api_group, {'id': sign.id, 'buffer': bufnr('')})
         else
             exe "sign unplace ". sign.id. " buffer=".bufnr('')
         endif
     endfor
 endfu
-fu! s:PlaceSpecificSign(id, line, type) "{{{1
+fu! s:PlaceSpecificSign(id, line, type, bufnr) "{{{1
     if s:sign_api
-        call sign_place(a:id, s:sign_api_group, a:type, bufnr(''), {'lnum': a:line})
+        call sign_place(0, s:sign_api_group, a:type, a:bufnr, {'lnum': a:line})
     else
         exe printf("sil sign place %d line=%d name=%s buffer=%d",
-                \ a:id, a:line, a:type, bufnr(''))
+                \ a:id, a:line, a:type, a:bufnr)
     endif
 endfu
 fu! s:InitSignDef() "{{{1
@@ -1128,7 +1134,7 @@ if has("job") "{{{1
             call s:StoreMessage("File not found or no differences found!")
             if exists("b:diffhl")
                 " might need to remove invalid signs
-                call s:AfterDiff()
+                call s:AfterDiff(self.bufnr)
             endif
             call changes#WarningMsg()
             return
@@ -1137,7 +1143,7 @@ if has("job") "{{{1
             let b:diffhl={'add': [], 'del': [], 'cha': []}
         endif
         call s:ParseDiffOutput(self.output)
-        call s:AfterDiff()
+        call s:AfterDiff(self.bufnr)
         " redrawing is expansive, skipped
         redr!
         if self.type != 3 || s:nodiff
@@ -1170,7 +1176,7 @@ if has("job") "{{{1
             return
         endif
 
-        let options = {'file': a:file, 'cmd': a:cmd, 'type': a:type, 'output': outfile}
+        let options = {'file': a:file, 'cmd': a:cmd, 'type': a:type, 'output': outfile, 'bufnr': bufnr('')}
         if has_key(s:jobs, a:file)
             if job_status(get(s:jobs, a:file)) == 'run'
                 return
@@ -1609,21 +1615,21 @@ fu! changes#InsertSignOnEnter() "{{{1
     let prev = line - 1
     let next = line + 1
     let name=s:PrevDictHasKey(line)
-    if empty(name)
+    if name == {}
         " no sign yet on current line, add one.
         let prevname = s:PrevDictHasKey(prev)
-        let name = ((!empty(prevname) && prevname =~? 'add') ? 'add_dummy' : 'add')
+        let name = ((get(prevname, 'name', '') =~? 'add') ? 'add_dummy' : 'add')
         let id=b:sign_prefix.s:SignId()
-        call s:PlaceSpecificSign(id, line, name)
+        call s:PlaceSpecificSign(id, line, name, bufnr(''))
         " on o in normal mode, we should keep the sign
         if get(b:, 'changes_last_line', 0) == line('$')
             let s:changes_last_inserted_sign={'id': id, 'line':line, 'type':name}
         endif
     endif
-    if s:PrevDictHasKey(next) ==? 'add'
+    if get(s:PrevDictHasKey(next),'name', '') ==? 'add'
         let item = filter(copy(s:placed_signs[0]), 'v:val.line ==? next')
         call s:UnPlaceSpecificSigns(item)
-        call s:PlaceSpecificSign(item[0].id, next, 'add_dummy')
+        call s:PlaceSpecificSign(item[0].id, next, 'add_dummy', bufnr(''))
     endif
     let b:changes_last_line = line('$')
 endfu
