@@ -808,6 +808,22 @@ fu! s:GetDiff(arg, file) "{{{1
 endfu
 fu! s:AfterDiff() "{{{1
     call s:SortDiffHl()
+    if s:sign_api
+        " First unplace all plugin specific signs
+        call s:UnPlaceSigns(1)
+        for name in ['add', 'cha', 'del']
+            let previous=0
+            for line in b:diffhl[name]
+                let sid=b:sign_prefix.s:SignId()
+                if line==previous+1 && index(['add', 'cha'], name) > -1
+                    call s:PlaceSpecificSign(sid, line, name.'_dummy')
+                else
+                    call s:PlaceSpecificSign(sid, line, name)
+                endif
+                let previous=line
+            endfor
+        return
+    endif
     " Check for empty dict of signs
     if !exists("b:diffhl") ||
                 \ ((b:diffhl ==? {'add': [], 'del': [], 'cha': []})
@@ -1332,7 +1348,7 @@ fu! changes#Init() "{{{1
     " This variable is a prefix for all placed signs.
     " This is needed, to not mess with signs placed by the user
     if !exists("b:sign_prefix")
-        let b:sign_prefix = s:GetSignId() + 10
+        let b:sign_prefix = (s:sign_api ? '' : s:GetSignId() + 10)
     endif
 
     let s:placed_signs = s:PlacedSigns()
