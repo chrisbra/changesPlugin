@@ -1371,6 +1371,9 @@ fu! changes#EnableChanges(arg, ...) "{{{1
         let savevar = get(g:, 'changes_max_filesize', 0)
         unlet! g:changes_max_filesize
         call changes#Init()
+        if a:arg
+            call s:UnPlaceSigns(1)
+        endif
         verbose call s:GetDiff(a:arg, (a:0 ? a:1 : ''))
     catch
         call changes#WarningMsg()
