@@ -9,8 +9,11 @@
 " Documentation: "{{{1
 " See :h ChangesPlugin.txt
 
+" {{{1 script-level variables
 scriptencoding utf-8
 let s:i_path = fnamemodify(expand("<sfile>"), ':p:h'). '/changes_icons/'
+let s:sign_api = v:version > 801 || (v:version == 801 && has("patch614"))
+let s:sign_api_group = 'ChangesSignGroup'
 
 fu! <sid>GetSID() "{{{1
     return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_GetSID$')
@@ -48,21 +51,43 @@ fu! s:Check() "{{{1
     call s:SetupSignTextHl()
     call s:DefineSigns(0)
 endfu
+fu! s:GetSignDef(def) "{{{1
+    " Returns sign definition as string for use as `:sign command`
+    " not used when s:sign_api is defined
+    return ' text='.get(a:def, 'text', '').
+        \ ' texthl='.get(a:def, 'texthl', '').
+        \ (has_key(a:def, 'icon') ? ' icon='.get(a:def, 'icon', '') : '').
+        \ (has_key(a:def, 'linehl') ? ' icon='.get(a:def, 'linehl', '') : '')
+endfu
 fu! s:DefineSigns(undef) "{{{1
     for key in keys(s:signs)
         if a:undef
             try
                 " Try undefining first, so that refining will actually work!
-                exe "sil! sign undefine " key
+                if s:sign_api
+                    call sign_undefine(s:signs[key].name)
+                else
+                    exe "sil! sign undefine " key
+                endif
             catch /^Vim\%((\a\+)\)\=:E155/	" sign does not exist
             endtry
         endif
         try
-            exe "sil! sign define" s:signs[key]
+            if s:sign_api
+                call sign_define(key, s:signs[key])
+            else
+                exe "sil! sign define" key. s:GetSignDef(s:signs[key])
+            endif
         catch /^Vim\%((\a\+)\)\=:E255/	" Can't read icons
-            exe "sil! sign undefine " key
-            let s:signs[key] = substitute(s:signs[key], 'icon=.*$', '', '')
-            exe "sign define" s:signs[key]
+            if s:sign_api
+                call sign_undefine(key)
+                unlet! s:signs[key]['icon']
+                call sign_define(key, s:signs[key])
+            else
+                exe "sil! sign undefine " key
+                unlet! s:signs[key]['icon']
+                exe "sign define" key s:GetSignDef(s:signs[key])
+            endif
         endtry
     endfor
 endfu
@@ -147,10 +172,9 @@ fu! s:UpdateView(...) "{{{1
         " using the InsertEnter autocommand
         if exists("s:changes_last_inserted_sign")
             let name=s:PrevDictHasKey(line('.'))
-            if name ==# s:changes_last_inserted_sign.type
-            let dict = {'name': 'add', 'id': s:SignIdRemove(), 'type': 'add'}
-                call s:UnPlaceSpecificSigns([dict])
-            endi
+            if name ==# s:changes_last_inserted_sign.name
+                call s:UnPlaceSpecificSigns([{'id': s:SignIdRemove()}])
+            endif
         endif
     endif
 endfu
@@ -168,7 +192,7 @@ fu! s:SetupSignTextHl() "{{{1
 endfu
 fu! s:ChangesSignsLines() "{{{1
     " returns a list of all changes placed signs
-    return sort(map(copy(s:placed_signs[0]), 'get(v:val, "line")+0'))
+    return sort(map(copy(s:placed_signs[0]), 'get(v:val, "line")+0'), 'N')
 endfu
 fu! s:PrevDictHasKey(line, ...) "{{{1
     " Return existing sign on the current line
@@ -177,15 +201,15 @@ fu! s:PrevDictHasKey(line, ...) "{{{1
     if result == []
         return a:0 ? {} : ''
     endif
-    return a:0 ? result[0] : result[0].type
+    return a:0 ? result[0] : result[0].name
 endfu
 fu! s:PrevDictHasKeyType(line, id) "{{{1
     " Return existing sign on the current line
     " If a:1, return complete dict item
-    let result=filter(copy(s:placed_signs[0]), 'v:val.line ==? a:line && v:val.type[0:2] ==? a:id')
-    return result == [] ? '' : result[0].type
+    let result=filter(copy(s:placed_signs[0]), 'v:val.line ==? a:line && v:val.name[0:2] ==? a:id')
+    return result == [] ? '' : result[0].name
 endfu
-fu! s:Write(name)
+fu! s:Write(name) "{{{1
     " turn off fsync, so writing is faster
     let _fsync=&fsync
     set nofsync
@@ -250,7 +274,11 @@ fu! s:UnPlaceSigns(force) "{{{1
     endif
     if a:force
         " only changes sign present, can remove all of them now
-        exe "sign unplace * buffer=".bufnr('')
+        if s:sign_api
+            call sign_unplace(s:sign_api_group, {'buffer': bufnr('')})
+        else
+            exe "sign unplace * buffer=".bufnr('')
+        endif
         return
     endif
     if !exists("b:diffhl")
@@ -548,6 +576,9 @@ fu! s:ShowDifferentLines() "{{{1
 endfun
 let g:Changes_funcref=funcref("<sid>ShowDifferentLines")
 fu! s:GetSignId() "{{{1
+    if s:sign_api
+        return 10
+    endif
     let signs = s:GetPlacedSigns()
     if empty(signs)
         " No signs placed yet...
@@ -565,15 +596,19 @@ fu! s:GetPlacedSigns() "{{{1
     if exists("s:all_signs")
         return s:all_signs
     endif
-    " set local to english
-    let lang=v:lang
-    if lang isnot# 'C'
-        sil lang mess C
-    endif
-    redir => a| exe "silent sign place buffer=".bufnr('')|redir end
-    let s:all_signs = split(a,"\n")[1:]
-    if lang != 'C'
-        exe "sil lang mess" lang
+    if s:sign_api
+        let s:all_signs = sign_getplaced(bufnr(''), {'group': s:sign_api_group})
+    else
+        " set local to english
+        let lang=v:lang
+        if lang isnot# 'C'
+            sil lang mess C
+        endif
+        redir => a| exe "silent sign place buffer=".bufnr('')|redir end
+        let s:all_signs = split(a,"\n")[1:]
+        if lang != 'C'
+            exe "sil lang mess" lang
+        endif
     endif
     return s:all_signs
 endfu
@@ -584,6 +619,9 @@ fu! s:PlacedSigns() "{{{1
         return [[],[]]
     endif
     let b = s:GetPlacedSigns()
+    if s:sign_api
+        return [[], b]
+    endif
     if empty(b)
         return [[],[]]
     endif
@@ -600,7 +638,7 @@ fu! s:PlacedSigns() "{{{1
             let t = split(item)
             let dict.line = split(t[0], '=')[1]
             let dict.id   = split(t[1], '=')[1]
-            let dict.type = split(t[2], '=')[1]
+            let dict.name = split(t[2], '=')[1]
             call add(own, copy(dict))
         else
             call add(other, matchstr(item, '^\s*\w\+=\zs\d\+\ze')+0)
@@ -786,7 +824,7 @@ fu! s:AfterDiff() "{{{1
 endfu
 fu! s:SortDiffHl() "{{{1
     for i in ['add', 'cha', 'del']
-        call sort(b:diffhl[i], 'n')
+        call sort(b:diffhl[i], 'N')
         call uniq(b:diffhl[i])
     endfor
 endfu
@@ -804,7 +842,7 @@ fu! s:CheckInvalidSigns() "{{{1
     try
         " 1) check, if there are signs to delete
         for item in s:placed_signs[0]
-            if (item.type ==? '[Deleted]')
+            if (item.name ==? '[Deleted]')
                 call add(list[0], item)
                 continue
             elseif (item.line == get(last, 'line', 0))
@@ -812,7 +850,7 @@ fu! s:CheckInvalidSigns() "{{{1
                 call add(list[0], item)
                 continue
             endif
-            let type=s:SignType(item.type)
+            let type=s:SignType(item.name)
             if match(keys(b:diffhl), type) < 0
                 continue
             endif
@@ -821,7 +859,7 @@ fu! s:CheckInvalidSigns() "{{{1
                 " remove item from the placed sign list, so that we
                 " don't erroneously place a dummy sign later on
                 let next = get(s:placed_signs[0], ind+1, {})
-                if item.type !~? 'dummy' && !empty(next) && next.type =~? 'dummy'
+                if item.name !~? 'dummy' && !empty(next) && next.name =~? 'dummy'
                     " The next line should not be of type dummy, so add it to the
                     " delete list and to the add list
                     call add(list[0], next)
@@ -832,14 +870,14 @@ fu! s:CheckInvalidSigns() "{{{1
                 endif
                 call remove(s:placed_signs[0], ind)
             else
-                if item.type =~? 'dummy' && s:SignType(get(last, 'type', '')) != type
+                if item.name =~? 'dummy' && s:SignType(get(last, 'name', '')) != type
                     call add(list[0], item)
                     if index(b:diffhl[type], item.line+0) > -1
                         call add(list[1][type],  item.line+0)
                     endif
                 endif
-                if s:SignType(item.type) == s:SignType(get(last, 'type', ''))
-                            \ && item.type !~ 'dummy'
+                if s:SignType(item.name) == s:SignType(get(last, 'name', ''))
+                            \ && item.name !~ 'dummy'
                             \ && item.line+0 == get(last, 'line', 0)+1
                     " Current type needs to be of type dummy, but isn't,
                     " remove and re-add the sign
@@ -869,7 +907,7 @@ fu! s:CheckInvalidSigns() "{{{1
                     endif
                     if has_sign
                         let previtem = s:PrevDictHasKey(line, 1)
-                        if previtem.type == id
+                        if previtem.name == id
                             call add(list[0], previtem)
                         endif
                     endif
@@ -888,61 +926,68 @@ fu! s:UnPlaceSpecificSigns(dict) "{{{1
         if ind > -1
             call remove(s:placed_signs[0], ind)
         endif
-        exe "sign unplace ". sign.id. " buffer=".bufnr('')
+        if s:sign_api
+            call sign_unplace(s:sign_api_group, {'id': s:SignIdRemove(), 'buffer': bufnr('')})
+        else
+            exe "sign unplace ". sign.id. " buffer=".bufnr('')
+        endif
     endfor
 endfu
 fu! s:PlaceSpecificSign(id, line, type) "{{{1
-    exe printf("sil sign place %d line=%d name=%s buffer=%d",
+    if s:sign_api
+        call sign_place(a:id, s:sign_api_group, a:type, bufnr(''), {'lnum': a:line})
+    else
+        exe printf("sil sign place %d line=%d name=%s buffer=%d",
                 \ a:id, a:line, a:type, bufnr(''))
+    endif
 endfu
 fu! s:InitSignDef() "{{{1
     let signs={}
     let s:changes_sign_hi_style = get(s:, 'changes_sign_hi_style', 0)
     let sign_hi = s:changes_sign_hi_style
     if sign_hi == 2
-        let add = printf("%s texthl=SignColumn", "\<Char-0xa0>")
-        let del = printf("%s texthl=SignColumn", "\<Char-0xa0>")
-        let ch  = printf("%s texthl=SignColumn", "\<Char-0xa0>")
+        for name in ['add', 'del', 'ch']
+            let signs.name = {'text': "\<Char-0xa0>", 'texthl': 'SignColumn'}
+        endfor
     else
-        let add = printf("%s texthl=%s %s",
-                    \ (get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+'),
-                    \ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn"),
-                    \ s:MakeSignIcon('icon=', s:i_path.'add1.bmp'))
-        let del = printf("%s texthl=%s %s",
-                    \ (get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-'),
-                    \ (sign_hi<2 ? "ChangesSignTextDel" : "SignColumn"),
-                    \ s:MakeSignIcon('icon=', s:i_path.'delete1.bmp'))
-        let ch  = printf("%s texthl=%s  %s",
-                    \ (get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*'),
-                    \ (sign_hi<2 ? "ChangesSignTextCh" : "SignColumn"),
-                    \ s:MakeSignIcon('icon=', s:i_path.'warning1.bmp'))
+        let signs['add'] = {
+                    \ 'text': (get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+'),
+                    \ 'texthl': (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn"),
+                    \ 'icon': s:MakeSignIcon(s:i_path.'add1.bmp'),
+                    \ 'linehl': sign_hi > 0 ? 'DiffAdd' : ''}
+        let signs['del'] = {
+                    \ 'text': (get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-'),
+                    \ 'texthl': (sign_hi<2 ? "ChangesSignTextDel" : "SignColumn"),
+                    \ 'icon': s:MakeSignIcon(s:i_path.'delete1.bmp'),
+                    \ 'linehl': sign_hi > 0 ? 'DiffDelete' : ''}
+        let signs['cha'] = {
+                    \ 'text': (get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*'),
+                    \ 'texthl': (sign_hi<2 ? "ChangesSignTextCh" : "SignColumn"),
+                    \ 'icon': s:MakeSignIcon(s:i_path.'warning1.bmp'),
+                    \ 'linehl': sign_hi > 0 ? 'DiffChange' : ''}
     endif
+    let signs['add_dummy'] = {
+                    \ 'text': "\<Char-0xa0>\<Char-0xa0>",
+                    \ 'texthl': (sign_hi<2 ? "ChangesSignTextAdd": "SignColumn"),
+                    \ 'linehl': sign_hi > 0 ? 'DiffAdd' : ''}
+    let signs['cha_dummy'] = {
+                    \ 'text': "\<Char-0xa0>\<Char-0xa0>",
+                    \ 'texthl': (sign_hi<2 ? "ChangesSignTextCh": "SignColumn"),
+                    \ 'linehl': sign_hi > 0 ? 'DiffChange' : ''}
 
-    let signs["add"] = "add text=".add
-    let signs["cha"] = "cha  text=".ch
-    let signs["del"] = "del text=".del
+    for name in keys(signs)
+      " remove empty keys from dictionary
+      call filter(signs[name], {key, val -> !empty(val)})
+    endfor
 
-    " Add some more dummy signs
-    let signs["add_dummy"] = "add_dummy text=\<Char-0xa0>\<Char-0xa0> texthl=".
-                \ (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn")
-    let signs["cha_dummy"]  = "cha_dummy text=\<Char-0xa0>\<Char-0xa0> texthl=".
-                \ (sign_hi<2 ? "ChangesSignTextCh" : "SignColumn")
-
-    if sign_hi > 0
-        let signs['add'] .= ' linehl=DiffAdd'
-        let signs['cha'] .= ' linehl=DiffChange'
-        let signs['del'] .= ' linehl=DiffDelete'
-        let signs['add_dummy'] .= ' linehl=DiffAdd'
-        let signs['cha_dummy']  .= ' linehl=DiffChange'
-    endif
     return signs
 endfu
-fu! s:MakeSignIcon(prefix, path) "{{{1
+fu! s:MakeSignIcon(path) "{{{1
     " Windows seems to have problems with the gui
     if has("gui_running") && !s:Is("win") &&
         \ get(g:, 'changes_use_icons', 1) &&
         \ filereadable(a:path)
-        return a:prefix.a:path
+        return a:path
     else
         return ''
     endif
@@ -1123,7 +1168,7 @@ if has("job") "{{{1
     endfu
 endif
 
-fu! changes#PlaceSignDummy() "{{{1
+fu! changes#SetSignColumn() "{{{1
     if exists("s:old_signcolumn") && &scl isnot# 'yes'
         " user changed the setting, do not change it back again
         if &scl is# 'no'
@@ -1138,8 +1183,8 @@ fu! changes#PlaceSignDummy() "{{{1
 endfu
 fu! changes#GetStats() "{{{1
     return [  len(get(get(b:, 'diffhl', []), 'add', [])),
-                \ len(get(get(b:, 'diffhl', []), 'cha',  [])),
-                \ len(get(get(b:, 'diffhl', []), 'del', []))]
+            \ len(get(get(b:, 'diffhl', []), 'cha',  [])),
+            \ len(get(get(b:, 'diffhl', []), 'del', []))]
 endfu
 fu! changes#WarningMsg() "{{{1
     if !&vbs
@@ -1292,7 +1337,7 @@ fu! changes#Init() "{{{1
         " need to parse placed signs again...
         let s:placed_signs = s:PlacedSigns()
     endif
-    call changes#PlaceSignDummy()
+    call changes#SetSignColumn()
     call changes#AuCmd(s:autocmd)
     " map <cr> to update sign column, if g:changes_fast == 0
     if !hasmapto('<cr>', 'i') && !get(g:, 'changes_fast', 1)
