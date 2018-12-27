@@ -7,9 +7,10 @@
 " Documentation: see :help changesPlugin.txt
 " GetLatestVimScripts: 3052 15 :AutoInstall: ChangesPlugin.vim
 " Documentation: "{{{1
+" TODO: Remove old in-efficient sign handling, once 8.2 or so is stable
 " See :h ChangesPlugin.txt
 
-" {{{1 script-level variables
+"{{{1script-level variables
 scriptencoding utf-8
 let s:i_path = fnamemodify(expand("<sfile>"), ':p:h'). '/changes_icons/'
 let s:sign_api = v:version > 801 || (v:version == 801 && has("patch614"))
