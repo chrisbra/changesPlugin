@@ -583,9 +583,7 @@ fu! s:ShowDifferentLines() "{{{1
 endfun
 let g:Changes_funcref=funcref("<sid>ShowDifferentLines")
 fu! s:GetSignId() "{{{1
-    if s:sign_api
-        return 10
-    endif
+    " Not called for s:sign_api
     let signs = s:GetPlacedSigns()
     if empty(signs)
         " No signs placed yet...
@@ -600,11 +598,10 @@ fu! s:GetSignId() "{{{1
     return max(list)
 endfu
 fu! s:GetPlacedSigns() "{{{1
-    if exists("s:all_signs")
-        return s:all_signs
-    endif
     if s:sign_api
-        let s:all_signs = sign_getplaced(bufnr(''), {'group': s:sign_api_group})
+        return sign_getplaced(bufnr(''), {'group': s:sign_api_group})
+    elseif exists("s:all_signs")
+        return s:all_signs
     else
         " set local to english
         let lang=v:lang
