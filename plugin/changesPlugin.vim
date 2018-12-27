@@ -1,6 +1,6 @@
 " ChangesPlugin.vim - Using Signs for indicating changed lines
 " ---------------------------------------------------------------
-" Version:  0.15
+" Version:  0.16
 " Authors:  Christian Brabandt <cb@256bit.org>
 " Last Change: Thu, 15 Jan 2015 21:16:40 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=3052

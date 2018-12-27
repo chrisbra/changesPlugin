@@ -1,6 +1,6 @@
 " Changes.vim - Using Signs for indicating changed lines
 " ------------------------------------------------------
-" Version:  0.15
+" Version:  0.16
 " Author:  Christian Brabandt <cb@256bit.org>
 " Last Change: Thu, 15 Jan 2015 21:16:40 +0100
 " License: VIM License
