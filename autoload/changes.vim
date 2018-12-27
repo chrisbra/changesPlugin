@@ -806,28 +806,67 @@ fu! s:GetDiff(arg, file) "{{{1
         call s:SaveRestoreChangeMarks(0)
     endtry
 endfu
+fu! s:AfterDiffAPI(bufnr) "{{{1
+    " Get all currently placed signs in the buffer
+    let placed_signs = sign_getplaced(a:bufnr, {'group': s:sign_api_group})
+    if len(placed_signs[0]['signs']) > 0
+        " remove signs, that are no longer needed anymore
+        let newly_signs = b:diffhl['add'] + b:diffhl['cha'] + b:diffhl['del']
+        let to_remove = filter(placed_signs[0]['signs'], { idx, val -> index(newly_signs, val.lnum) == -1})
+        call map(to_remove, {idx, val -> sign_unplace(s:sign_api_group, {'id': val.id})}) 
+    endif
+    for name in ['del', 'add', 'cha']
+        " Del delete first, since those refer to the old line numbers
+        let previous=-1
+        let id = 0
+        for line in b:diffhl[name]
+            let actual_name = name
+            let cur_sign = sign_getplaced(a:bufnr, {'group': s:sign_api_group, 'lnum':line})
+            let length=len(cur_sign[0]['signs'])
+            let cur_id = 0
+            let cur_name = ''
+            while length > 0
+                " In case there are several signs on the current line,
+                " remove all except for the last one
+                let cur_id = cur_sign[0]['signs'][length-1]['id']
+                let cur_name = cur_sign[0]['signs'][length-1]['name']
+                if length > 1
+                    call sign_unplace(s:sign_api_group, {'id':cur_id})
+                endif
+                let length -= 1
+            endwhile
+            if line==previous+1
+                " There was a sign on the previous line
+                if index(['add', 'cha'], name) > -1
+                    let actual_name = name.'_dummy'
+                    " Only place sign, if the old existing sign is not of the
+                    " same type (name)
+                    if actual_name isnot# cur_name
+                        call s:PlaceSpecificSign(cur_id, line, actual_name, a:bufnr)
+                    endif
+                else
+                    " nothing to do for deleted lines,
+                    " but remove previously placed lines
+                    if cur_id > 0
+                        call sign_unplace(s:sign_api_group, {'id': cur_id})
+                    endif
+                    let previous=line
+                    continue
+                endif
+            else
+                " Only place sign, if the old existing sign is not of the same type (name)
+                if actual_name isnot# cur_name
+                    call s:PlaceSpecificSign(cur_id, line, actual_name, a:bufnr)
+                endif
+            endif
+            let previous=line
+        endfor
+    endfor
+endfu
 fu! s:AfterDiff(bufnr) "{{{1
     call s:SortDiffHl()
     if s:sign_api
-        " First unplace all plugin specific signs
-        call s:UnPlaceSigns(1)
-        for name in ['add', 'cha', 'del']
-            let previous=-1
-            for line in b:diffhl[name]
-                if line==previous+1
-                    if index(['add', 'cha'], name) > -1
-                        call s:PlaceSpecificSign(0, line, name.'_dummy', a:bufnr)
-                    else
-                        " nothing to do for deleted lines
-                        let previous=line
-                        continue
-                    endif
-                else
-                    call s:PlaceSpecificSign(0, line, name, a:bufnr)
-                endif
-                let previous=line
-            endfor
-        endfor
+        call s:AfterDiffAPI(a:bufnr)
         return
     endif
     " Check for empty dict of signs
@@ -963,7 +1002,7 @@ fu! s:UnPlaceSpecificSigns(dict) "{{{1
 endfu
 fu! s:PlaceSpecificSign(id, line, type, bufnr) "{{{1
     if s:sign_api
-        call sign_place(0, s:sign_api_group, a:type, a:bufnr, {'lnum': a:line})
+        call sign_place(a:id, s:sign_api_group, a:type, a:bufnr, {'lnum': a:line})
     else
         exe printf("sil sign place %d line=%d name=%s buffer=%d",
                 \ a:id, a:line, a:type, a:bufnr)
