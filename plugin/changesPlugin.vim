@@ -68,10 +68,8 @@ function s:ChangesStartup()
 endfu
 " =====================================================================
 " Mappings:  "{{{1
-if !hasmapto("[h")
+if !hasmapto("changes#MoveToNextChange")
   map <expr> <silent> [h changes#MoveToNextChange(0, v:count1)
-endif
-if !hasmapto("]h")
   map <expr> <silent> ]h changes#MoveToNextChange(1, v:count1)
 endif
 
