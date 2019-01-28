@@ -227,7 +227,6 @@ fu! s:PlaceSigns(dict) "{{{1
     " signs by other plugins
     let b = copy(s:placed_signs[1])
     let changes_signs_lines=s:ChangesSignsLines()
-    " Give changes a higher prio than adds
     for id in ['add', 'cha', 'del']
         let prev_line = -1
         if !has_key(a:dict, id)
