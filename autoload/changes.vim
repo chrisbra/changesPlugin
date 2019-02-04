@@ -525,7 +525,7 @@ fu! s:ParseDiffOutput(file) "{{{1
             " I think this is wrong:
             " if new_line + new_count < old_line+old_count && !(empty(submatch[2]) && empty(submatch[4]))
             " should probably rather be:
-            if new_count < old_count
+            if new_line + new_count < old_line + old_count && new_count != old_count
                 let b:diffhl.del+= range(new_count + new_line, old_line + old_count - 1)
             endif
 
