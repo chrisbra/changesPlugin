@@ -516,10 +516,16 @@ fu! s:ParseDiffOutput(file) "{{{1
         " Lines changed
         " 2 deleted, 2 changed
         " @@ -3,4 +3,2 @@
+        "
+        " But this is just a Change:
+        " @@ -1010,5 +1020,5 @@
         elseif old_count >= new_count
             let b:diffhl.cha += range(new_line, new_line + new_count - 1)
             " if old and new count is not given, can't be deletion
-            if new_line + new_count < old_line+old_count && !(empty(submatch[2]) && empty(submatch[4]))
+            " I think this is wrong:
+            " if new_line + new_count < old_line+old_count && !(empty(submatch[2]) && empty(submatch[4]))
+            " should probably rather be:
+            if new_count < old_count
                 let b:diffhl.del+= range(new_count + new_line, old_line + old_count - 1)
             endif
 
