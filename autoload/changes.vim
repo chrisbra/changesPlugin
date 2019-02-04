@@ -492,9 +492,9 @@ fu! s:ParseDiffOutput(file) "{{{1
             return
         else
             let old_line = submatch[1] + 0
-            let old_count = (empty(submatch[2]) ? 1 : submatch[2]) + 0
+            let old_count = (empty(submatch[2]) ? 1 : submatch[2] + 0)
             let new_line = submatch[3] + 0
-            let new_count = (empty(submatch[4]) ? 1 : submatch[4]) + 0
+            let new_count = (empty(submatch[4]) ? 1 : submatch[4] + 0)
             if b:current_line > (old_line - line('.'))
                 let b:current_line = old_line
             endif
@@ -518,7 +518,8 @@ fu! s:ParseDiffOutput(file) "{{{1
         " @@ -3,4 +3,2 @@
         elseif old_count >= new_count
             let b:diffhl.cha += range(new_line, new_line + new_count - 1)
-            if new_line + new_count <= old_line+old_count
+            " if old and new count is not given, can't be deletion
+            if new_line + new_count < old_line+old_count && !(empty(submatch[2]) && empty(submatch[4]))
                 let b:diffhl.del+= range(new_count + new_line, old_line + old_count - 1)
             endif
 
