@@ -180,22 +180,17 @@ fu! s:UpdateView(...) "{{{1
     endif
 endfu
 fu! s:SetupSignTextHl() "{{{1
-    if !hlID('ChangesSignTextAdd') || synIDattr(hlID('ChangesSignTextAdd'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextAdd'), 'fg'))
-        " highlighting group does not exist yet
-        hi ChangesSignTextAdd ctermbg=46  ctermfg=black guibg=green
+    if &bg == 'dark'
+        hi default ChangesSignTextAdd ctermbg=NONE ctermfg=darkgreen guibg=NONE guifg=darkgreen
+        hi default ChangesSignTextDel ctermbg=NONE ctermfg=darkred guibg=NONE guifg=darkred
+        hi default ChangesSignTextCh  ctermbg=NONE ctermfg=lightblue guibg=NONE guifg=lightblue
+    else
+        hi default ChangesSignTextAdd ctermbg=NONE ctermfg=green guibg=NONE guifg=green
+        hi default ChangesSignTextDel ctermbg=NONE ctermfg=red guibg=NONE guifg=red
+        hi default ChangesSignTextCh  ctermbg=NONE ctermfg=darkblue guibg=NONE guifg=darkblue
     endif
-    if !hlID('ChangesSignTextDummyAdd') || synIDattr(hlID('ChangesSignTextDummyAdd'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextDummyAdd'), 'fg'))
-        hi ChangesSignTextDummyAdd ctermbg=46 ctermfg=black guibg=green
-    endif
-    if !hlID('ChangesSignTextDel') || synIDattr(hlID('ChangesSignTextDel'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextDel'), 'fg'))
-        hi ChangesSignTextDel ctermbg=160 ctermfg=black guibg=red
-    endif
-    if !hlID('ChangesSignTextCh') || synIDattr(hlID('ChangesSignTextCh'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextCh'), 'fg'))
-        hi ChangesSignTextCh  ctermbg=21  ctermfg=white guibg=blue
-    endif
-    if !hlID('ChangesSignTextDummyAdd') || synIDattr(hlID('ChangesSignTextDummyAdd'), 'fg') == -1 || empty(synIDattr(hlID('ChangesSignTextDummyAdd'), 'fg'))
-        hi ChangesSignTextDummyCh  ctermbg=21  ctermfg=white guibg=blue
-    endif
+    hi default link ChangesSignTextDummyCh ChangesSignTextCh
+    hi default link ChangesSignTextDummyAdd ChangesSignTextAdd
 endfu
 fu! s:ChangesSignsLines() "{{{1
     " returns a list of all changes placed signs
@@ -1014,28 +1009,32 @@ fu! s:InitSignDef() "{{{1
             let signs.name = {'text': "\<Char-0xa0>", 'texthl': 'SignColumn'}
         endfor
     else
+        let plus = (get(g:, 'changes_sign_text_utf8', 0) ? '➕' : '+')
+        let del  = (get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-')
+        let mod  = (get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*')
+
         let signs['add'] = {
-                    \ 'text': (get(g:, 'changes_sign_text_utf8', 0) ? '⨁' : '+'),
+                    \ 'text': plus,
                     \ 'texthl': (sign_hi<2 ? "ChangesSignTextAdd" : "SignColumn"),
                     \ 'icon': s:MakeSignIcon(s:i_path.'add1.bmp'),
                     \ 'linehl': sign_hi > 0 ? 'DiffAdd' : ''}
         let signs['del'] = {
-                    \ 'text': (get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-'),
+                    \ 'text': del,
                     \ 'texthl': (sign_hi<2 ? "ChangesSignTextDel" : "SignColumn"),
                     \ 'icon': s:MakeSignIcon(s:i_path.'delete1.bmp'),
                     \ 'linehl': sign_hi > 0 ? 'DiffDelete' : ''}
         let signs['cha'] = {
-                    \ 'text': (get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*'),
+                    \ 'text': mod,
                     \ 'texthl': (sign_hi<2 ? "ChangesSignTextCh" : "SignColumn"),
                     \ 'icon': s:MakeSignIcon(s:i_path.'warning1.bmp'),
                     \ 'linehl': sign_hi > 0 ? 'DiffChange' : ''}
     endif
     let signs['add_dummy'] = {
-                    \ 'text': "\<Char-0xa0>\<Char-0xa0>",
+                    \ 'text': plus,
                     \ 'texthl': (sign_hi<2 ? "ChangesSignTextDummyAdd": "SignColumn"),
                     \ 'linehl': sign_hi > 0 ? 'DiffAdd' : ''}
     let signs['cha_dummy'] = {
-                    \ 'text': "\<Char-0xa0>\<Char-0xa0>",
+                    \ 'text': mod,
                     \ 'texthl': (sign_hi<2 ? "ChangesSignTextDummyCh": "SignColumn"),
                     \ 'linehl': sign_hi > 0 ? 'DiffChange' : ''}
 
