@@ -26,7 +26,7 @@ Features:
 * Customisable
 * Many different Commands (fold all non changed lines, show changed lines in Quickfix window, opens a diff split...)
 * Preserves signs from other plugins.
-* Built-in integration with [vim-airline](https://github.com/bling/vim-airline/).
+* Built-in integration with [vim-airline](https://github.com/vim-airline/vim-airline/).
 * good documentation
 * quick response
 * Nice icons for gvim
@@ -36,13 +36,27 @@ Features:
 To be fair, there were a lot of other vim plugins, that offered the same functionality as those two. They just didn't get the same attention as those two. ChangesPlugin was one of those plugins.
 
 ### Installation
-Use the plugin manager of your choice. For example with [pathogen](https://github.com/tpope/vim-pathogen) use:
+Using Vim 8 comes with package support. Simply clone it into your packpath like this:
 ```
-cd ~/.vim/bundle
+cd ~/.vim/pack/custom/start/
 git clone https://github.com/chrisbra/changesPlugin.git
 ```
+(Remember to run `:helptags ALL` after restarting Vim to regenerating the help files)
 
-[Vundle](https://github.com/gmarik/vundle) users do add `Plugin 'chrisbra/changesPlugin'` to your `~/.vimrc` and then issue `:PluginInstall` from within Vim.
+Other installations methods.
+
+| Plugin Manager | Install with... |
+| ------------- | ------------- |
+| [Pathogen][1] | `git clone https://github.com/chrisbra/changesPlugin ~/.vim/bundle/changesPlugin`<br/>Remember to run `:Helptags` to generate help tags |
+| [NeoBundle][2] | `NeoBundle 'chrisbra/changesPlugin'` |
+| [Vundle][3] | `Plugin 'chrisbra/changesPlugin'` |
+| [Plug][4] | `Plug 'chrisbra/changesPlugin'` |
+| [VAM][5] | `call vam#ActivateAddons([ 'changesPlugin' ])` |
+| [Dein][6] | `call dein#add('chrisbra/changesPlugin')` |
+| [minpac][7] | `call minpac#add('chrisbra/changesPlugin')` |
+| manual | copy all of the directories into your `~/.vim` directory (preserve existing directories)|
+
+Other package managers work similar, please refer to their documentation.
 
 ### Usage
 Once installed, take a look at the help at `:h ChangesPlugin`
@@ -83,7 +97,7 @@ Here is a short overview of the functionality provided by the plugin:
 
 #### Similar Work
 [vim-gitgutter](https://github.com/airblade/vim-gitgutter)
-Only works for git, only updates the signs on write
+Only works for git.
 
 [vim-signify](https://github.com/mhinz/vim-signify/)
 supports several VCS, only updates the sign on write
@@ -93,3 +107,11 @@ supports several VCS, only updates the sign on write
 © 2009-2014 by Christian Brabandt. The Vim License applies. See `:h license`
 
 __NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK__
+
+[1]: https://github.com/tpope/vim-pathogen
+[2]: https://github.com/Shougo/neobundle.vim
+[3]: https://github.com/VundleVim/Vundle.vim
+[4]: https://github.com/junegunn/vim-plug
+[5]: https://github.com/MarcWeber/vim-addon-manager
+[6]: https://github.com/Shougo/dein.vim
+[7]: https://github.com/k-takata/minpac/
