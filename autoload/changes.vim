@@ -58,7 +58,7 @@ fu! s:GetSignDef(def) "{{{1
     return ' text='.get(a:def, 'text', '').
         \ ' texthl='.get(a:def, 'texthl', '').
         \ (has_key(a:def, 'icon') ? ' icon='.get(a:def, 'icon', '') : '').
-        \ (has_key(a:def, 'linehl') ? ' icon='.get(a:def, 'linehl', '') : '')
+        \ (has_key(a:def, 'linehl') ? ' linehl='.get(a:def, 'linehl', '') : '')
 endfu
 fu! s:DefineSigns(undef) "{{{1
     for key in keys(s:signs)
