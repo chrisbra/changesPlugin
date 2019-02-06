@@ -55,8 +55,8 @@ endfu
 fu! s:GetSignDef(def) "{{{1
     " Returns sign definition as string for use as `:sign command`
     " not used when s:sign_api is defined
-    return ' text='.get(a:def, 'text', '').
-        \ ' texthl='.get(a:def, 'texthl', '').
+    return (has_key(a:def, 'text') ? ' text='.get(a:def, 'text', '') : '').
+        \ (has_key(a:def, 'texthl') ? ' texthl='.get(a:def, 'texthl', '') : '').
         \ (has_key(a:def, 'icon') ? ' icon='.get(a:def, 'icon', '') : '').
         \ (has_key(a:def, 'linehl') ? ' linehl='.get(a:def, 'linehl', '') : '')
 endfu
