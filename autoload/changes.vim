@@ -1187,7 +1187,7 @@ if has("job") "{{{1
         call s:ParseDiffOutput(self.output)
         call s:AfterDiff(self.bufnr)
         " redrawing is expansive, skipped
-        redr!
+        "redr!
         if self.type != 3 || s:nodiff
             let b:changes_view_enabled=1
         endif
