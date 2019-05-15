@@ -69,33 +69,37 @@ endfu
 " =====================================================================
 " Mappings:  "{{{1
 if !hasmapto("changes#MoveToNextChange")
-  map <expr> <silent> [h changes#MoveToNextChange(0, v:count1)
-  map <expr> <silent> ]h changes#MoveToNextChange(1, v:count1)
+  if empty(maparg('[h'))
+    map <expr> <silent> [h changes#MoveToNextChange(0, v:count1)
+  endif
+  if empty(maparg(']h'))
+    map <expr> <silent> ]h changes#MoveToNextChange(1, v:count1)
+  endif
 endif
 
 " Text-object: A hunk
-if !hasmapto("ah", 'v')
-  vmap <expr> <silent> ah changes#CurrentHunk()
+if !hasmapto("ah", 'x') && empty(maparg('ah', 'x'))
+  xmap <expr> <silent> ah changes#CurrentHunk()
 endif
 
-if !hasmapto("ah", 'o')
+if !hasmapto("ah", 'o') && empty(maparg('ah', 'o'))
   omap <silent> ah :norm Vah<cr>
 endif
 
-if !hasmapto('<Plug>(ChangesStageHunk)')
+if !hasmapto('<Plug>(ChangesStageHunk)') && empty(maparg('<Leader>h', 'n'))
   nmap     <silent><unique><nowait> <Leader>h <Plug>(ChangesStageHunk)
   nnoremap <unique><script> <Plug>(ChangesStageHunk) <sid>ChangesStageHunkAdd
   nnoremap <sid>ChangesStageHunkAdd :<c-u>call changes#StageHunk(line('.'), 0)<cr>
 endif
 
-if !hasmapto('<Plug>(ChangesStageHunkRevert)')
+if !hasmapto('<Plug>(ChangesStageHunkRevert)') && empty(maparg('<Leader>H', 'n'))
   nmap     <silent><unique><nowait> <Leader>H <Plug>(ChangesStageHunkRevert)
   nnoremap <unique><script> <Plug>(ChangesStageHunkRevert) <sid>ChangesStageHunkRevert
   nnoremap <sid>ChangesStageHunkRevert :<c-u>call changes#StageHunk(line('.'), 1)<cr>
 endif
 
 " In Insert mode, when <cr> is pressed, update the signs immediately
-if !get(g:, 'changes_fast', 1) && !hasmapto('<cr>', 'i')
+if !get(g:, 'changes_fast', 1) && !hasmapto('<cr>', 'i') && empty(maparg('<cr>', 'i'))
   call ChangesMap('<cr>')
 endif
 
