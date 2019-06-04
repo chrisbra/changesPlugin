@@ -1,4 +1,4 @@
-# Changes plugin
+# Changes plugin [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/chrisbra)
 > A Vim plugin for displaying changes in a buffer
 
 This plugin was written to help visualize which lines have been changed since
