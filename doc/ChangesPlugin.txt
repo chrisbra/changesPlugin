@@ -2,7 +2,7 @@
 
 Author:  Christian Brabandt <cb@256bit.org>
 Version: 0.16 Thu, 15 Jan 2015 21:16:40 +0100
-Copyright: (c) 2010-2016 by Christian Brabandt
+Copyright: (c) 2010-2019 by Christian Brabandt
 
                                            *ChangesPlugin-copyright*
 The VIM LICENSE applies to ChangesPlugin.txt (see |copyright|)
@@ -356,6 +356,9 @@ third line of this document.
         BF: check, that the file exists in git
         NF: use signcolumn function if available
         NF: Make use of Sign API (neews Vim 8.1.616)
+        BF: better detection of modified
+        NF: better and simpler defaults for signs
+        NF: Make use of Vim patch 8.1.1682 (to define and place list of signs)
     0.15: Jan 15, 2015:                                                 {{{1
         NF: use |TextChanged| autocommand to update signs faster
         NF: use new utf8 symbols

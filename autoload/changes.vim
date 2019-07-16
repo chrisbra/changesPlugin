@@ -14,6 +14,7 @@
 scriptencoding utf-8
 let s:i_path = fnamemodify(expand("<sfile>"), ':p:h'). '/changes_icons/'
 let s:sign_api = v:version > 801 || (v:version == 801 && has("patch614"))
+let s:sign_api_list = exists("*sign_placelist")
 let s:sign_api_group = 'ChangesSignGroup'
 
 fu! <sid>GetSID() "{{{1
@@ -61,6 +62,13 @@ fu! s:GetSignDef(def) "{{{1
         \ (has_key(a:def, 'linehl') ? ' linehl='.get(a:def, 'linehl', '') : '')
 endfu
 fu! s:DefineSigns(undef) "{{{1
+    if s:sign_api_list
+        if a:undef
+            call sign_undefine(values(s:signs))
+        endif
+        call sign_define(values(s:signs))
+        return
+    endif
     for key in keys(s:signs)
         if a:undef
             try
@@ -1048,6 +1056,8 @@ fu! s:InitSignDef() "{{{1
     for name in keys(signs)
       " remove empty keys from dictionary
       call filter(signs[name], {key, val -> !empty(val)})
+      " add name of sign to the definition, required for sign_define([list])
+      let signs[name].name = name
     endfor
 
     return signs
