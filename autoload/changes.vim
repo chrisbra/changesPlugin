@@ -64,7 +64,7 @@ endfu
 fu! s:DefineSigns(undef) "{{{1
     if s:sign_api_list
         if a:undef
-            call sign_undefine(values(s:signs))
+            call sign_undefine(keys(s:signs))
         endif
         call sign_define(values(s:signs))
         return
