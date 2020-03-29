@@ -1262,6 +1262,9 @@ fu! changes#SetSignColumn() "{{{1
     endif
 endfu
 fu! changes#GetStats() "{{{1
+    if !get(b:, 'changes_view_enabled', 0)
+        call s:GetDiff(1, '')
+    endif
     return [  len(get(get(b:, 'diffhl', []), 'add', [])),
             \ len(get(get(b:, 'diffhl', []), 'cha',  [])),
             \ len(get(get(b:, 'diffhl', []), 'del', []))]
