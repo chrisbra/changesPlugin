@@ -1256,7 +1256,7 @@ fu! changes#SetSignColumn() "{{{1
         else
             return
         endif
-    elseif &scl isnot# 'yes'
+    elseif &scl isnot# 'yes' && !&buftype ==# 'terminal'
         set signcolumn=yes
         let s:old_signcolumn = 1
     endif
