@@ -223,7 +223,7 @@ fu! s:Write(name) "{{{1
     " turn off fsync, so writing is faster
     let _fsync=&fsync
     set nofsync
-    exe ":sil keepalt noa :w!" a:name
+    exe ":sil keepalt noa :w! ++ff=unix" a:name
     let &fsync=_fsync
 endfu
 fu! s:PlaceSigns(dict) "{{{1
@@ -361,7 +361,7 @@ fu! s:MakeDiff_new(file, type) "{{{1
     try
         let _pwd = s:ChangeDir()
         unlet! b:current_line
-        call s:Write(s:diff_in_cur)
+        call s:Write(s:diff_in_cur) " writes in Unix format
         if !s:vcs || !empty(a:file)
             let file = !empty(a:file) ? a:file : bufname('')
             if empty(file)
@@ -395,6 +395,10 @@ fu! s:MakeDiff_new(file, type) "{{{1
                 call s:StoreMessage(output[:-2])
                 throw "changes:abort"
             endif
+"            if &ff ==? 'dos'
+"                " need to postprocess the resulting file
+"                call system('vim --clean -c ":w! ++ff=dos" -c ":q!" ' . s:diff_in_old) 
+"            endif
         endif
         let cmd = printf("diff -a -U0 -N %s %s %s > %s",
             \ s:diff_in_old, s:diff_in_cur, 
