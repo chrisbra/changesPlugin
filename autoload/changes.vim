@@ -1108,6 +1108,11 @@ fu! s:HighlightTextChanges() "{{{1
         " - or they do not match the complete buffer
         call s:AddMatches(
                     \ s:GenerateHiPattern(getpos("'[")[1:2], getpos("']")[1:2]))
+    elseif get(g:, 'changes_linehi_diff', 0) &&  getpos("']") ==? getpos("'[")
+        " highlight the complete line
+        let pos1=[line("'[")] + [1]
+        let pos2=[line("'[")] + [1000] " just a guess
+        call s:AddMatches(s:GenerateHiPattern(pos1, pos2))
     endif
 endfu
 fu! s:GenerateHiPattern(startl, endl) "{{{1
@@ -1115,7 +1120,7 @@ fu! s:GenerateHiPattern(startl, endl) "{{{1
     " endl   - End Position   [line, col]
     " Easy way: match within a line
     if a:startl[0] == a:endl[0]
-        return '\%'.a:startl[0]. 'l\%>'.(a:startl[1]-1).'c.*\%<'.a:endl[1].'c'
+        return '\%'.a:startl[0]. 'l\%>'.(a:startl[1]-1).'c.*\%<'.(a:endl[1]+1).'c'
     else
         " Need to generate concat 3 patterns:
         "  1) from startline, startcolumn till end of line
@@ -1126,7 +1131,7 @@ fu! s:GenerateHiPattern(startl, endl) "{{{1
         " \%(\%1l\%>6v.*\)\|\(\%>1l\%<3l.*\)\|\(\%3l.*\%<12v\)
         return  '\%(\%'.  a:startl[0]. 'l\%>'. (a:startl[1]-1). 'c.*\)\|'.
                     \	'\%(\%>'. a:startl[0]. 'l\%<'. a:endl[0]. 'l.*\)\|'.
-                    \   '\%(\%'.  a:endl[0]. 'l.*\%<'. a:endl[1]. 'c\)'
+                    \   '\%(\%'.  a:endl[0]. 'l.*\%<'. (a:endl[1]+1). 'c\)'
     endif
 endfu
 fu! s:AddMatches(pattern) "{{{1
