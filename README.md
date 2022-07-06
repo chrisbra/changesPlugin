@@ -100,11 +100,11 @@ Here is a short overview of the functionality provided by the plugin:
 
 `g:changes_modified_sign` (default: '*') - If set, will display custom sign
 
-`g:changes_utf8_add_sign` (default '➕') - If set, will display nice little utf-8 signs.
+`g:changes_utf8_add_sign` (default '➕') - If set, will display nice little utf-8 plus signs.
 
-`g:changes_utf8_delete_sign` (default '➖') - If set, will display nice little utf-8 signs.
+`g:changes_utf8_delete_sign` (default '➖') - If set, will display nice little utf-8 minus signs.
 
-`g:changes_utf8_modifed_sign` (default '★') - If set, will display nice little utf-8 signs.
+`g:changes_utf8_modifed_sign` (default '★') - If set, will display nice little utf-8 star signs.
 
 #### Similar Work
 [vim-gitgutter](https://github.com/airblade/vim-gitgutter)
