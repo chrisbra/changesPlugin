@@ -1028,9 +1028,9 @@ fu! s:InitSignDef() "{{{1
             let signs.name = {'text': "\<Char-0xa0>", 'texthl': 'SignColumn'}
         endfor
     else
-        let plus = (get(g:, 'changes_sign_text_utf8', 0) ? '➕' : '+')
-        let del  = (get(g:, 'changes_sign_text_utf8', 0) ? '➖' : '-')
-        let mod  = (get(g:, 'changes_sign_text_utf8', 0) ? '★' : '*')
+        let plus = (get(g:, 'changes_sign_text_utf8', 0) ? get(g:, 'changes_utf8_add_sign','➕') : get(g:,'changes_add_sign','+'))
+        let del  = (get(g:, 'changes_sign_text_utf8', 0) ? get(g:, 'changes_utf8_delete_sign','➖') : get(g:,'changes_delete_sign','-'))
+        let mod  = (get(g:, 'changes_sign_text_utf8', 0) ? get(g:, 'changes_utf8_modified_sign','★') : get(g:,'changes_modified_sign','*'))
 
         let signs['add'] = {
                     \ 'text': plus,
