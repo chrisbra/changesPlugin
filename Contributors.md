@@ -1,3 +1,3 @@
 **Contributors**
 
-- [TechnicalDC](https://github.com/TechnicalDC)
+* [TechnicalDC](https://github.com/TechnicalDC)
