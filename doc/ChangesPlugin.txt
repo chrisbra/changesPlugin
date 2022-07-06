@@ -293,6 +293,20 @@ g:changes_linehi_diff (default: 0)
     (does not attempt to parse the VCS diff to try to figure the differences
     out). Note: Currently very experimental!
 
+                                                        *ChangesPlugin-signs*
+You can customize what text will be displayed in the signcolumn by setting the
+following variables (this shows the defaults): >
+
+  " Customize Ascii Text for Signs
+  let g:changes_add_sign='+'
+  let g:changes_delete_sign='-'
+  let g:changes_modified_sign='*'
+
+  " Customize UTF-8 Text for Signs
+  " overrides the g_changes_<type>_sign
+  let g:changes_utf8_add_sign='➕' 
+  let g:changes_utf8_delete_sign='➖'
+  let g:changes_utf8_modifed_sign='★'
                                                         *ChangesPlugin-Signcol*
 g:changes_fixed_sign_column (default: 0)
 ----------------------------------------
@@ -359,6 +373,7 @@ third line of this document.
         BF: better detection of modified
         NF: better and simpler defaults for signs
         NF: Make use of Vim patch 8.1.1682 (to define and place list of signs)
+        NF: Allow customization of signs
     0.15: Jan 15, 2015:                                                 {{{1
         NF: use |TextChanged| autocommand to update signs faster
         NF: use new utf8 symbols
