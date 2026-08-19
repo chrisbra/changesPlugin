@@ -1300,9 +1300,9 @@ fu! changes#Output() "{{{1
     let del = '-'
     let sign_def = s:signs
     if !empty(sign_def)
-        let add = matchstr(sign_def['add'], 'text=\zs..')
-        let ch  = matchstr(sign_def['cha'], 'text=\zs..')
-        let del = matchstr(sign_def['del'], 'text=\zs..')
+        let add = matchstr(sign_def['add'].text, 'text=\zs..')
+        let ch  = matchstr(sign_def['cha'].text, 'text=\zs..')
+        let del = matchstr(sign_def['del'].text, 'text=\zs..')
     endif
     echohl Title
     echo "Differences will be highlighted like this:"
